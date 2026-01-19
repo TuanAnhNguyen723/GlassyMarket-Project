@@ -23,6 +23,8 @@
           <RouterLink class="text-sm font-semibold hover:text-primary transition-colors" to="/products"
             >Accessories</RouterLink
           >
+          <RouterLink class="text-sm font-semibold hover:text-primary transition-colors" to="/About"
+          >About us</RouterLink>
         </nav>
       </div>
 
