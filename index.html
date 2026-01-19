@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="vi" class="light">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eyewear Store | Redefining Your Vision</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Epilogue:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    >
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    >
+    <!-- Tailwind CDN (runtime) -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              primary: '#49d0c2',
+              'background-light': '#ffffff',
+              'background-dark': '#17191c',
+              'accent-blue': '#f0f9ff',
+            },
+            fontFamily: {
+              display: ['Epilogue', 'sans-serif'],
+            },
+            borderRadius: {
+              DEFAULT: '0.5rem',
+              lg: '1rem',
+              xl: '1.5rem',
+              full: '9999px',
+            },
+          },
+        },
+      }
+    </script>
+    <script>
+      // Set theme before paint (Tailwind uses `dark` class on <html>)
+      try {
+        const saved = localStorage.getItem('theme')
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        const shouldDark = saved ? saved === 'dark' : prefersDark
+        document.documentElement.classList.toggle('dark', shouldDark)
+      } catch {}
+    </script>
+  </head>
+  <body class="bg-background-light dark:bg-background-dark text-[#101918] dark:text-white antialiased font-display">
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
