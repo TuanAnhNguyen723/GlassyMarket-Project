@@ -41,14 +41,14 @@
 
         <!-- Utilities -->
         <div class="flex items-center gap-1">
-          <button
+          <RouterLink
             class="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors relative"
-            type="button"
+            to="/cart"
             title="Giỏ hàng"
           >
             <span class="material-symbols-outlined">shopping_bag</span>
             <span class="absolute top-1 right-1 size-2 bg-primary rounded-full"></span>
-          </button>
+          </RouterLink>
 
           <button
             class="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
