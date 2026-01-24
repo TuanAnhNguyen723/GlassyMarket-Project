@@ -10,15 +10,9 @@
         <!-- Main Content Area -->
         <main class="flex-1 flex flex-col overflow-y-auto px-6 py-10">
           <!-- Heading -->
-          <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
-            <div class="flex flex-col gap-1">
-              <h1 class="text-slate-900 dark:text-white text-3xl font-extrabold tracking-tight">{{ $t('orders.title') }}</h1>
-              <p class="text-slate-500 dark:text-slate-400 text-sm">{{ $t('orders.totalOrders', { count: totalOrders }) }}</p>
-            </div>
-          </div>
-
           <!-- Filters/Chips -->
           <div class="flex gap-2 flex-wrap mb-6">
+            
             <button
               v-for="filter in filters"
               :key="filter.value"
@@ -34,6 +28,7 @@
               {{ filter.label }}
             </button>
           </div>
+          <p class="text-slate-500 dark:text-slate-400 text-sm mb-5">{{ $t('orders.totalOrders', { count: totalOrders }) }}</p>
 
           <!-- Order Cards List -->
           <div class="flex flex-col gap-4 mb-6">

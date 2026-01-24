@@ -9,21 +9,6 @@
 
         <!-- Main Content Area -->
         <main class="flex-1 flex flex-col overflow-y-auto px-6 py-10">
-      <!-- PageHeading -->
-      <header class="flex flex-wrap justify-between items-center gap-4 mb-8">
-        <div class="flex flex-col gap-1">
-          <h2 class="text-[#0d171b] dark:text-white text-4xl font-black leading-tight tracking-tight">
-            {{ $t('dashboard.welcome', { name: userName }) }}
-          </h2>
-          <p class="text-[#578e89] dark:text-slate-400 text-lg font-normal">{{ $t('dashboard.welcomeSubtitle') }}</p>
-        </div>
-        <button
-          class="flex items-center justify-center rounded-xl h-11 px-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[#0d171b] dark:text-white text-sm font-bold shadow-sm hover:shadow-md transition-shadow"
-          type="button"
-        >
-          {{ $t('common.viewProfile') }}
-        </button>
-      </header>
 
       <!-- Dashboard Grid -->
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">

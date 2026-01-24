@@ -75,7 +75,8 @@ const navItems = [
   { path: '/dashboard/orders', key: 'myOrders', icon: 'package_2' },
   { path: '/dashboard/saved', key: 'savedStyles', icon: 'favorite' },
   { path: '/dashboard/prescriptions', key: 'prescriptions', icon: 'description' },
-  { path: '/dashboard/settings', key: 'settings', icon: 'settings' },
+  { path: '/dashboard/settings', key: 'profileSettings', icon: 'person' },
+  { path: '/dashboard/security', key: 'security', icon: 'lock' },
 ]
 
 const isActive = (path) => {
