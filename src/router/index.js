@@ -45,6 +45,11 @@ const routes = [
     path: '/dashboard/settings',
     name: 'ProfileSettings',
     component: () => import('../views/ProfileSettingsView.vue')
+  },
+  {
+    path: '/dashboard/saved',
+    name: 'SavedStyles',
+    component: () => import('../views/SavedStylesView.vue')
   }
 ]
 
