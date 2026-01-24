@@ -2,10 +2,12 @@
 import { RouterView } from 'vue-router'
 import AppHeader from './components/layout/AppHeader.vue'
 import AppFooter from './components/layout/AppFooter.vue'
+import PageLoader from './components/common/PageLoader.vue'
 </script>
 
 <template>
   <div class="app-layout">
+    <PageLoader />
     <AppHeader />
 
     <main class="app-main">
