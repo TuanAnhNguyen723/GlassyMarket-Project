@@ -50,13 +50,13 @@
             <span class="absolute top-1 right-1 size-2 bg-primary rounded-full"></span>
           </RouterLink>
 
-          <button
+          <RouterLink
+            to="/dashboard"
             class="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
-            type="button"
             title="Tài khoản"
           >
             <span class="material-symbols-outlined">person</span>
-          </button>
+          </RouterLink>
 
           <button
             class="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
