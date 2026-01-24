@@ -4,9 +4,9 @@
   >
     <div class="p-6">
       <div class="flex items-center justify-between mb-6">
-        <h3 class="text-[#0d171b] dark:text-white text-xl font-bold">Saved Styles</h3>
+        <h3 class="text-[#0d171b] dark:text-white text-xl font-bold">{{ $t('dashboard.savedStyles') }}</h3>
         <RouterLink class="text-primary text-sm font-bold hover:underline" to="/dashboard/saved">
-          See All Favorites
+          {{ $t('dashboard.seeAllFavorites') }}
         </RouterLink>
       </div>
 

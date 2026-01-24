@@ -12,7 +12,7 @@
           <div class="flex flex-col">
             <h1 class="text-[#0d171b] dark:text-white text-base font-bold leading-none">{{ user.name }}</h1>
             <p class="text-[#578e89] dark:text-primary/70 text-xs mt-1 font-medium leading-normal">
-              {{ user.tier }}
+              {{ $t('sidebar.premiumMember') }}
             </p>
           </div>
         </div>
@@ -37,7 +37,7 @@
               {{ item.icon }}
             </span>
             <p :class="isActive(item.path) ? 'text-sm font-bold' : 'text-sm font-medium'">
-              {{ item.label }}
+              {{ $t(`sidebar.${item.key}`) }}
             </p>
           </RouterLink>
         </nav>
@@ -50,7 +50,7 @@
           @click="handleLogout"
         >
           <span class="material-symbols-outlined">logout</span>
-          <p class="text-sm font-bold">Logout</p>
+          <p class="text-sm font-bold">{{ $t('sidebar.logout') }}</p>
         </button>
       </div>
     </div>
@@ -71,11 +71,11 @@ const user = {
 }
 
 const navItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { path: '/dashboard/orders', label: 'My Orders', icon: 'package_2' },
-  { path: '/dashboard/saved', label: 'Saved Styles', icon: 'favorite' },
-  { path: '/dashboard/prescriptions', label: 'Prescriptions', icon: 'description' },
-  { path: '/dashboard/settings', label: 'Settings', icon: 'settings' },
+  { path: '/dashboard', key: 'dashboard', icon: 'dashboard' },
+  { path: '/dashboard/orders', key: 'myOrders', icon: 'package_2' },
+  { path: '/dashboard/saved', key: 'savedStyles', icon: 'favorite' },
+  { path: '/dashboard/prescriptions', key: 'prescriptions', icon: 'description' },
+  { path: '/dashboard/settings', key: 'settings', icon: 'settings' },
 ]
 
 const isActive = (path) => {

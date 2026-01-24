@@ -3,6 +3,7 @@ import './styles/main.css'
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+import i18n from './locales'
 import { usePageLoading } from './composables/usePageLoading'
 
 const app = createApp(App)
@@ -20,4 +21,4 @@ router.afterEach(() => {
 
 router.onError(() => setLoading(false))
 
-app.use(router).mount('#app')
+app.use(router).use(i18n).mount('#app')

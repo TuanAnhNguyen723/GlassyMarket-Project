@@ -17,11 +17,11 @@
 
         <div class="space-y-1">
           <p class="text-[#5e8487] dark:text-gray-400 text-sm">
-            Color:
+            {{ $t('cart.color') }}:
             <span class="text-[#111718] dark:text-white font-medium">{{ item.color }}</span>
           </p>
           <p class="text-[#5e8487] dark:text-gray-400 text-sm">
-            Lens:
+            {{ $t('cart.lens') }}:
             <span class="text-[#111718] dark:text-white font-medium">{{ item.lens }}</span>
           </p>
         </div>
@@ -32,7 +32,7 @@
 
         <button class="flex items-center gap-1.5 text-primary font-bold text-sm hover:underline" type="button" @click="$emit('remove', item.id)">
           <span class="material-symbols-outlined text-lg">delete</span>
-          Remove
+          {{ $t('cart.remove') }}
         </button>
       </div>
     </div>

@@ -4,29 +4,29 @@
     <div class="mb-8">
       <Breadcrumbs
         :items="[
-          { label: 'Home', to: '/' },
-          { label: 'Eyewear Collection' },
+          { label: $t('products.home'), to: '/' },
+          { label: $t('products.eyewearCollection') },
         ]"
         class-name="mb-4"
       />
 
       <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 class="text-4xl font-black tracking-tight text-[#101918] dark:text-white mb-2">Modern Eyewear</h1>
+          <h1 class="text-4xl font-black tracking-tight text-[#101918] dark:text-white mb-2">{{ $t('products.title') }}</h1>
           <p class="text-[#578e89] max-w-lg">
-            Engineered for comfort. Designed for expression. Explore our latest drop of handcrafted frames.
+            {{ $t('products.subtitle') }}
           </p>
         </div>
 
         <div
           class="flex items-center gap-4 bg-white dark:bg-gray-800 p-2 rounded-xl border border-[#e9f1f1] dark:border-gray-700"
         >
-          <span class="text-sm font-medium px-2">Sort by:</span>
+          <span class="text-sm font-medium px-2">{{ $t('products.sortBy') }}</span>
           <select class="bg-transparent border-none text-sm font-bold focus:ring-0 py-0 pr-8">
-            <option>Newest Arrivals</option>
-            <option>Price: Low to High</option>
-            <option>Price: High to Low</option>
-            <option>Most Popular</option>
+            <option>{{ $t('products.newestArrivals') }}</option>
+            <option>{{ $t('products.priceLowToHigh') }}</option>
+            <option>{{ $t('products.priceHighToLow') }}</option>
+            <option>{{ $t('products.mostPopular') }}</option>
           </select>
         </div>
       </div>
@@ -39,28 +39,28 @@
           class="sticky top-28 space-y-8 bg-white dark:bg-gray-900 p-6 rounded-2xl border border-[#e9f1f1] dark:border-gray-800 shadow-sm"
         >
           <div class="flex items-center justify-between">
-            <h3 class="font-bold text-lg">Filters</h3>
+            <h3 class="font-bold text-lg">{{ $t('products.filters') }}</h3>
             <button class="text-primary text-xs font-bold uppercase tracking-widest hover:underline" type="button">
-              Clear All
+              {{ $t('products.clearAll') }}
             </button>
           </div>
 
           <!-- Type Filter -->
           <div class="space-y-4">
-            <p class="text-xs font-bold text-[#578e89] uppercase tracking-widest">Type</p>
+            <p class="text-xs font-bold text-[#578e89] uppercase tracking-widest">{{ $t('products.type') }}</p>
             <div class="flex flex-wrap gap-2">
-              <button class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-bold" type="button">All</button>
+              <button class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-bold" type="button">{{ $t('products.all') }}</button>
               <button
                 class="px-4 py-2 rounded-lg bg-[#e9f1f1] dark:bg-gray-800 text-sm font-medium hover:bg-primary/10 transition-colors"
                 type="button"
               >
-                Optical
+                {{ $t('products.optical') }}
               </button>
               <button
                 class="px-4 py-2 rounded-lg bg-[#e9f1f1] dark:bg-gray-800 text-sm font-medium hover:bg-primary/10 transition-colors"
                 type="button"
               >
-                Sunglasses
+                {{ $t('products.sunglasses') }}
               </button>
             </div>
           </div>
@@ -68,7 +68,7 @@
           <!-- Price Range -->
           <div class="space-y-4">
             <div class="flex justify-between items-center">
-              <p class="text-xs font-bold text-[#578e89] uppercase tracking-widest">Price Range</p>
+              <p class="text-xs font-bold text-[#578e89] uppercase tracking-widest">{{ $t('products.priceRange') }}</p>
               <span class="text-sm font-bold text-primary">$120 - $350</span>
             </div>
             <input
@@ -79,74 +79,74 @@
 
           <!-- Frame Shape -->
           <div class="space-y-3">
-            <p class="text-xs font-bold text-[#578e89] uppercase tracking-widest">Frame Shape</p>
+            <p class="text-xs font-bold text-[#578e89] uppercase tracking-widest">{{ $t('products.frameShape') }}</p>
             <div class="space-y-2">
               <label class="flex items-center gap-3 cursor-pointer group">
                 <input checked class="rounded border-gray-300 text-primary focus:ring-primary" type="checkbox" />
-                <span class="text-sm group-hover:text-primary transition-colors">Aviator</span>
+                <span class="text-sm group-hover:text-primary transition-colors">{{ $t('products.aviator') }}</span>
               </label>
               <label class="flex items-center gap-3 cursor-pointer group">
                 <input class="rounded border-gray-300 text-primary focus:ring-primary" type="checkbox" />
-                <span class="text-sm group-hover:text-primary transition-colors">Wayfarer</span>
+                <span class="text-sm group-hover:text-primary transition-colors">{{ $t('products.wayfarer') }}</span>
               </label>
               <label class="flex items-center gap-3 cursor-pointer group">
                 <input class="rounded border-gray-300 text-primary focus:ring-primary" type="checkbox" />
-                <span class="text-sm group-hover:text-primary transition-colors">Round</span>
+                <span class="text-sm group-hover:text-primary transition-colors">{{ $t('products.round') }}</span>
               </label>
               <label class="flex items-center gap-3 cursor-pointer group">
                 <input class="rounded border-gray-300 text-primary focus:ring-primary" type="checkbox" />
-                <span class="text-sm group-hover:text-primary transition-colors">Square</span>
+                <span class="text-sm group-hover:text-primary transition-colors">{{ $t('products.square') }}</span>
               </label>
               <label class="flex items-center gap-3 cursor-pointer group">
                 <input class="rounded border-gray-300 text-primary focus:ring-primary" type="checkbox" />
-                <span class="text-sm group-hover:text-primary transition-colors">Cat Eye</span>
+                <span class="text-sm group-hover:text-primary transition-colors">{{ $t('products.catEye') }}</span>
               </label>
             </div>
           </div>
 
           <!-- Colors -->
           <div class="space-y-4">
-            <p class="text-xs font-bold text-[#578e89] uppercase tracking-widest">Colors</p>
+            <p class="text-xs font-bold text-[#578e89] uppercase tracking-widest">{{ $t('products.colors') }}</p>
             <div class="flex flex-wrap gap-3">
               <button
                 class="size-8 rounded-full bg-black ring-2 ring-offset-2 ring-primary border border-white/20"
                 type="button"
-                title="Black"
+                :title="$t('products.black')"
               />
               <button
                 class="size-8 rounded-full bg-[#5D4037] ring-1 ring-black/5 hover:ring-primary transition-all"
                 type="button"
-                title="Tortoise"
+                :title="$t('products.tortoise')"
               />
               <button
                 class="size-8 rounded-full bg-[#D4AF37] ring-1 ring-black/5 hover:ring-primary transition-all"
                 type="button"
-                title="Gold"
+                :title="$t('products.gold')"
               />
               <button
                 class="size-8 rounded-full bg-[#C0C0C0] ring-1 ring-black/5 hover:ring-primary transition-all"
                 type="button"
-                title="Silver"
+                :title="$t('products.silver')"
               />
               <button
                 class="size-8 rounded-full bg-white border border-gray-200 ring-1 ring-black/5 hover:ring-primary transition-all"
                 type="button"
-                title="Crystal"
+                :title="$t('products.crystal')"
               />
             </div>
           </div>
 
           <!-- Promotion Card -->
           <div class="mt-8 bg-primary/10 dark:bg-primary/5 rounded-xl p-4 border border-primary/20">
-            <p class="text-sm font-bold text-primary mb-1">Free Eye Exam</p>
+            <p class="text-sm font-bold text-primary mb-1">{{ $t('products.freeEyeExam') }}</p>
             <p class="text-xs text-[#578e89] leading-relaxed">
-              Book a session at any of our stores and get 15% off your first frame.
+              {{ $t('products.freeEyeExamDesc') }}
             </p>
             <button
               class="mt-3 w-full py-2 bg-primary text-white text-xs font-bold rounded-lg hover:brightness-105 transition-all"
               type="button"
             >
-              Book Now
+              {{ $t('products.bookNow') }}
             </button>
           </div>
         </div>

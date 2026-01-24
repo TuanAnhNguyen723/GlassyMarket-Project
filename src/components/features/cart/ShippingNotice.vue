@@ -3,8 +3,8 @@
     <div class="flex items-center gap-4">
       <span class="material-symbols-outlined text-primary text-3xl">local_shipping</span>
       <div>
-        <p class="font-bold text-sm">{{ title }}</p>
-        <p class="text-xs text-[#5e8487]">{{ subtitle }}</p>
+        <p class="font-bold text-sm">{{ title || $t('cart.freeShipping') }}</p>
+        <p class="text-xs text-[#5e8487]">{{ subtitle || $t('cart.estimatedDelivery') }}</p>
       </div>
     </div>
   </div>
@@ -12,8 +12,8 @@
 
 <script setup>
 defineProps({
-  title: { type: String, default: 'Free Express Shipping' },
-  subtitle: { type: String, default: 'Estimated delivery: 2-3 business days' },
+  title: { type: String, default: '' },
+  subtitle: { type: String, default: '' },
 })
 </script>
 

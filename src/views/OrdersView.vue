@@ -12,8 +12,8 @@
           <!-- Heading -->
           <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
             <div class="flex flex-col gap-1">
-              <h1 class="text-slate-900 dark:text-white text-3xl font-extrabold tracking-tight">My Orders</h1>
-              <p class="text-slate-500 dark:text-slate-400 text-sm">You have {{ totalOrders }} orders in total</p>
+              <h1 class="text-slate-900 dark:text-white text-3xl font-extrabold tracking-tight">{{ $t('orders.title') }}</h1>
+              <p class="text-slate-500 dark:text-slate-400 text-sm">{{ $t('orders.totalOrders', { count: totalOrders }) }}</p>
             </div>
           </div>
 
@@ -73,6 +73,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { usePageLoading } from '@/composables/usePageLoading'
 import DashboardSidebar from '../components/features/dashboard/DashboardSidebar.vue'
 import OrderCard from '../components/features/dashboard/OrderCard.vue'
@@ -90,12 +91,14 @@ onMounted(async () => {
   setLoading(false)
 })
 
-const filters = [
-  { label: 'All Orders', value: 'All Orders' },
-  { label: 'Ongoing', value: 'Ongoing' },
-  { label: 'Delivered', value: 'Delivered' },
-  { label: 'Cancelled', value: 'Cancelled' },
-]
+const { t } = useI18n()
+
+const filters = computed(() => [
+  { label: t('orders.allOrders'), value: 'All Orders' },
+  { label: t('orders.ongoing'), value: 'Ongoing' },
+  { label: t('orders.delivered'), value: 'Delivered' },
+  { label: t('orders.cancelled'), value: 'Cancelled' },
+])
 
 const orders = ref([
   {

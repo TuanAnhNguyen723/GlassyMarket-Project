@@ -2,7 +2,7 @@
   <main class="flex-1 max-w-[1280px] mx-auto w-full px-6 lg:px-20 py-8 lg:py-12">
     <!-- Breadcrumbs -->
     <Breadcrumbs
-      :items="[{ label: 'Home', to: '/' }, { label: 'Shopping Cart' }]"
+      :items="[{ label: $t('products.home'), to: '/' }, { label: $t('cart.shoppingCart') }]"
       class-name="mb-8"
       link-class="text-[#5e8487] dark:text-gray-400 text-sm font-medium hover:text-primary transition-colors"
       current-class="text-sm font-semibold"
@@ -11,8 +11,8 @@
 
     <!-- Page Heading -->
     <div class="mb-10">
-      <h1 class="text-4xl lg:text-5xl font-black tracking-tight mb-2">Your Cart</h1>
-      <p class="text-[#5e8487] dark:text-gray-400 text-lg">You have {{ itemsCount }} items in your bag</p>
+      <h1 class="text-4xl lg:text-5xl font-black tracking-tight mb-2">{{ $t('cart.title') }}</h1>
+      <p class="text-[#5e8487] dark:text-gray-400 text-lg">{{ $t('cart.itemsCount', { count: itemsCount }) }}</p>
     </div>
 
     <div class="flex flex-col lg:flex-row gap-12 items-start">
@@ -29,7 +29,7 @@
         <div class="pt-4">
           <RouterLink class="inline-flex items-center gap-2 text-primary font-bold hover:gap-3 transition-all" to="/products">
             <span class="material-symbols-outlined">arrow_back</span>
-            Continue Shopping
+            {{ $t('cart.continueShopping') }}
           </RouterLink>
         </div>
       </section>
@@ -41,7 +41,7 @@
           :subtotal="subtotal"
           :tax="tax"
           :discount="discount"
-          shipping-label="Free"
+          :shipping-label="$t('cart.free')"
           @apply-promo="applyPromo"
           @checkout="checkout"
         />

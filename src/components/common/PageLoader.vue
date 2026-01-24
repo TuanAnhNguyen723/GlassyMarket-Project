@@ -7,7 +7,7 @@
       >
         <div class="flex items-center gap-3 px-5 py-3 rounded-xl bg-white dark:bg-zinc-900 shadow-lg border border-zinc-200/60 dark:border-zinc-800">
           <span class="loader" aria-hidden="true"></span>
-          <span class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">Đang tải...</span>
+          <span class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">{{ $t('common.loading') }}</span>
         </div>
       </div>
     </transition>

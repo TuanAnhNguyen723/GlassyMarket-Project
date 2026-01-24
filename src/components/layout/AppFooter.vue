@@ -9,41 +9,40 @@
           <h2 class="text-lg font-black tracking-tight uppercase">Optic</h2>
         </div>
         <p class="text-sm text-zinc-500 leading-relaxed">
-          Crafting perspectives since 2012. Our mission is to make quality eyewear accessible without
-          compromising on style.
+          {{ $t('footer.description') }}
         </p>
       </div>
 
       <div>
-        <h4 class="font-bold mb-6">Explore</h4>
+        <h4 class="font-bold mb-6">{{ $t('footer.explore') }}</h4>
         <ul class="space-y-4 text-sm text-zinc-500">
-          <li><RouterLink class="hover:text-primary transition-colors" to="/products">All Products</RouterLink></li>
-          <li><RouterLink class="hover:text-primary transition-colors" to="/products">Best Sellers</RouterLink></li>
-          <li><RouterLink class="hover:text-primary transition-colors" to="/products">New Arrivals</RouterLink></li>
-          <li><RouterLink class="hover:text-primary transition-colors" to="/products">Virtual Mirror</RouterLink></li>
+          <li><RouterLink class="hover:text-primary transition-colors" to="/products">{{ $t('footer.allProducts') }}</RouterLink></li>
+          <li><RouterLink class="hover:text-primary transition-colors" to="/products">{{ $t('footer.bestSellers') }}</RouterLink></li>
+          <li><RouterLink class="hover:text-primary transition-colors" to="/products">{{ $t('footer.newArrivals') }}</RouterLink></li>
+          <li><RouterLink class="hover:text-primary transition-colors" to="/products">{{ $t('footer.virtualMirror') }}</RouterLink></li>
         </ul>
       </div>
 
       <div>
-        <h4 class="font-bold mb-6">Support</h4>
+        <h4 class="font-bold mb-6">{{ $t('footer.support') }}</h4>
         <ul class="space-y-4 text-sm text-zinc-500">
-          <li><RouterLink class="hover:text-primary transition-colors" to="/about">Help Center</RouterLink></li>
-          <li><RouterLink class="hover:text-primary transition-colors" to="/about">Order Status</RouterLink></li>
-          <li><RouterLink class="hover:text-primary transition-colors" to="/about">Shipping &amp; Returns</RouterLink></li>
-          <li><RouterLink class="hover:text-primary transition-colors" to="/contact">Contact Us</RouterLink></li>
+          <li><RouterLink class="hover:text-primary transition-colors" to="/about">{{ $t('footer.helpCenter') }}</RouterLink></li>
+          <li><RouterLink class="hover:text-primary transition-colors" to="/about">{{ $t('footer.orderStatus') }}</RouterLink></li>
+          <li><RouterLink class="hover:text-primary transition-colors" to="/about">{{ $t('footer.shippingReturns') }}</RouterLink></li>
+          <li><RouterLink class="hover:text-primary transition-colors" to="/contact">{{ $t('footer.contactUs') }}</RouterLink></li>
         </ul>
       </div>
 
       <div>
-        <h4 class="font-bold mb-6">Join the newsletter</h4>
-        <p class="text-sm text-zinc-500 mb-4">Weekly styles and exclusive offers in your inbox.</p>
+        <h4 class="font-bold mb-6">{{ $t('footer.joinNewsletter') }}</h4>
+        <p class="text-sm text-zinc-500 mb-4">{{ $t('footer.newsletterDesc') }}</p>
         <div class="flex gap-2">
           <input
             class="bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 rounded-lg text-sm flex-1 focus:ring-primary focus:border-primary"
-            placeholder="email@example.com"
+            :placeholder="$t('footer.emailPlaceholder')"
             type="email"
           />
-          <button class="bg-primary text-white p-2 rounded-lg" type="button" title="Gửi">
+          <button class="bg-primary text-white p-2 rounded-lg" type="button" :title="$t('footer.send')">
             <span class="material-symbols-outlined">send</span>
           </button>
         </div>
@@ -53,7 +52,7 @@
     <div
       class="max-w-[1440px] mx-auto px-6 lg:px-20 mt-20 pt-8 border-t border-[#e9f1f1] dark:border-zinc-800 flex flex-col md:flex-row justify-between items-center gap-4"
     >
-      <p class="text-xs text-zinc-400">© {{ year }} Optic Eyewear Store. All rights reserved.</p>
+      <p class="text-xs text-zinc-400">{{ $t('footer.copyright', { year }) }}</p>
       <div class="flex gap-6 grayscale opacity-50">
         <span class="material-symbols-outlined">payments</span>
         <span class="material-symbols-outlined">credit_card</span>

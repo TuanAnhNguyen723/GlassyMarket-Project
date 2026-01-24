@@ -15,16 +15,16 @@
         <!-- Nav Links -->
         <nav class="hidden md:flex items-center gap-8">
           <RouterLink class="text-sm font-semibold hover:text-primary transition-colors" to="/products"
-            >Eyeglasses</RouterLink
+            >{{ $t('header.eyeglasses') }}</RouterLink
           >
           <RouterLink class="text-sm font-semibold hover:text-primary transition-colors" to="/products"
-            >Sunglasses</RouterLink
+            >{{ $t('header.sunglasses') }}</RouterLink
           >
           <RouterLink class="text-sm font-semibold hover:text-primary transition-colors" to="/products"
-            >Accessories</RouterLink
+            >{{ $t('header.accessories') }}</RouterLink
           >
           <RouterLink class="text-sm font-semibold hover:text-primary transition-colors" to="/About"
-          >About us</RouterLink>
+          >{{ $t('header.aboutUs') }}</RouterLink>
         </nav>
       </div>
 
@@ -34,7 +34,7 @@
           <span class="material-symbols-outlined text-zinc-400 text-lg">search</span>
           <input
             class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-zinc-400"
-            placeholder="Find your style..."
+            :placeholder="$t('header.searchPlaceholder')"
             type="text"
           />
         </div>
@@ -44,7 +44,7 @@
           <RouterLink
             class="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors relative"
             to="/cart"
-            title="Giỏ hàng"
+            :title="$t('header.cartTitle')"
           >
             <span class="material-symbols-outlined">shopping_bag</span>
             <span class="absolute top-1 right-1 size-2 bg-primary rounded-full"></span>
@@ -53,21 +53,31 @@
           <RouterLink
             to="/dashboard"
             class="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
-            title="Tài khoản"
+            :title="$t('header.accountTitle')"
           >
             <span class="material-symbols-outlined">person</span>
           </RouterLink>
 
+          <!-- Language Switcher -->
           <button
             class="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
             type="button"
-            :title="isDark ? 'Chế độ sáng' : 'Chế độ tối'"
+            :title="locale === 'en' ? 'Tiếng Việt' : 'English'"
+            @click="toggleLanguage"
+          >
+            <span class="text-sm font-bold">{{ locale === 'en' ? 'VI' : 'EN' }}</span>
+          </button>
+
+          <button
+            class="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
+            type="button"
+            :title="isDark ? $t('header.lightMode') : $t('header.darkMode')"
             @click="toggleDark"
           >
             <span class="material-symbols-outlined">{{ isDark ? 'light_mode' : 'dark_mode' }}</span>
           </button>
 
-          <button class="md:hidden p-2" type="button" title="Menu">
+          <button class="md:hidden p-2" type="button" :title="$t('common.menu')">
             <span class="material-symbols-outlined">menu</span>
           </button>
         </div>
@@ -80,8 +90,10 @@
 import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'
+import { useLanguage } from '@/composables/useLanguage'
 
 const { init, isDark, toggleDark } = useTheme()
+const { locale, toggleLanguage } = useLanguage()
 
 onMounted(() => init())
 </script>

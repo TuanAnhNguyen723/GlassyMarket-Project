@@ -13,15 +13,15 @@
       <header class="flex flex-wrap justify-between items-center gap-4 mb-8">
         <div class="flex flex-col gap-1">
           <h2 class="text-[#0d171b] dark:text-white text-4xl font-black leading-tight tracking-tight">
-            Welcome back, {{ userName }}!
+            {{ $t('dashboard.welcome', { name: userName }) }}
           </h2>
-          <p class="text-[#578e89] dark:text-slate-400 text-lg font-normal">Your stylish view is on its way.</p>
+          <p class="text-[#578e89] dark:text-slate-400 text-lg font-normal">{{ $t('dashboard.welcomeSubtitle') }}</p>
         </div>
         <button
           class="flex items-center justify-center rounded-xl h-11 px-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[#0d171b] dark:text-white text-sm font-bold shadow-sm hover:shadow-md transition-shadow"
           type="button"
         >
-          View Profile
+          {{ $t('common.viewProfile') }}
         </button>
       </header>
 
@@ -43,8 +43,8 @@
       >
         <div class="flex gap-8">
           <div class="flex flex-col gap-1">
-            <p class="text-[#0d171b] dark:text-white text-sm font-bold">Need help?</p>
-            <p class="text-[#578e89] text-xs">Available 24/7 for our members</p>
+            <p class="text-[#0d171b] dark:text-white text-sm font-bold">{{ $t('dashboard.needHelp') }}</p>
+            <p class="text-[#578e89] text-xs">{{ $t('dashboard.helpAvailable') }}</p>
           </div>
           <div class="flex items-center gap-4">
             <button
@@ -64,8 +64,8 @@
         <div class="bg-primary/5 dark:bg-primary/10 px-6 py-4 rounded-2xl flex items-center gap-4">
           <span class="material-symbols-outlined text-primary">local_library</span>
           <div>
-            <p class="text-xs font-bold text-slate-800 dark:text-white">Learn how to read your prescription</p>
-            <p class="text-[10px] text-[#578e89] mt-0.5">Our guide makes it easy to understand OD, OS, and CYL.</p>
+            <p class="text-xs font-bold text-slate-800 dark:text-white">{{ $t('dashboard.learnPrescription') }}</p>
+            <p class="text-[10px] text-[#578e89] mt-0.5">{{ $t('dashboard.learnPrescriptionDesc') }}</p>
           </div>
           <span class="material-symbols-outlined text-slate-400 text-sm">arrow_forward_ios</span>
         </div>
@@ -101,9 +101,11 @@ const recentOrder = ref({
   orderNumber: 'ORD-8821',
   productName: 'Urban Classic Frames',
   status: 'Out for Delivery',
+  statusKey: 'outForDelivery',
   estimatedArrival: 'Today',
   progress: 85,
   statusMessage: 'Package is at your local distribution center',
+  statusMessageKey: 'statusMessage',
   image:
     'https://lh3.googleusercontent.com/aida-public/AB6AXuC_4tzGN9se0EhS7Mp59o3VVBZSNS8EnnQfOVZsg0_fcY4j42YaSPN-bjLGABVTLWKJh-hxCiELqtkyHOOesOnNHfs4Wz5wMjiB2oAp9ebS0z4-mSspTeEysadQgTVQNUeGn2RIBHVmk-FRGcMxKjU2lt1w_lpyLcE3S5XUJIhgNLbHpvlnXmUBK48ein2Jei-08TwIoCa2mmYp8K5XJj4zLiWaPk9CTriLGakyPkJ9odDLGb_nJFHLtNR5imVtVSJOQmcxJUkK6a8J',
 })
