@@ -198,7 +198,7 @@ export default {
     contactUs: 'Liên hệ chúng tôi',
     joinNewsletter: 'Tham gia bản tin',
     newsletterDesc: 'Phong cách hàng tuần và ưu đãi độc quyền trong hộp thư của bạn.',
-    emailPlaceholder: 'email@example.com',
+    emailPlaceholder: 'Nhập email của bạn',
     send: 'Gửi',
     copyright: '© {year} Optic Eyewear Store. Bảo lưu mọi quyền.',
   },

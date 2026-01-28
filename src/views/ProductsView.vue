@@ -22,11 +22,14 @@
           class="flex items-center gap-4 bg-white dark:bg-gray-800 p-2 rounded-xl border border-[#e9f1f1] dark:border-gray-700"
         >
           <span class="text-sm font-medium px-2">{{ $t('products.sortBy') }}</span>
-          <select class="bg-transparent border-none text-sm font-bold focus:ring-0 py-0 pr-8">
-            <option>{{ $t('products.newestArrivals') }}</option>
-            <option>{{ $t('products.priceLowToHigh') }}</option>
-            <option>{{ $t('products.priceHighToLow') }}</option>
-            <option>{{ $t('products.mostPopular') }}</option>
+          <select
+            v-model="selectedSort"
+            class="bg-transparent border-none text-sm font-bold focus:ring-0 py-0 pr-8 cursor-pointer"
+          >
+            <option value="newest">{{ $t('products.newestArrivals') }}</option>
+            <option value="priceAsc">{{ $t('products.priceLowToHigh') }}</option>
+            <option value="priceDesc">{{ $t('products.priceHighToLow') }}</option>
+            <option value="popular">{{ $t('products.mostPopular') }}</option>
           </select>
         </div>
       </div>
@@ -40,27 +43,36 @@
         >
           <div class="flex items-center justify-between">
             <h3 class="font-bold text-lg">{{ $t('products.filters') }}</h3>
-            <button class="text-primary text-xs font-bold uppercase tracking-widest hover:underline" type="button">
+            <button
+              class="text-primary text-xs font-bold uppercase tracking-widest hover:underline"
+              type="button"
+              @click="clearAllFilters"
+            >
               {{ $t('products.clearAll') }}
             </button>
           </div>
 
-          <!-- Type Filter -->
+          <!-- Categories Filter -->
           <div class="space-y-4">
             <p class="text-xs font-bold text-[#578e89] uppercase tracking-widest">{{ $t('products.type') }}</p>
             <div class="flex flex-wrap gap-2">
-              <button class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-bold" type="button">{{ $t('products.all') }}</button>
               <button
-                class="px-4 py-2 rounded-lg bg-[#e9f1f1] dark:bg-gray-800 text-sm font-medium hover:bg-primary/10 transition-colors"
+                class="px-4 py-2 rounded-lg text-sm font-bold"
                 type="button"
+                :class="selectedCategoryId === null ? 'bg-primary text-white' : 'bg-[#e9f1f1] dark:bg-gray-800 hover:bg-primary/10 transition-colors'"
+                @click="selectedCategoryId = null"
               >
-                {{ $t('products.optical') }}
+                {{ $t('products.all') }}
               </button>
               <button
-                class="px-4 py-2 rounded-lg bg-[#e9f1f1] dark:bg-gray-800 text-sm font-medium hover:bg-primary/10 transition-colors"
+                v-for="cat in categories"
+                :key="cat.id"
+                class="px-4 py-2 rounded-lg text-sm font-medium"
                 type="button"
+                :class="selectedCategoryId === cat.id ? 'bg-primary text-white font-bold' : 'bg-[#e9f1f1] dark:bg-gray-800 hover:bg-primary/10 transition-colors'"
+                @click="selectedCategoryId = cat.id"
               >
-                {{ $t('products.sunglasses') }}
+                {{ cat.name }}
               </button>
             </div>
           </div>
@@ -69,70 +81,48 @@
           <div class="space-y-4">
             <div class="flex justify-between items-center">
               <p class="text-xs font-bold text-[#578e89] uppercase tracking-widest">{{ $t('products.priceRange') }}</p>
-              <span class="text-sm font-bold text-primary">$120 - $350</span>
+              <span class="text-sm font-bold text-primary">{{ priceRangeLabel }}</span>
             </div>
             <input
               class="w-full accent-primary h-1.5 bg-[#e9f1f1] dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
               type="range"
+              :min="priceMin"
+              :max="priceMaxLimit"
+              :step="priceStep"
+              v-model.number="priceMaxDraft"
+              @change="commitPriceMax"
             />
           </div>
 
-          <!-- Frame Shape -->
+          <!-- Frame Shape (single select) -->
           <div class="space-y-3">
             <p class="text-xs font-bold text-[#578e89] uppercase tracking-widest">{{ $t('products.frameShape') }}</p>
             <div class="space-y-2">
               <label class="flex items-center gap-3 cursor-pointer group">
-                <input checked class="rounded border-gray-300 text-primary focus:ring-primary" type="checkbox" />
-                <span class="text-sm group-hover:text-primary transition-colors">{{ $t('products.aviator') }}</span>
+                <input
+                  v-model="selectedFrameShape"
+                  :value="null"
+                  class="rounded-full border-gray-300 text-primary focus:ring-primary"
+                  type="radio"
+                  name="frame-shape"
+                />
+                <span class="text-sm group-hover:text-primary transition-colors">{{ $t('products.all') }}</span>
               </label>
-              <label class="flex items-center gap-3 cursor-pointer group">
-                <input class="rounded border-gray-300 text-primary focus:ring-primary" type="checkbox" />
-                <span class="text-sm group-hover:text-primary transition-colors">{{ $t('products.wayfarer') }}</span>
-              </label>
-              <label class="flex items-center gap-3 cursor-pointer group">
-                <input class="rounded border-gray-300 text-primary focus:ring-primary" type="checkbox" />
-                <span class="text-sm group-hover:text-primary transition-colors">{{ $t('products.round') }}</span>
-              </label>
-              <label class="flex items-center gap-3 cursor-pointer group">
-                <input class="rounded border-gray-300 text-primary focus:ring-primary" type="checkbox" />
-                <span class="text-sm group-hover:text-primary transition-colors">{{ $t('products.square') }}</span>
-              </label>
-              <label class="flex items-center gap-3 cursor-pointer group">
-                <input class="rounded border-gray-300 text-primary focus:ring-primary" type="checkbox" />
-                <span class="text-sm group-hover:text-primary transition-colors">{{ $t('products.catEye') }}</span>
-              </label>
-            </div>
-          </div>
 
-          <!-- Colors -->
-          <div class="space-y-4">
-            <p class="text-xs font-bold text-[#578e89] uppercase tracking-widest">{{ $t('products.colors') }}</p>
-            <div class="flex flex-wrap gap-3">
-              <button
-                class="size-8 rounded-full bg-black ring-2 ring-offset-2 ring-primary border border-white/20"
-                type="button"
-                :title="$t('products.black')"
-              />
-              <button
-                class="size-8 rounded-full bg-[#5D4037] ring-1 ring-black/5 hover:ring-primary transition-all"
-                type="button"
-                :title="$t('products.tortoise')"
-              />
-              <button
-                class="size-8 rounded-full bg-[#D4AF37] ring-1 ring-black/5 hover:ring-primary transition-all"
-                type="button"
-                :title="$t('products.gold')"
-              />
-              <button
-                class="size-8 rounded-full bg-[#C0C0C0] ring-1 ring-black/5 hover:ring-primary transition-all"
-                type="button"
-                :title="$t('products.silver')"
-              />
-              <button
-                class="size-8 rounded-full bg-white border border-gray-200 ring-1 ring-black/5 hover:ring-primary transition-all"
-                type="button"
-                :title="$t('products.crystal')"
-              />
+              <label
+                v-for="shape in frameShapeOptions"
+                :key="shape"
+                class="flex items-center gap-3 cursor-pointer group"
+              >
+                <input
+                  v-model="selectedFrameShape"
+                  :value="shape"
+                  class="rounded-full border-gray-300 text-primary focus:ring-primary"
+                  type="radio"
+                  name="frame-shape"
+                />
+                <span class="text-sm group-hover:text-primary transition-colors">{{ frameShapeLabel(shape) }}</span>
+              </label>
             </div>
           </div>
 
@@ -154,170 +144,423 @@
 
       <!-- Product Grid -->
       <section class="flex-1">
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+        <!-- Error Message -->
+        <div v-if="error" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+          <p class="text-red-600 dark:text-red-400 text-sm font-medium">{{ error }}</p>
+        </div>
+
+        <!-- Loading State -->
+        <div v-if="isLoading && products.length === 0" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+          <div v-for="i in 6" :key="i" class="bg-gray-200 dark:bg-gray-700 rounded-2xl aspect-[4/5] animate-pulse"></div>
+        </div>
+
+        <!-- Products Grid -->
+        <div v-else-if="sortedProducts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
           <ProductCard
-            v-for="product in products"
+            v-for="product in pagedProducts"
             :key="product.id"
             :product="product"
-            :show-quick-view="true"
-            :show-rating="true"
+            :show-quick-view="false"
+            :show-rating="false"
           />
         </div>
 
+        <!-- Empty State -->
+        <div v-else-if="!isLoading && !error" class="text-center py-12">
+          <p class="text-gray-500 dark:text-gray-400 text-lg">{{'Không có sản phẩm nào' }}</p>
+        </div>
+
         <!-- Pagination -->
-        <Pagination :current-page="currentPage" :total-pages="12" @page-change="handlePageChange" />
+        <Pagination 
+          v-if="sortedProducts.length > PAGE_SIZE" 
+          :current-page="currentPage" 
+          :total-pages="totalPages" 
+          @page-change="handlePageChange" 
+        />
       </section>
     </div>
   </main>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import Breadcrumbs from '@/components/common/Breadcrumbs.vue'
 import ProductCard from '@/components/features/products/ProductCard.vue'
 import Pagination from '@/components/common/Pagination.vue'
+import { usePageLoading } from '@/composables/usePageLoading'
+import productService from '@/services/productService.js'
+import categoryService from '@/services/categoryService.js'
+
+const { setLoading } = usePageLoading()
+const { t } = useI18n()
 
 const currentPage = ref(1)
+const products = ref([])
+const isLoading = ref(false)
+const error = ref(null)
+const selectedSort = ref('newest')
+
+// ===== Filters =====
+const categories = ref([])
+const selectedCategoryId = ref(null) // null = all
+const selectedFrameShape = ref(null) // single (null = all)
+
+const priceMin = ref(0)
+const priceMaxLimit = ref(5_000_000) // tuỳ bạn đổi, hiện mặc định 5tr
+const priceStep = ref(50_000)
+// priceMaxDraft: đang kéo slider (UI update liên tục, KHÔNG gọi API)
+const priceMaxDraft = ref(priceMaxLimit.value)
+// priceMax: giá đã chọn (chỉ đổi khi thả chuột / change -> mới gọi API)
+const priceMax = ref(priceMaxLimit.value)
+
+// Chuẩn hoá giá về number để sort
+const parsePriceToNumber = (price) => {
+  if (typeof price === 'number') return price
+  if (typeof price === 'string') {
+    // Bỏ ký tự $, dấu phẩy, khoảng trắng...
+    const cleaned = price.replace(/[^0-9.,-]/g, '').replace(/,/g, '')
+    const num = Number(cleaned)
+    return Number.isNaN(num) ? 0 : num
+  }
+  return 0
+}
+
+const formatVnd = (n) => {
+  const num = Number(n) || 0
+  return num.toLocaleString('vi-VN') + '₫'
+}
+
+const priceRangeLabel = computed(() => `${formatVnd(priceMin.value)} - ${formatVnd(priceMaxDraft.value)}`)
+
+const commitPriceMax = () => {
+  // Chỉ khi thả chuột (change) mới commit và trigger fetch (watch priceMax)
+  priceMax.value = priceMaxDraft.value
+}
+
+// Chống race condition khi kéo filter nhanh (nhiều request về không theo thứ tự)
+let fetchSeq = 0
+
+// Kích thước trang cho pagination phía client
+const PAGE_SIZE = 6
+
+// Frame shape options (danh sách cố định, khớp với API frame_shape)
+const frameShapeOptions = ['aviator', 'wayfarer', 'round', 'square', 'cat_eye']
+
+const frameShapeLabel = (shape) => {
+  const keyMap = {
+    aviator: 'products.aviator',
+    wayfarer: 'products.wayfarer',
+    round: 'products.round',
+    square: 'products.square',
+    cat_eye: 'products.catEye',
+  }
+  const key = keyMap[String(shape)]
+  if (key) return t(key)
+  // fallback: hiển thị dạng chữ thường -> Title Case
+  return String(shape).replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase())
+}
+
+/**
+ * Transform API product data to match component expectations
+ * Handles different field names from Laravel API
+ */
+const transformProduct = (product) => {
+  // Ensure product is an object
+  if (!product || typeof product !== 'object') {
+    console.warn('Invalid product data:', product)
+    return null
+  }
+
+  // Handle nested objects (e.g., product.category might be an object)
+  let categoryName = ''
+  if (product.category) {
+    if (typeof product.category === 'string') {
+      categoryName = product.category
+    } else if (typeof product.category === 'object' && product.category.name) {
+      categoryName = product.category.name
+    }
+  }
+  if (!categoryName) {
+    categoryName = product.type || product.category_name || ''
+  }
+
+  // Extract price and format it
+  let priceValue = product.price || product.price_formatted || 0
+  if (typeof priceValue === 'number') {
+    priceValue = `$${priceValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  } else if (typeof priceValue === 'string' && !priceValue.startsWith('$')) {
+    priceValue = `$${priceValue}`
+  }
+
+  // Compare price (giá gốc) nếu có
+  const comparePriceValue = product.compare_price ?? product.comparePrice ?? null
+
+  // Placeholder image URL (fallback khi không có ảnh)
+  const placeholderImage = 'https://via.placeholder.com/400x500/59b7c0/ffffff?text=Product+Image'
+
+  // Get image URL từ API response
+  // Với response bạn gửi: ưu tiên `primary_image` -> `images[].image_url`
+  let imageUrl = null
+
+  // 1) Primary image ở cấp product
+  if (typeof product.primary_image === 'string' && product.primary_image.trim()) {
+    imageUrl = product.primary_image
+  }
+
+  // 2) Ảnh trong mảng images
+  if (!imageUrl && Array.isArray(product.images) && product.images.length > 0) {
+    const primaryImg =
+      product.images.find((img) => img && (img.is_primary === true || img.is_primary === 1)) || product.images[0]
+    if (primaryImg) {
+      if (typeof primaryImg.image_url === 'string' && primaryImg.image_url.trim()) {
+        imageUrl = primaryImg.image_url
+      } else if (typeof primaryImg.url === 'string' && primaryImg.url.trim()) {
+        imageUrl = primaryImg.url
+      }
+    }
+  }
+
+  // 3) Fallback (giữ tương thích các format khác)
+  if (!imageUrl && product.image_url) {
+    imageUrl = typeof product.image_url === 'string' ? product.image_url : (product.image_url.url || null)
+  } else if (!imageUrl && product.image) {
+    imageUrl = typeof product.image === 'string' ? product.image : (product.image.url || null)
+  } else if (!imageUrl && product.imageUrl) {
+    imageUrl = product.imageUrl
+  } else if (!imageUrl && product.photo) {
+    imageUrl = typeof product.photo === 'string' ? product.photo : (product.photo.url || null)
+  }
+
+  // Sử dụng placeholder nếu không có URL
+  if (!imageUrl) imageUrl = placeholderImage
+
+  // Get product name
+  const productName = product.name || product.title || 'Unnamed Product'
+  
+  // Get alt text
+  const altText = product.alt || product.description || productName
+
+  // Transform to clean object with only needed fields
+  const transformed = {
+    id: product.id || product.product_id || null,
+    name: productName,
+    category: categoryName,
+    categoryId: product?.category?.id ?? product.category_id ?? product.categories_id ?? null,
+    frameShape: product.frame_shape || product.frameShape || null,
+    price: priceValue,
+    comparePrice: comparePriceValue,
+    badge: product.badge || (product.is_new ? 'New' : null) || (product.is_new === 1 ? 'New' : null),
+    image: imageUrl,
+    imageUrl: imageUrl,
+    alt: altText,
+    // rating trong response bạn gửi là object { average, count, reviews }
+    rating: Number(product?.rating?.average ?? product.average_rating ?? product.rating_average ?? 0),
+    reviews: Number(product?.rating?.count ?? product.reviews_count ?? product.review_count ?? 0),
+    fullStars: Math.round(Number(product?.rating?.average ?? product.average_rating ?? product.rating_average ?? 0)),
+    // Dữ liệu phục vụ sort
+    createdAt: product.created_at || product.createdAt || null,
+    // Màu sắc (array) để hiển thị ở ProductCard
+    colors: Array.isArray(product.colors)
+      ? product.colors.map((c) => ({
+          id: c.id,
+          name: c.name,
+          hex: c.hex_code || c.hex || null,
+        }))
+      : [],
+  }
+
+  return transformed
+}
+
+// Danh sách sản phẩm sau khi filter + sort (fallback client-side)
+const sortedProducts = computed(() => {
+  let list = [...products.value]
+
+  // Fallback filter theo categoryId (trong trường hợp backend chưa lọc)
+  if (selectedCategoryId.value !== null && selectedCategoryId.value !== undefined) {
+    list = list.filter((p) => String(p.categoryId) === String(selectedCategoryId.value))
+  }
+
+  // Fallback filter theo frame_shape (single select)
+  if (selectedFrameShape.value) {
+    list = list.filter((p) => String(p.frameShape) === String(selectedFrameShape.value))
+  }
+
+  switch (selectedSort.value) {
+    case 'priceAsc':
+      return list.sort((a, b) => parsePriceToNumber(a.price) - parsePriceToNumber(b.price))
+    case 'priceDesc':
+      return list.sort((a, b) => parsePriceToNumber(b.price) - parsePriceToNumber(a.price))
+    case 'popular':
+      // Sort theo số lượng reviews (hoặc rating cao hơn nếu reviews bằng nhau)
+      return list.sort((a, b) => {
+        const reviewsDiff = (b.reviews || 0) - (a.reviews || 0)
+        if (reviewsDiff !== 0) return reviewsDiff
+        return (b.rating || 0) - (a.rating || 0)
+      })
+    case 'newest':
+    default:
+      // Sort theo ngày tạo mới nhất
+      return list.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+        return dateB - dateA
+      })
+  }
+})
+
+// Sản phẩm cho trang hiện tại (pagination phía client)
+const pagedProducts = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  return sortedProducts.value.slice(start, start + PAGE_SIZE)
+})
+
+// Tổng số trang dựa trên số sản phẩm sau khi filter
+const totalPages = computed(() => {
+  const total = sortedProducts.value.length
+  return total === 0 ? 1 : Math.ceil(total / PAGE_SIZE)
+})
+
+/**
+ * Fetch products from API
+ */
+const fetchProducts = async (page = 1) => {
+  const seq = ++fetchSeq
+  isLoading.value = true
+  error.value = null
+  setLoading(true)
+
+  try {
+    const params = {
+      page,
+      // Lấy nhiều sản phẩm để filter + phân trang phía client
+      per_page: 100,
+      limit: 100,
+    }
+
+    // ==== sort params (backend có thể dùng hoặc bỏ qua) ====
+    // Nếu backend bạn đang có param riêng, đổi mapping tại đây
+    if (selectedSort.value === 'newest') {
+      params.sort_by = 'created_at'
+      params.sort_dir = 'desc'
+    } else if (selectedSort.value === 'priceAsc') {
+      // Backend/DB dùng cột base_price (không có cột price)
+      params.sort_by = 'base_price'
+      params.sort_dir = 'asc'
+    } else if (selectedSort.value === 'priceDesc') {
+      // Backend/DB dùng cột base_price (không có cột price)
+      params.sort_by = 'base_price'
+      params.sort_dir = 'desc'
+    } else if (selectedSort.value === 'popular') {
+      params.sort_by = 'popular'
+      params.sort_dir = 'desc'
+    }
+
+    // ==== filter params ====
+    if (selectedCategoryId.value !== null && selectedCategoryId.value !== undefined) {
+      // theo yêu cầu backend: filter bằng categories_id
+      params.categories_id = selectedCategoryId.value
+      // fallback tên param thường gặp
+      params.category_id = selectedCategoryId.value
+    }
+
+    // price
+    if (priceMax.value !== null && priceMax.value !== undefined) {
+      params.min_price = priceMin.value
+      params.max_price = priceMax.value
+    }
+
+    // frame shape (single)
+    if (selectedFrameShape.value) {
+      params.frame_shape = selectedFrameShape.value
+      // fallback param name (nếu backend dùng)
+      params.frame_shapes = selectedFrameShape.value
+    }
+    
+    const response = await productService.getProducts(params)
+    
+    // Handle Laravel paginated response: { data: [...], meta: {...}, links: {...} }
+    let productsData = []
+    let paginationMeta = null
+    
+    if (response && typeof response === 'object') {
+      if (Array.isArray(response)) {
+        productsData = response
+      } else if (response.data && Array.isArray(response.data)) {
+        productsData = response.data
+        paginationMeta = response.meta || response.pagination
+      } else if (response.products && Array.isArray(response.products)) {
+        productsData = response.products
+        paginationMeta = response.meta
+      }
+    }
+    
+    // Nếu có request mới hơn, bỏ qua response cũ để tránh UI bị "trễ"
+    if (seq !== fetchSeq) return
+
+    // Transform products to match component structure
+    products.value = productsData
+      .map(transformProduct)
+      .filter((p) => p !== null) // Remove invalid products
+    
+  } catch (err) {
+    if (seq !== fetchSeq) return
+    console.error('Failed to fetch products:', err)
+    error.value = err.message || 'Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.'
+    products.value = []
+  } finally {
+    // Chỉ tắt loading cho request mới nhất
+    if (seq === fetchSeq) {
+      isLoading.value = false
+      setLoading(false)
+    }
+  }
+}
 
 const handlePageChange = (page) => {
   currentPage.value = page
-  // TODO: Fetch products for new page
 }
 
-const baseProducts = [
-  {
-    id: 'aviator-classic',
-    name: 'Aviator Classic',
-    category: 'Sunglasses',
-    price: '$149',
-    badge: 'New',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuD38n7OWel44o2y7ygSFMqRKjahtV_da6ATMWTNa_Vmuv7wALf4ai7mgXt-b4nJGiXzKpnUMn0uLKUjEr6jWq4xshe3w8Mns5-2I_Qm8djnC57YdIxoqegZQ5Yrlljtxd3SuAxyNdv_gKIzDdJ0n6R08KRUUBJmPFjj27WG48Tc0OC3jBK8FLO4NNCKOhJjVb5EwCI3av-6uCz0Rcvx7VB1uFa4Bs9ZDy3xWkCf9E5hRWOQwSopjAyTw_fYIlfYYuQAeqB9sQjKWAjG',
-    alt: 'Main front view of classic gold aviator glasses',
-    rating: 4.5,
-    reviews: 128,
-  },
-  {
-    id: 'luna-round',
-    name: 'Luna Round',
-    category: 'Optical',
-    price: '$210',
-    badge: null,
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuCGkkJKxlUkdClFYHLpB2TlOOQtMvcH7RYBBG0V5pmH9U0uFt0sc4-JWYIK8Zwa0bfuuAcios7qEJ4-VntotjE8NaJ8gRJ8uul_54KhLoE9531QFB-JesLg06ROcgZ90r_F9TOYXFdjgzoL8NDCzOdSrz0s0jrHh5QVUcojynWJt5IUKUqNG9XXic2cxsS7Z9TLmCYYHWkGPyjFdjFa2STrH7FaxD7uirFfc3wjW4ObSaNqeQEwQEG97lRII36x0DrY6jKWOk38btr4',
-    alt: 'Amber tortoise shell round frames',
-    rating: 5,
-    reviews: 89,
-  },
-  {
-    id: 'brooklyn-square',
-    name: 'Brooklyn Square',
-    category: 'Optical',
-    price: '$155',
-    badge: null,
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuCiQQ_qiJioWkeMIVEOTr8fVMqc_W1FDaze3OIeChK8hFv2GrQjQeSd4AzoYEY-fsYtbTi7oD1scQALqfnDen6cBZBhFGRLN9aVNn-c0huNw5kFaFnynjhxcfivSjBAR2Rgj0eJhKbmmCt7QHYkMCEjflXKBOQ6u77EjDCbXHusEX-3qlwdnh9Koe3UXjDE4l6Xd2hFedLVuwYxDVnYRUOmmHma8He2QAeFLJdoC6lrCJATCJjbRQxonO49RBHUZTIsPN_NqVLGf3Xy',
-    alt: 'Classic thick black square frames',
-    rating: 4,
-    reviews: 256,
-  },
-  {
-    id: 'gold-luxe-rim',
-    name: 'Gold Luxe Rim',
-    category: 'Sunglasses',
-    price: '$320',
-    badge: null,
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDfYEZsYIWOHsVfTXXmIxf2rIqfoV36JSqMBBDFlb5tVEbwTxeu8WbW2wrisbof60wnIBZ8tIaejtW2JJ0tgbFUX2Xy2-ThTeUgu9oKfo4lEkXPe1NpGDpzoQF2pP4SPke14LjHSeV0S12jhMe8mkcGHMkGB14Wj0vh0e_kO7LG1-Kab2vEijQkMC0nshLuUDZME2JjWS-UsrKBwpm_aBNdRlNfDCLK7wEJGSVoWqggqcDCHQMo5Eeql82x3ckMov56eV4UR75TVIH8',
-    alt: 'Golden rimless sunglasses on model',
-    rating: 5,
-    reviews: 42,
-  },
-  {
-    id: 'crystal-cat-eye',
-    name: 'Crystal Cat Eye',
-    category: 'Optical',
-    price: '$175',
-    badge: null,
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDrvCy-Lfhs3UWotKUd4IrXrD4MUJ7e-SOkBikBzGDPT2e71d_eIFTdSTBg9S1s0ydvAXUhk4XaPs68K7AZKPSvbaLL9Py2b0q8zw8Cp8U4fckdJn0rX8gWCyXnOouviPpUI2KZLs6JR_XfZb6MOyHZ5ya7GdkP02kdPCP8CZ33Hd61YPpFde2hNWYi-eyWOJuzfvCJ5yLXeEcMJXy3Z7kvK5eYKXaFEaoI3e1ggBY-A5toNY9GcKv846yn9cEJI4LobE526x6Hh5mt',
-    alt: 'Clear transparent cat-eye optical frames',
-    rating: 4,
-    reviews: 15,
-  },
-  {
-    id: 'silver-wire-minimalist',
-    name: 'Silver Wire Minimalist',
-    category: 'Optical',
-    price: '$195',
-    badge: null,
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBn0WbBWIXREQnsyr_NkHm06Aqgwq1iGDOfNSVtSWrAPRzl9YsIESZR-14W1HRsQCHXrqQtp90yuJS0Gj-4Czue9kZeq14oFG2rp-HCX9bzS5DwgyRbHdLMFzeTgKCwutdyvCtzXlMLrpVBa6J2IRLq7gKDKB5vAGZuMqAmyyE3WpNxEr8r_t_SjDB6uIcSCylxeI-SrY5tFHjdijli9TLLCR1Q4yGBIj6GrjH-IZpJ0tFQTVonztm5N8lh9eXVoJZ8arSvG5Nt8uKD',
-    alt: 'Silver minimalist wire frames',
-    rating: 5,
-    reviews: 76,
-  },
-  {
-    name: 'Luna Round',
-    category: 'Optical',
-    price: '$210',
-    badge: null,
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuCGkkJKxlUkdClFYHLpB2TlOOQtMvcH7RYBBG0V5pmH9U0uFt0sc4-JWYIK8Zwa0bfuuAcios7qEJ4-VntotjE8NaJ8gRJ8uul_54KhLoE9531QFB-JesLg06ROcgZ90r_F9TOYXFdjgzoL8NDCzOdSrz0s0jrHh5QVUcojynWJt5IUKUqNG9XXic2cxsS7Z9TLmCYYHWkGPyjFdjFa2STrH7FaxD7uirFfc3wjW4ObSaNqeQEwQEG97lRII36x0DrY6jKWOk38btr4',
-    alt: 'Amber tortoise shell round frames',
-    rating: 5,
-    reviews: 89,
-  },
-  {
-    name: 'Brooklyn Square',
-    category: 'Optical',
-    price: '$155',
-    badge: null,
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuCiQQ_qiJioWkeMIVEOTr8fVMqc_W1FDaze3OIeChK8hFv2GrQjQeSd4AzoYEY-fsYtbTi7oD1scQALqfnDen6cBZBhFGRLN9aVNn-c0huNw5kFaFnynjhxcfivSjBAR2Rgj0eJhKbmmCt7QHYkMCEjflXKBOQ6u77EjDCbXHusEX-3qlwdnh9Koe3UXjDE4l6Xd2hFedLVuwYxDVnYRUOmmHma8He2QAeFLJdoC6lrCJATCJjbRQxonO49RBHUZTIsPN_NqVLGf3Xy',
-    alt: 'Classic thick black square frames',
-    rating: 4,
-    reviews: 256,
-  },
-  {
-    name: 'Gold Luxe Rim',
-    category: 'Sunglasses',
-    price: '$320',
-    badge: null,
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDfYEZsYIWOHsVfTXXmIxf2rIqfoV36JSqMBBDFlb5tVEbwTxeu8WbW2wrisbof60wnIBZ8tIaejtW2JJ0tgbFUX2Xy2-ThTeUgu9oKfo4lEkXPe1NpGDpzoQF2pP4SPke14LjHSeV0S12jhMe8mkcGHMkGB14Wj0vh0e_kO7LG1-Kab2vEijQkMC0nshLuUDZME2JjWS-UsrKBwpm_aBNdRlNfDCLK7wEJGSVoWqggqcDCHQMo5Eeql82x3ckMov56eV4UR75TVIH8',
-    alt: 'Golden rimless sunglasses on model',
-    rating: 5,
-    reviews: 42,
-  },
-  {
-    name: 'Crystal Cat Eye',
-    category: 'Optical',
-    price: '$175',
-    badge: null,
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDrvCy-Lfhs3UWotKUd4IrXrD4MUJ7e-SOkBikBzGDPT2e71d_eIFTdSTBg9S1s0ydvAXUhk4XaPs68K7AZKPSvbaLL9Py2b0q8zw8Cp8U4fckdJn0rX8gWCyXnOouviPpUI2KZLs6JR_XfZb6MOyHZ5ya7GdkP02kdPCP8CZ33Hd61YPpFde2hNWYi-eyWOJuzfvCJ5yLXeEcMJXy3Z7kvK5eYKXaFEaoI3e1ggBY-A5toNY9GcKv846yn9cEJI4LobE526x6Hh5mt',
-    alt: 'Clear transparent cat-eye optical frames',
-    rating: 4,
-    reviews: 15,
-  },
-  {
-    name: 'Silver Wire Minimalist',
-    category: 'Optical',
-    price: '$195',
-    badge: null,
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBn0WbBWIXREQnsyr_NkHm06Aqgwq1iGDOfNSVtSWrAPRzl9YsIESZR-14W1HRsQCHXrqQtp90yuJS0Gj-4Czue9kZeq14oFG2rp-HCX9bzS5DwgyRbHdLMFzeTgKCwutdyvCtzXlMLrpVBa6J2IRLq7gKDKB5vAGZuMqAmyyE3WpNxEr8r_t_SjDB6uIcSCylxeI-SrY5tFHjdijli9TLLCR1Q4yGBIj6GrjH-IZpJ0tFQTVonztm5N8lh9eXVoJZ8arSvG5Nt8uKD',
-    alt: 'Silver minimalist wire frames',
-    rating: 5,
-    reviews: 76,
-  },
-]
+const clearAllFilters = () => {
+  selectedCategoryId.value = null
+  selectedFrameShape.value = null
+  priceMin.value = 0
+  priceMaxDraft.value = priceMaxLimit.value
+  priceMax.value = priceMaxLimit.value
+  currentPage.value = 1
+  fetchProducts(1)
+}
 
-const products = baseProducts.map((p) => ({
-  ...p,
-  fullStars: Math.round(p.rating),
-}))
+// Khi thay đổi sort/filter -> reset về trang 1 và fetch lại
+watch(
+  [selectedSort, selectedCategoryId, selectedFrameShape, priceMax],
+  () => {
+    currentPage.value = 1
+    fetchProducts(1)
+  },
+  { deep: true }
+)
+
+const fetchCategories = async () => {
+  try {
+    const data = await categoryService.getCategories()
+    categories.value = Array.isArray(data)
+      ? data
+          .filter((c) => c && c.id !== undefined && c.name)
+          .map((c) => ({ id: Number(c.id), name: c.name }))
+      : []
+  } catch (e) {
+    console.error('Failed to fetch categories:', e)
+    categories.value = []
+  }
+}
+
+// Fetch products on component mount
+onMounted(() => {
+  fetchCategories()
+  fetchProducts(1)
+})
 </script>
 

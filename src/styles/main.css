@@ -15,3 +15,15 @@
 .product-image {
   transition: transform 0.4s ease;
 }
+
+.custom-product-card {
+  height: 300px;
+}
+
+.custom-bottom-product-card {
+  margin-top: 30px;
+}
+
+.color-price {
+  color:#eb2924;
+}
