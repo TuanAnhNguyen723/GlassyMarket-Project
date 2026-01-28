@@ -3,12 +3,15 @@
     class="product-card group relative bg-white dark:bg-gray-900 rounded-2xl overflow-hidden border border-transparent transition-all duration-700 ease-out hover:shadow-lg hover:shadow-black/5"
     :class="{ 'cursor-pointer': clickable }"
     @click="handleClick"
+    style="border: 1px solid #e9f1f1"
   >
     <!-- Image -->
-    <div class="relative aspect-square overflow-hidden bg-white dark:bg-gray-900">
+    <div
+      class="relative aspect-square overflow-hidden bg-white dark:bg-gray-900"
+    >
       <img
         v-if="product.image || product.imageUrl"
-        class="w-full h-full object-contain p-8 transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+        class="w-full h-full object-contain transition-transform duration-700 ease-out group-hover:scale-[1.02]"
         :src="product.image || product.imageUrl"
         :alt="product.alt || product.name || 'Product image'"
         @error="handleImageError"
@@ -19,7 +22,9 @@
         class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center"
       >
         <div class="text-center p-4">
-          <span class="material-symbols-outlined text-6xl text-primary/40">image</span>
+          <span class="material-symbols-outlined text-6xl text-primary/40"
+            >image</span
+          >
           <p class="text-xs text-primary/60 mt-2 font-medium">No Image</p>
         </div>
       </div>
@@ -49,23 +54,32 @@
 
       <button
         v-if="showFavorite"
-        class="absolute top-3 right-3 p-2 bg-white/90 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+        class="absolute top-3 right-3 p-2 bg-white/90 rounded-full"
         type="button"
         @click.stop="toggleFavorite"
       >
-        <span class="material-symbols-outlined text-[20px]">{{ isFav ? 'favorite' : 'favorite_border' }}</span>
+        <span
+          class="material-symbols-outlined text-[20px] flex-custom color-btn-favorite"
+          :class="isFav ? 'text-red-500' : 'text-zinc-500'"
+        >
+          {{ isFav ? "favorite" : "favorite_border" }}
+        </span>
       </button>
     </div>
 
     <!-- Content -->
     <div class="px-4 pb-5 pt-4">
       <!-- Brand/Category -->
-      <p class="text-[11px] font-extrabold tracking-widest uppercase text-zinc-400 mb-1">
-        {{ (product.brand || product.category || '').toString() }}
+      <p
+        class="text-[11px] font-extrabold tracking-widest uppercase text-zinc-400 mb-1"
+      >
+        {{ (product.brand || product.category || "").toString() }}
       </p>
 
       <!-- Name -->
-      <h3 class="text-sm font-extrabold tracking-wide uppercase text-zinc-800 dark:text-zinc-100 leading-snug">
+      <h3
+        class="text-sm font-extrabold tracking-wide uppercase text-zinc-800 dark:text-zinc-100 leading-snug"
+      >
         {{ product.name }}
       </h3>
 
@@ -83,7 +97,10 @@
       </div>
 
       <!-- Colors -->
-      <div v-if="product.colors && product.colors.length" class="mt-3 flex flex-wrap gap-2">
+      <div
+        v-if="product.colors && product.colors.length"
+        class="mt-3 flex flex-wrap gap-2"
+      >
         <span
           v-for="(color, index) in product.colors.slice(0, 6)"
           :key="color.id || index"
@@ -107,9 +124,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import ProductRating from '@/components/common/ProductRating.vue'
+import { ref, watch } from "vue";
+import { useRouter } from "vue-router";
+import ProductRating from "@/components/common/ProductRating.vue";
+import productService from "@/services/productService.js";
+import { useNotification } from "@/composables/useNotification.js";
 
 const props = defineProps({
   product: {
@@ -132,56 +151,96 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
-})
+});
 
-const emit = defineEmits(['click', 'quick-view', 'favorite'])
+const emit = defineEmits(["click", "quick-view", "favorite"]);
 
-const router = useRouter()
-const isFav = ref(false)
-const imageError = ref(false)
+const router = useRouter();
+const { showNotification } = useNotification();
+const isFav = ref(!!props.product?.is_featured);
+const imageError = ref(false);
 
 // Placeholder image URL
-const placeholderImage = 'https://via.placeholder.com/400x500/59b7c0/ffffff?text=Product+Image'
+const placeholderImage =
+  "https://via.placeholder.com/400x500/59b7c0/ffffff?text=Product+Image";
 
 const handleImageError = (event) => {
   // If image fails to load, use placeholder
   if (event.target.src !== placeholderImage) {
-    event.target.src = placeholderImage
+    event.target.src = placeholderImage;
   }
-  imageError.value = true
-}
+  imageError.value = true;
+};
 
 const handleClick = () => {
   if (props.clickable && props.product.id) {
-    router.push(`/product/${props.product.id}`)
+    router.push(`/product/${props.product.id}`);
   }
-  emit('click', props.product)
-}
+  emit("click", props.product);
+};
 
 const handleQuickView = () => {
-  emit('quick-view', props.product)
-}
+  emit("quick-view", props.product);
+};
 
-const toggleFavorite = () => {
-  isFav.value = !isFav.value
-  emit('favorite', { product: props.product, isFavorite: isFav.value })
-}
+// Đồng bộ lại khi prop product thay đổi (ví dụ reload từ API)
+watch(
+  () => props.product?.is_featured,
+  (val) => {
+    isFav.value = !!val;
+  },
+);
+
+const toggleFavorite = async () => {
+  if (!props.product?.id) return;
+
+  const next = !isFav.value;
+  // Optimistic UI: đổi màu ngay
+  isFav.value = next;
+  emit("favorite", { product: props.product, isFavorite: next });
+
+  // Hiển thị noti ngay khi user ấn (optimistic)
+  if (next) {
+    showNotification({
+      message: "Đã thêm sản phẩm vào mục yêu thích",
+      type: "success",
+      icon: "favorite",
+      duration: 3000,
+    });
+  }
+
+  try {
+    await productService.updateFeaturedStatus(props.product.id, next);
+  } catch (error) {
+    console.error("Failed to update featured status:", error);
+    // revert UI nếu lỗi
+    isFav.value = !next;
+    emit("favorite", { product: props.product, isFavorite: isFav.value });
+
+    // Hiển thị notification lỗi
+    showNotification({
+      message: "Không thể cập nhật mục yêu thích. Vui lòng thử lại.",
+      type: "error",
+      duration: 3000,
+    });
+  }
+};
 
 const formatPrice = (price) => {
   // Normalize to number (handle "$1,234,567.00", "1,234,567.00", 1234567, etc.)
-  let value = 0
+  let value = 0;
 
-  if (typeof price === 'number') {
-    value = price
-  } else if (typeof price === 'string') {
+  if (typeof price === "number") {
+    value = price;
+  } else if (typeof price === "string") {
     // Keep digits, separators and minus; then remove thousands commas
-    const cleaned = price.replace(/[^0-9.,-]/g, '').replace(/,/g, '')
-    const parsed = Number.parseFloat(cleaned)
-    value = Number.isNaN(parsed) ? 0 : parsed
+    const cleaned = price.replace(/[^0-9.,-]/g, "").replace(/,/g, "");
+    const parsed = Number.parseFloat(cleaned);
+    value = Number.isNaN(parsed) ? 0 : parsed;
   }
 
   // VND: no decimals
-  const vnd = Math.round(value)
-  return `${vnd.toLocaleString('vi-VN')} đ`
-}
+  const vnd = Math.round(value);
+  return `${vnd.toLocaleString("vi-VN")} đ`;
+};
 </script>

@@ -1,13 +1,15 @@
 <script setup>
-import { RouterView } from 'vue-router'
-import AppHeader from './components/layout/AppHeader.vue'
-import AppFooter from './components/layout/AppFooter.vue'
-import PageLoader from './components/common/PageLoader.vue'
+import { RouterView } from "vue-router";
+import AppHeader from "./components/layout/AppHeader.vue";
+import AppFooter from "./components/layout/AppFooter.vue";
+import PageLoader from "./components/common/PageLoader.vue";
+import Notification from "./components/common/Notification.vue";
 </script>
 
 <template>
   <div class="app-layout">
     <PageLoader />
+    <Notification />
     <AppHeader />
 
     <main class="app-main">

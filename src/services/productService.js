@@ -44,6 +44,23 @@ export const productService = {
       throw error
     }
   },
+
+  /**
+   * Toggle product featured status (is_featured)
+   * @param {string|number} id - Product ID
+   * @param {boolean} isFeatured - New featured state
+   */
+  async updateFeaturedStatus(id, isFeatured) {
+    try {
+      // Bạn có thể chỉnh lại endpoint này cho khớp backend
+      // Ví dụ: PUT /products/:id/feature với payload { is_featured: 1|0 }
+      const payload = { is_featured: isFeatured ? 1 : 0 }
+      return await api.put(`/products/${id}/feature`, payload)
+    } catch (error) {
+      console.error('Error updating featured status:', error)
+      throw error
+    }
+  },
 }
 
 export default productService
