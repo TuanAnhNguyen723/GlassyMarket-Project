@@ -10,9 +10,9 @@
       class="relative aspect-square overflow-hidden bg-white dark:bg-gray-900"
     >
       <img
-        v-if="product.image || product.imageUrl"
+        v-if="imageSrc"
         class="w-full h-full object-contain transition-transform duration-700 ease-out group-hover:scale-[1.02]"
-        :src="product.image || product.imageUrl"
+        :src="imageSrc"
         :alt="product.alt || product.name || 'Product image'"
         @error="handleImageError"
       />
@@ -101,12 +101,25 @@
         v-if="product.colors && product.colors.length"
         class="mt-3 flex flex-wrap gap-2"
       >
-        <span
+        <button
           v-for="(color, index) in product.colors.slice(0, 6)"
-          :key="color.id || index"
-          class="w-5 h-5 rounded-full border-2 border-white dark:border-gray-900 ring-1 ring-black/25"
+          :key="color.productColorId || color.id || index"
+          class="w-5 h-5 rounded-full border-2 border-white dark:border-gray-900 ring-1 ring-black/25 transition-transform hover:scale-105"
+          :class="{
+            'ring-2 ring-primary ring-offset-1 ring-offset-white dark:ring-offset-gray-900':
+              color.productColorId !== null &&
+              color.productColorId !== undefined &&
+              selectedProductColorId === color.productColorId,
+          }"
           :style="{ backgroundColor: color.hex || '#ffffff' }"
           :title="color.name"
+          type="button"
+          :aria-pressed="
+            color.productColorId !== null &&
+            color.productColorId !== undefined &&
+            selectedProductColorId === color.productColorId
+          "
+          @click.stop="handleSelectColor(color)"
         />
       </div>
 
@@ -124,7 +137,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import { useRouter } from "vue-router";
 import ProductRating from "@/components/common/ProductRating.vue";
 import productService from "@/services/productService.js";
@@ -160,9 +173,26 @@ const { showNotification } = useNotification();
 const isFav = ref(!!props.product?.is_featured);
 const imageError = ref(false);
 
+// ===== Variant image (by color) =====
+const selectedProductColorId = ref(null);
+const variantImageUrl = ref(null);
+let colorFetchSeq = 0;
+
+// cache để không phải lọc lại (cùng product_color_id)
+const variantImageCache = new Map();
+
 // Placeholder image URL
 const placeholderImage =
   "https://via.placeholder.com/400x500/59b7c0/ffffff?text=Product+Image";
+
+const imageSrc = computed(() => {
+  return (
+    variantImageUrl.value ||
+    props.product?.image ||
+    props.product?.imageUrl ||
+    null
+  );
+});
 
 const handleImageError = (event) => {
   // If image fails to load, use placeholder
@@ -170,6 +200,64 @@ const handleImageError = (event) => {
     event.target.src = placeholderImage;
   }
   imageError.value = true;
+};
+
+const handleSelectColor = async (color) => {
+  const productColorId = color?.productColorId ?? null;
+  selectedProductColorId.value = productColorId;
+
+  // nếu không có product_color_id thì reset về ảnh mặc định
+  if (!productColorId) {
+    variantImageUrl.value = null;
+    return;
+  }
+
+  // cache hit
+  if (variantImageCache.has(String(productColorId))) {
+    variantImageUrl.value =
+      variantImageCache.get(String(productColorId)) || null;
+    return;
+  }
+
+  // Map màu -> ảnh ngay từ product.images[] (backend đã trả product_color_id)
+  const seq = ++colorFetchSeq;
+
+  const images = Array.isArray(props.product?.images)
+    ? props.product.images
+    : [];
+  const matching = images.filter((img) => {
+    const imgProductColorId =
+      img?.productColorId ?? img?.product_color_id ?? null;
+    return (
+      imgProductColorId !== null &&
+      String(imgProductColorId) === String(productColorId)
+    );
+  });
+
+  const primary =
+    matching.find(
+      (img) =>
+        img &&
+        (img.isPrimary === true ||
+          img.is_primary === true ||
+          img.is_primary === 1),
+    ) ||
+    matching[0] ||
+    null;
+
+  const url =
+    (typeof primary?.imageUrl === "string" &&
+      primary.imageUrl.trim() &&
+      primary.imageUrl) ||
+    (typeof primary?.image_url === "string" &&
+      primary.image_url.trim() &&
+      primary.image_url) ||
+    (typeof primary?.url === "string" && primary.url.trim() && primary.url) ||
+    null;
+
+  if (seq !== colorFetchSeq) return;
+  variantImageCache.set(String(productColorId), url);
+  variantImageUrl.value = url;
 };
 
 const handleClick = () => {
@@ -188,6 +276,16 @@ watch(
   () => props.product?.is_featured,
   (val) => {
     isFav.value = !!val;
+  },
+);
+
+// Reset variant state khi chuyển product khác
+watch(
+  () => props.product?.id,
+  () => {
+    selectedProductColorId.value = null;
+    variantImageUrl.value = null;
+    colorFetchSeq = 0;
   },
 );
 
