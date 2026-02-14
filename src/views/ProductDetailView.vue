@@ -437,20 +437,27 @@ const loadProduct = async () => {
     const ratingReviews = res?.rating?.reviews ?? res?.rating?.count ?? 0;
 
     // build images list: primary_image + images[] (loại bỏ trùng lặp)
+    const normalizeUrl = (u) => {
+      if (typeof u !== "string" || !u.trim()) return "";
+      return u.trim().replace(/\/+$/, "");
+    };
+
     const images = [];
     const seenUrls = new Set();
 
     if (res.primary_image) {
-      images.push({ url: res.primary_image, alt: res.name });
-      seenUrls.add(res.primary_image);
+      const url = res.primary_image.trim();
+      images.push({ url, alt: res.name });
+      seenUrls.add(normalizeUrl(url));
     }
 
     if (Array.isArray(res.images)) {
       for (const img of res.images) {
-        const url = img?.image_url;
-        if (url && !seenUrls.has(url)) {
+        const url = (img?.url ?? img?.image_url)?.trim?.() || "";
+        const key = normalizeUrl(url);
+        if (key && !seenUrls.has(key)) {
           images.push({ url, alt: res.name });
-          seenUrls.add(url);
+          seenUrls.add(key);
         }
       }
     }
