@@ -56,7 +56,7 @@
                 ? 'border-2 border-primary'
                 : 'border border-slate-200 dark:border-slate-800'
             "
-            @click="selectedImage = img.url"
+            @click="handleSelectImage(img)"
           >
             <div
               class="w-full h-full bg-center bg-no-repeat bg-cover"
@@ -96,6 +96,29 @@
           />
         </div>
         <div class="h-px bg-slate-100 dark:bg-slate-800"></div>
+
+        <!-- Màu sắc -->
+        <div v-if="product.colors && product.colors.length" class="space-y-3">
+          <h3 class="text-sm font-bold uppercase tracking-widest text-slate-400">
+            Màu sắc
+          </h3>
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="(color, index) in product.colors"
+              :key="color.productColorId ?? color.id ?? index"
+              type="button"
+              class="w-8 h-8 rounded-full border-2 border-white dark:border-slate-800 shadow-sm ring-1 ring-slate-300 dark:ring-slate-600 transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              :class="{
+                'ring-2 ring-primary ring-offset-2 ring-offset-white dark:ring-offset-slate-900':
+                  isColorSelected(color),
+              }"
+              :style="{ backgroundColor: color.hex || '#9ca3af' }"
+              :title="color.name"
+              :aria-pressed="isColorSelected(color)"
+              @click="handleSelectColor(color)"
+            />
+          </div>
+        </div>
 
         <!-- Frame Details -->
         <div class="space-y-3">
@@ -272,10 +295,12 @@ import ProductCard from "@/components/features/products/ProductCard.vue";
 import productService from "@/services/productService.js";
 import { usePageLoading } from "@/composables/usePageLoading";
 import { useNotification } from "@/composables/useNotification.js";
+import { useCart } from "@/composables/useCart.js";
 
 const route = useRoute();
 const { setLoading } = usePageLoading();
 const { showNotification } = useNotification();
+const cart = useCart();
 const selectedImage = ref("");
 const selectedLens = ref(null);
 const isFavorite = ref(false);
@@ -292,7 +317,11 @@ const product = ref({
   images: [],
   frameDetails: [],
   lensOptions: [],
+  colors: [],
 });
+
+const selectedProductColorId = ref(null);
+const selectedColorHex = ref(null);
 
 const relatedProducts = ref([]);
 
@@ -455,15 +484,40 @@ const loadProduct = async () => {
       for (const img of res.images) {
         const url = (img?.url ?? img?.image_url)?.trim?.() || "";
         const key = normalizeUrl(url);
+        const productColorId = img?.product_color_id ?? img?.productColorId ?? null;
         if (key && !seenUrls.has(key)) {
-          images.push({ url, alt: res.name });
+          images.push({ url, alt: res.name, product_color_id: productColorId });
           seenUrls.add(key);
         }
       }
     }
 
+    const colors =
+      Array.isArray(res.colors) && res.colors.length > 0
+        ? res.colors.map((c) => ({
+            id: c?.color_id ?? c?.id ?? null,
+            productColorId:
+              c?.id ?? c?.product_color_id ?? c?.product_color?.id ?? c?.pivot?.id ?? null,
+            name: c?.name ?? "",
+            hex: c?.hex_code ?? c?.hex ?? c?.hex_color ?? "#9ca3af",
+          }))
+        : [
+            { productColorId: null, id: null, name: "Đen", hex: "#111827" },
+            { productColorId: null, id: null, name: "Nâu", hex: "#78350f" },
+            { productColorId: null, id: null, name: "Xám", hex: "#4b5563" },
+            { productColorId: null, id: null, name: "Bạc", hex: "#f3f4f6" },
+          ];
+
+    // Loại kính = Loại trong Frame Details, lấy từ API: data.category.slug
+    const loaiKinh =
+      (typeof res.category?.slug === "string" && res.category.slug.trim()
+        ? res.category.slug.trim()
+        : null) ??
+      res.category?.name ??
+      "";
+
     const frameDetails = [
-      res.category?.name && { label: "Loại", value: res.category.name },
+      loaiKinh && { label: "Loại", value: loaiKinh },
       res.frame_shape && { label: "Hình dạng", value: res.frame_shape },
       res.material && { label: "Chất liệu", value: res.material },
       res.size && { label: "Kích cỡ", value: res.size },
@@ -478,6 +532,8 @@ const loadProduct = async () => {
         }))
       : [];
 
+    const categoryName = loaiKinh || "";
+
     product.value = {
       id: res.id,
       name: res.name,
@@ -488,6 +544,8 @@ const loadProduct = async () => {
       images: images.length ? images : [{ url: "", alt: res.name }],
       frameDetails,
       lensOptions,
+      colors,
+      categoryName: categoryName || null,
     };
 
     // Đồng bộ trạng thái favorite từ API (is_featured)
@@ -495,6 +553,8 @@ const loadProduct = async () => {
 
     selectedImage.value = product.value.images[0]?.url || "";
     selectedLens.value = lensOptions[0]?.id ?? null;
+    selectedProductColorId.value = null;
+    selectedColorHex.value = null;
 
     // Sau khi có thông tin category => load related products cùng category.
     // Không await để trang detail hiển thị nhanh hơn; phần gợi ý sẽ load sau.
@@ -547,14 +607,93 @@ const toggleFavorite = async () => {
   }
 };
 
-const addToCart = () => {
-  // TODO: Implement add to cart logic
-  console.log("Added to cart:", {
-    product: product.value.name,
-    lens: selectedLens.value,
-    price: product.value.price,
+const isColorSelected = (color) => {
+  const id = color?.productColorId ?? color?.id;
+  if (id != null) return selectedProductColorId.value === id;
+  return color?.hex && selectedColorHex.value === color.hex;
+};
+
+const handleSelectColor = (color) => {
+  const productColorId = color?.productColorId ?? color?.id ?? null;
+  selectedProductColorId.value = productColorId;
+  selectedColorHex.value = color?.hex ?? null;
+
+  if (!productColorId || !Array.isArray(product.value.images)) {
+    selectedImage.value = product.value.images?.[0]?.url ?? "";
+    return;
+  }
+
+  const matching = product.value.images.filter((img) => {
+    const id = img?.product_color_id ?? img?.productColorId ?? null;
+    return id != null && String(id) === String(productColorId);
   });
-  alert("Added to cart!");
+  const primary =
+    matching.find(
+      (img) => img?.is_primary === true || img?.is_primary === 1 || img?.isPrimary === true
+    ) ?? matching[0];
+  const url = primary?.url ?? primary?.image_url ?? primary?.imageUrl ?? "";
+  selectedImage.value = url || (product.value.images?.[0]?.url ?? "");
+};
+
+/** Khi chọn ảnh (thumbnail), cập nhật luôn màu tương ứng theo product_color_id */
+const handleSelectImage = (img) => {
+  const url = img?.url ?? img?.image_url ?? img?.imageUrl ?? "";
+  selectedImage.value = url;
+
+  const productColorId = img?.product_color_id ?? img?.productColorId ?? null;
+  if (productColorId == null || !Array.isArray(product.value.colors)) {
+    selectedProductColorId.value = null;
+    selectedColorHex.value = null;
+    return;
+  }
+
+  const color = product.value.colors.find((c) => {
+    const id = c?.productColorId ?? c?.id ?? null;
+    return id != null && String(id) === String(productColorId);
+  });
+  if (color) {
+    selectedProductColorId.value = color.productColorId ?? color.id ?? null;
+    selectedColorHex.value = color.hex ?? null;
+  } else {
+    selectedProductColorId.value = null;
+    selectedColorHex.value = null;
+  }
+};
+
+const addToCart = () => {
+  const p = product.value;
+  if (!p?.id) return;
+
+  const lensOpt = p.lensOptions?.find((o) => o.id === selectedLens.value);
+  const lensName = lensOpt?.name ?? "—";
+  const selectedColorObj = p.colors?.find((c) => isColorSelected(c));
+  const colorDetail = p.frameDetails?.find(
+    (d) => d.label === "Chất liệu" || d.label === "Loại"
+  );
+  const color = selectedColorObj?.name ?? "—";
+  const colorHex = selectedColorObj?.hex ?? null; // API: colors.hex_code
+  const frameType =
+    colorDetail?.value ?? p.categoryName ?? (p.frameDetails?.[0]?.value) ?? "—";
+
+  cart.addItem({
+    productId: p.id,
+    name: p.name,
+    price: p.price,
+    image: selectedImage.value || (p.images?.[0]?.url ?? ""),
+    alt: p.name,
+    lensId: selectedLens.value,
+    lensName,
+    color,
+    colorHex,
+    frameType,
+  });
+
+  showNotification({
+    message: "Đã thêm vào giỏ hàng",
+    type: "success",
+    icon: "add_shopping_cart",
+    duration: 3000,
+  });
 };
 
 onMounted(() => {

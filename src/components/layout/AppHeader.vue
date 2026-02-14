@@ -47,7 +47,12 @@
             :title="$t('header.cartTitle')"
           >
             <span class="material-symbols-outlined">shopping_bag</span>
-            <span class="absolute top-1 right-1 size-2 bg-primary rounded-full"></span>
+            <span
+              v-if="cartItemsCount > 0"
+              class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-primary text-white text-[10px] font-bold rounded-full"
+            >
+              {{ cartItemsCount > 99 ? "99+" : cartItemsCount }}
+            </span>
           </RouterLink>
 
           <RouterLink
@@ -91,9 +96,12 @@ import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'
 import { useLanguage } from '@/composables/useLanguage'
+import { useCart } from '@/composables/useCart.js'
 
 const { init, isDark, toggleDark } = useTheme()
 const { locale, toggleLanguage } = useLanguage()
+const cart = useCart()
+const cartItemsCount = cart.itemsCount
 
 onMounted(() => init())
 </script>

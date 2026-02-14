@@ -1,0 +1,606 @@
+<template>
+  <main class="flex-1 max-w-[1280px] mx-auto w-full px-6 lg:px-20 py-8 lg:py-12">
+    <Breadcrumbs
+      :items="[
+        { label: $t('products.home'), to: '/' },
+        { label: $t('checkout.breadcrumbCart'), to: '/cart' },
+        { label: $t('checkout.breadcrumbCheckout') },
+      ]"
+      class-name="mb-8"
+      link-class="text-[#5e8487] dark:text-gray-400 text-sm font-medium hover:text-primary transition-colors"
+      current-class="text-sm font-semibold text-[#111718] dark:text-white"
+      separator-class="text-[#5e8487] dark:text-gray-600 text-sm"
+    />
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+      <!-- Left: Checkout steps -->
+      <div class="lg:col-span-7 space-y-6">
+        <div class="mb-6">
+          <h1 class="text-2xl lg:text-3xl font-black tracking-tight mb-1">
+            {{ $t('checkout.title') }}
+          </h1>
+          <p class="text-[#5e8487] dark:text-gray-400 text-sm">
+            {{ $t('checkout.subtitle') }}
+          </p>
+        </div>
+
+        <!-- Step 1: Shipping -->
+        <section
+          class="border border-[#eaf0f0] dark:border-gray-800 rounded-xl overflow-hidden bg-white dark:bg-zinc-900/50 shadow-sm"
+        >
+          <button
+            type="button"
+            class="w-full p-5 flex items-center justify-between text-left border-b border-[#eaf0f0] dark:border-gray-800"
+            @click="stepOpen = stepOpen === 1 ? null : 1"
+          >
+            <div class="flex items-center gap-3">
+              <span
+                class="size-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm"
+              >
+                1
+              </span>
+              <h2 class="text-base font-bold text-[#111718] dark:text-white">
+                {{ $t('checkout.step1') }}
+              </h2>
+            </div>
+            <span
+              class="material-symbols-outlined text-[#5e8487] transition-transform"
+              :class="stepOpen === 1 ? 'rotate-180' : ''"
+            >
+              expand_more
+            </span>
+          </button>
+          <div v-show="stepOpen === 1" class="p-6 space-y-4">
+            <label class="block">
+              <span class="text-sm font-bold text-[#111718] dark:text-white mb-1.5 block">{{
+                $t('checkout.shippingName')
+              }}</span>
+              <input
+                v-model="shipping.name"
+                class="w-full rounded-lg border border-[#eaf0f0] dark:border-gray-700 bg-slate-50 dark:bg-zinc-800 focus:ring-2 focus:ring-primary focus:border-primary h-11 px-4 text-sm"
+                type="text"
+              />
+            </label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <label class="block">
+                <span class="text-sm font-bold text-[#111718] dark:text-white mb-1.5 block">{{
+                  $t('checkout.shippingPhone')
+                }}</span>
+                <input
+                  v-model="shipping.phone"
+                  class="w-full rounded-lg border border-[#eaf0f0] dark:border-gray-700 bg-slate-50 dark:bg-zinc-800 focus:ring-2 focus:ring-primary focus:border-primary h-11 px-4 text-sm"
+                  type="tel"
+                />
+              </label>
+              <label class="block">
+                <span class="text-sm font-bold text-[#111718] dark:text-white mb-1.5 block">{{
+                  $t('checkout.shippingEmail')
+                }}</span>
+                <input
+                  v-model="shipping.email"
+                  class="w-full rounded-lg border border-[#eaf0f0] dark:border-gray-700 bg-slate-50 dark:bg-zinc-800 focus:ring-2 focus:ring-primary focus:border-primary h-11 px-4 text-sm"
+                  type="email"
+                />
+              </label>
+            </div>
+            <label class="block">
+              <span class="text-sm font-bold text-[#111718] dark:text-white mb-1.5 block">{{
+                $t('checkout.shippingAddress')
+              }}</span>
+              <input
+                v-model="shipping.address"
+                class="w-full rounded-lg border border-[#eaf0f0] dark:border-gray-700 bg-slate-50 dark:bg-zinc-800 focus:ring-2 focus:ring-primary focus:border-primary h-11 px-4 text-sm"
+                type="text"
+              />
+            </label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <label class="block">
+                <span class="text-sm font-bold text-[#111718] dark:text-white mb-1.5 block">{{
+                  $t('checkout.city')
+                }}</span>
+                <input
+                  v-model="shipping.city"
+                  class="w-full rounded-lg border border-[#eaf0f0] dark:border-gray-700 bg-slate-50 dark:bg-zinc-800 focus:ring-2 focus:ring-primary focus:border-primary h-11 px-4 text-sm"
+                  type="text"
+                />
+              </label>
+              <label class="block">
+                <span class="text-sm font-bold text-[#111718] dark:text-white mb-1.5 block">{{
+                  $t('checkout.state')
+                }}</span>
+                <input
+                  v-model="shipping.state"
+                  class="w-full rounded-lg border border-[#eaf0f0] dark:border-gray-700 bg-slate-50 dark:bg-zinc-800 focus:ring-2 focus:ring-primary focus:border-primary h-11 px-4 text-sm"
+                  type="text"
+                />
+              </label>
+              <label class="block">
+                <span class="text-sm font-bold text-[#111718] dark:text-white mb-1.5 block">{{
+                  $t('checkout.zipCode')
+                }}</span>
+                <input
+                  v-model="shipping.zip_code"
+                  class="w-full rounded-lg border border-[#eaf0f0] dark:border-gray-700 bg-slate-50 dark:bg-zinc-800 focus:ring-2 focus:ring-primary focus:border-primary h-11 px-4 text-sm"
+                  type="text"
+                />
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <!-- Step 2: Delivery -->
+        <section
+          class="border border-[#eaf0f0] dark:border-gray-800 rounded-xl overflow-hidden bg-white dark:bg-zinc-900/50 shadow-sm"
+        >
+          <button
+            type="button"
+            class="w-full p-5 flex items-center justify-between text-left border-b border-[#eaf0f0] dark:border-gray-800"
+            @click="stepOpen = stepOpen === 2 ? null : 2"
+          >
+            <div class="flex items-center gap-3">
+              <span
+                class="size-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm"
+              >
+                2
+              </span>
+              <h2 class="text-base font-bold text-[#111718] dark:text-white">
+                {{ $t('checkout.step2') }}
+              </h2>
+            </div>
+            <span
+              class="material-symbols-outlined text-[#5e8487] transition-transform"
+              :class="stepOpen === 2 ? 'rotate-180' : ''"
+            >
+              expand_more
+            </span>
+          </button>
+          <div v-show="stepOpen === 2" class="p-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <label
+                class="relative flex cursor-pointer rounded-lg border-2 p-4 transition-colors"
+                :class="
+                  deliveryMethod === 'standard'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-[#eaf0f0] dark:border-gray-700 hover:border-primary/50'
+                "
+              >
+                <input
+                  v-model="deliveryMethod"
+                  class="sr-only"
+                  type="radio"
+                  value="standard"
+                />
+                <span class="flex-1">
+                  <span class="block text-sm font-bold text-[#111718] dark:text-white">{{
+                    $t('checkout.deliveryStandard')
+                  }}</span>
+                  <span class="mt-1 block text-xs text-[#5e8487] dark:text-gray-400">{{
+                    $t('checkout.deliveryStandardDays')
+                  }}</span>
+                  <span class="mt-2 block text-sm font-bold text-primary">{{ $t('cart.free') }}</span>
+                </span>
+                <span
+                  class="material-symbols-outlined flex-shrink-0"
+                  :class="deliveryMethod === 'standard' ? 'text-primary' : 'text-slate-300 dark:text-gray-600'"
+                >
+                  {{ deliveryMethod === 'standard' ? 'check_circle' : 'circle' }}
+                </span>
+              </label>
+              <label
+                class="relative flex cursor-pointer rounded-lg border-2 p-4 transition-colors"
+                :class="
+                  deliveryMethod === 'express'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-[#eaf0f0] dark:border-gray-700 hover:border-primary/50'
+                "
+              >
+                <input
+                  v-model="deliveryMethod"
+                  class="sr-only"
+                  type="radio"
+                  value="express"
+                />
+                <span class="flex-1">
+                  <span class="block text-sm font-bold text-[#111718] dark:text-white">{{
+                    $t('checkout.deliveryExpress')
+                  }}</span>
+                  <span class="mt-1 block text-xs text-[#5e8487] dark:text-gray-400">{{
+                    $t('checkout.deliveryExpressDays')
+                  }}</span>
+                  <span class="mt-2 block text-sm font-bold text-[#111718] dark:text-white">{{
+                    formatPrice(expressShippingFee)
+                  }}</span>
+                </span>
+                <span
+                  class="material-symbols-outlined flex-shrink-0"
+                  :class="deliveryMethod === 'express' ? 'text-primary' : 'text-slate-300 dark:text-gray-600'"
+                >
+                  {{ deliveryMethod === 'express' ? 'check_circle' : 'circle' }}
+                </span>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <!-- Step 3: Chọn phương thức thanh toán (trước khi tạo đơn) -->
+        <section
+          class="border border-[#eaf0f0] dark:border-gray-800 rounded-xl overflow-hidden bg-white dark:bg-zinc-900/50 shadow-sm"
+        >
+          <button
+            type="button"
+            class="w-full p-5 flex items-center justify-between text-left border-b border-[#eaf0f0] dark:border-gray-800"
+            @click="stepOpen = stepOpen === 3 ? null : 3"
+          >
+            <div class="flex items-center gap-3">
+              <span
+                class="size-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm"
+              >
+                3
+              </span>
+              <h2 class="text-base font-bold text-[#111718] dark:text-white">
+                {{ $t('checkout.step3') }}
+              </h2>
+            </div>
+            <span
+              class="material-symbols-outlined text-[#5e8487] transition-transform"
+              :class="stepOpen === 3 ? 'rotate-180' : ''"
+            >
+              expand_more
+            </span>
+          </button>
+          <div v-show="stepOpen === 3" class="p-6 space-y-4">
+            <p class="text-sm text-[#5e8487] dark:text-gray-400 mb-2">
+              {{ $t('checkout.selectPaymentMethod') }}
+            </p>
+            <p v-if="paymentMethod === 'momo' || paymentMethod === 'vnpay'" class="text-xs text-amber-600 dark:text-amber-400 mb-2">
+              {{ $t('checkout.paymentDemoNote') }}
+            </p>
+            <div class="space-y-3">
+              <label
+                class="relative flex cursor-pointer rounded-lg border-2 p-4 transition-colors"
+                :class="
+                  paymentMethod === 'momo'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-[#eaf0f0] dark:border-gray-700 hover:border-primary/50'
+                "
+              >
+                <input
+                  v-model="paymentMethod"
+                  class="sr-only"
+                  type="radio"
+                  value="momo"
+                />
+                <span class="flex-1 font-semibold text-sm text-[#111718] dark:text-white">
+                  {{ $t('checkout.payWithMomo') }}
+                </span>
+                <span
+                  class="material-symbols-outlined flex-shrink-0"
+                  :class="paymentMethod === 'momo' ? 'text-primary' : 'text-slate-300 dark:text-gray-600'"
+                >
+                  {{ paymentMethod === 'momo' ? 'check_circle' : 'circle' }}
+                </span>
+              </label>
+              <label
+                class="relative flex cursor-pointer rounded-lg border-2 p-4 transition-colors"
+                :class="
+                  paymentMethod === 'vnpay'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-[#eaf0f0] dark:border-gray-700 hover:border-primary/50'
+                "
+              >
+                <input
+                  v-model="paymentMethod"
+                  class="sr-only"
+                  type="radio"
+                  value="vnpay"
+                />
+                <span class="flex-1 font-semibold text-sm text-[#111718] dark:text-white">
+                  {{ $t('checkout.payWithVNPay') }}
+                </span>
+                <span
+                  class="material-symbols-outlined flex-shrink-0"
+                  :class="paymentMethod === 'vnpay' ? 'text-primary' : 'text-slate-300 dark:text-gray-600'"
+                >
+                  {{ paymentMethod === 'vnpay' ? 'check_circle' : 'circle' }}
+                </span>
+              </label>
+              <label
+                class="relative flex cursor-pointer rounded-lg border-2 p-4 transition-colors"
+                :class="
+                  paymentMethod === 'direct'
+                    ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20'
+                    : 'border-[#eaf0f0] dark:border-gray-700 hover:border-emerald-500/50'
+                "
+              >
+                <input
+                  v-model="paymentMethod"
+                  class="sr-only"
+                  type="radio"
+                  value="direct"
+                />
+                <span class="flex-1 font-semibold text-sm text-[#111718] dark:text-white">
+                  {{ $t('checkout.payDirect') }}
+                </span>
+                <span
+                  class="material-symbols-outlined flex-shrink-0"
+                  :class="paymentMethod === 'direct' ? 'text-emerald-600' : 'text-slate-300 dark:text-gray-600'"
+                >
+                  {{ paymentMethod === 'direct' ? 'check_circle' : 'circle' }}
+                </span>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <!-- Thanh toán (tạo đơn kèm payment_method → backend set paid/pending) -->
+        <button
+          type="button"
+          class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl text-base shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="isPlacingOrder || !canPlaceOrder"
+          @click="placeOrder"
+        >
+          <span v-if="isPlacingOrder" class="animate-pulse">...</span>
+          <span v-else class="material-symbols-outlined">verified_user</span>
+          {{ $t('checkout.placeOrder') }} - {{ formatPrice(grandTotal) }}
+        </button>
+      </div>
+
+      <!-- Right: Order Summary -->
+      <aside class="lg:col-span-5 lg:sticky lg:top-24">
+        <div
+          class="border border-[#eaf0f0] dark:border-gray-800 rounded-xl bg-white dark:bg-zinc-900/50 p-6 space-y-6"
+        >
+          <h2 class="text-lg font-bold text-[#111718] dark:text-white">
+            {{ $t('cart.orderSummary') }}
+          </h2>
+
+          <div v-if="!cartItems.length" class="py-8 text-center text-[#5e8487] dark:text-gray-400 text-sm">
+            {{ $t('cart.emptyMessage') }}
+          </div>
+          <template v-else>
+            <div class="space-y-4 max-h-[280px] overflow-y-auto pr-1">
+              <div
+                v-for="item in cartItems"
+                :key="item.id"
+                class="flex gap-3"
+              >
+                <div
+                  class="size-16 rounded-lg bg-slate-100 dark:bg-zinc-800 flex-shrink-0 bg-cover bg-center"
+                  :style="{ backgroundImage: item.image ? `url('${item.image}')` : '' }"
+                />
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-[#111718] dark:text-white line-clamp-2">
+                    {{ item.name }}
+                  </p>
+                  <p class="text-xs text-[#5e8487] dark:text-gray-400 mt-0.5">
+                    x{{ item.quantity }}
+                  </p>
+                  <p class="text-sm font-bold text-primary mt-1">
+                    {{ formatPrice(parsePrice(item.price) * item.quantity) }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-[#eaf0f0] dark:border-gray-800">
+              <div class="flex gap-2">
+                <input
+                  v-model="promoCode"
+                  class="flex-1 rounded-lg border border-[#eaf0f0] dark:border-gray-700 bg-slate-50 dark:bg-zinc-800 text-sm h-10 px-3 focus:ring-2 focus:ring-primary focus:border-primary"
+                  :placeholder="$t('checkout.promoCode')"
+                  type="text"
+                />
+                <button
+                  type="button"
+                  class="bg-[#eaf0f0] dark:bg-gray-800 text-[#111718] dark:text-white px-4 rounded-lg text-sm font-semibold hover:bg-primary hover:text-white transition-colors"
+                >
+                  {{ $t('checkout.apply') }}
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-2 pt-4 border-t border-[#eaf0f0] dark:border-gray-800 text-sm">
+              <div class="flex justify-between text-[#5e8487] dark:text-gray-400">
+                <span>{{ $t('cart.subtotal') }}</span>
+                <span class="font-semibold text-[#111718] dark:text-white">{{ formatPrice(cartSubtotal) }}</span>
+              </div>
+              <div class="flex justify-between text-[#5e8487] dark:text-gray-400">
+                <span>{{ $t('cart.shipping') }}</span>
+                <span class="font-semibold text-[#111718] dark:text-white">
+                  {{ deliveryMethod === 'express' ? formatPrice(expressShippingFee) : $t('cart.free') }}
+                </span>
+              </div>
+              <div class="flex justify-between text-[#5e8487] dark:text-gray-400">
+                <span>{{ $t('checkout.estimatedTax') }}</span>
+                <span class="font-semibold text-[#111718] dark:text-white">{{ formatPrice(cartTax) }}</span>
+              </div>
+              <div class="flex justify-between items-center pt-4 border-t border-[#eaf0f0] dark:border-gray-800">
+                <span class="font-bold text-[#111718] dark:text-white">{{ $t('cart.total') }}</span>
+                <span class="text-xl font-black text-primary">{{ formatPrice(grandTotal) }}</span>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <div class="mt-4 flex items-center justify-center gap-2 text-[#5e8487] dark:text-gray-400">
+          <span class="material-symbols-outlined text-lg">lock</span>
+          <span class="text-xs font-medium">{{ $t('checkout.secureBadge') }}</span>
+        </div>
+        <p class="mt-4 text-center text-xs text-[#5e8487] dark:text-gray-400">
+          {{ $t('checkout.termsNote') }}
+          <RouterLink to="/" class="underline hover:text-primary">{{ $t('checkout.terms') }}</RouterLink>
+          {{ $t('checkout.termsAnd') }}
+          <RouterLink to="/" class="underline hover:text-primary">{{ $t('checkout.privacy') }}</RouterLink>.
+        </p>
+      </aside>
+    </div>
+  </main>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import Breadcrumbs from '@/components/common/Breadcrumbs.vue'
+import { useCart } from '@/composables/useCart.js'
+import orderService from '@/services/orderService.js'
+import { useNotification } from '@/composables/useNotification.js'
+
+const { t: $t } = useI18n()
+const router = useRouter()
+const cart = useCart()
+const cartItems = cart.items
+const cartSubtotal = cart.subtotal
+const cartTax = cart.tax
+const { showNotification } = useNotification()
+
+const stepOpen = ref(1)
+const deliveryMethod = ref('standard')
+const paymentMethod = ref(null) // 'momo' | 'vnpay' | 'direct' → backend set paid / pending
+const expressShippingFee = 15000
+const promoCode = ref('')
+const shipping = ref({
+  name: '',
+  phone: '',
+  email: '',
+  address: '',
+  city: '',
+  state: '',
+  zip_code: '',
+})
+
+const isPlacingOrder = ref(false)
+
+function parsePrice(value) {
+  if (value == null) return 0
+  if (typeof value === 'number' && !Number.isNaN(value)) return value
+  const cleaned = String(value).replace(/[^0-9.,-]/g, '').replace(/,/g, '')
+  const num = Number.parseFloat(cleaned)
+  return Number.isNaN(num) ? 0 : num
+}
+
+function formatPrice(price) {
+  const num = Math.round(parsePrice(price))
+  return `${num.toLocaleString('vi-VN')} đ`
+}
+
+const shippingTotal = computed(() =>
+  deliveryMethod.value === 'express' ? expressShippingFee : 0
+)
+
+const grandTotal = computed(() => {
+  const sub = (cartSubtotal?.value ?? cartSubtotal) ?? 0
+  const tax = (cartTax?.value ?? cartTax) ?? 0
+  const ship = shippingTotal.value
+  const discount = 0
+  return Math.max(0, sub + tax + ship - discount)
+})
+
+const canPlaceOrder = computed(() => {
+  if (!(cartItems.value ?? []).length) return false
+  const s = shipping.value
+  const hasShipping = !!(
+    s.name?.trim() &&
+    s.phone?.trim() &&
+    s.email?.trim() &&
+    s.address?.trim()
+  )
+  const hasPayment = paymentMethod.value === 'momo' || paymentMethod.value === 'vnpay' || paymentMethod.value === 'direct'
+  return hasShipping && hasPayment
+})
+
+async function placeOrder() {
+  if (!canPlaceOrder.value || isPlacingOrder.value) return
+  isPlacingOrder.value = true
+  try {
+    const items = (cartItems.value ?? []).map((i) => ({
+      product_id: i.productId,
+      quantity: i.quantity,
+      unit_price: parsePrice(i.price),
+      lens_id: i.lensId ?? null,
+    }))
+    const s = shipping.value
+    const name = (s.name && String(s.name).trim()) || ''
+    const phone = (s.phone && String(s.phone).trim()) || ''
+    const email = (s.email && String(s.email).trim()) || ''
+    const address = (s.address && String(s.address).trim()) || ''
+
+    if (!name || !phone || !email || !address) {
+      showNotification({
+        message: $t('checkout.errorShippingRequired'),
+        type: 'error',
+        duration: 4000,
+      })
+      isPlacingOrder.value = false
+      return
+    }
+
+    const method = paymentMethod.value
+    if (method !== 'momo' && method !== 'vnpay' && method !== 'direct') {
+      showNotification({
+        message: $t('checkout.errorPaymentRequired'),
+        type: 'error',
+        duration: 4000,
+      })
+      isPlacingOrder.value = false
+      return
+    }
+    // payment_status: 'paid' (momo/vnpay) hoặc 'pending' (direct) — backend cần lưu vào DB (status / payment_status)
+    const paymentStatus = method === 'momo' || method === 'vnpay' ? 'paid' : 'pending'
+    const payload = {
+      shipping_name: name,
+      shipping_phone: phone,
+      shipping_email: email,
+      shipping_address: address,
+      shipping: {
+        name,
+        phone,
+        email,
+        address,
+        city: (s.city && String(s.city).trim()) || null,
+        state: (s.state && String(s.state).trim()) || null,
+        zip_code: (s.zip_code && String(s.zip_code).trim()) || null,
+      },
+      items,
+      delivery_method: deliveryMethod.value,
+      payment_method: method,
+      payment_status: paymentStatus,
+      status: paymentStatus === 'paid' ? 'completed' : 'pending',
+    }
+    const data = await orderService.createOrder(payload)
+    const orderId = data.id ?? data.data?.id
+    if (orderId) {
+      if (method === 'momo' || method === 'vnpay') {
+        showNotification({
+          message: $t('checkout.paymentDemoComplete'),
+          type: 'success',
+          duration: 4000,
+        })
+      } else {
+        showNotification({
+          message: $t('checkout.payDirectPending'),
+          type: 'success',
+          duration: 5000,
+        })
+      }
+      cart.clear()
+      router.push('/')
+    }
+  } catch (e) {
+    console.error('Create order failed:', e)
+    showNotification({
+      message: $t('checkout.errorCreateOrder'),
+      type: 'error',
+      duration: 4000,
+    })
+  } finally {
+    isPlacingOrder.value = false
+  }
+}
+
+onMounted(() => {
+  if (!(cartItems.value ?? []).length) {
+    router.replace('/cart')
+  }
+})
+</script>

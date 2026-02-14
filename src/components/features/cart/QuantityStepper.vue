@@ -1,21 +1,21 @@
 <template>
-  <div class="flex items-center gap-3 bg-[#eaf0f0] dark:bg-gray-800 rounded-lg p-1">
+  <div class="flex items-center gap-2 bg-[#eaf0f0] dark:bg-gray-800 rounded-md py-0.5 px-1">
     <button
-      class="flex h-8 w-8 items-center justify-center rounded-md bg-white dark:bg-gray-700 hover:text-primary transition-colors"
+      class="flex h-7 w-7 items-center justify-center rounded bg-white dark:bg-gray-700 hover:text-primary transition-colors"
       type="button"
       :disabled="modelValue <= min"
       @click="$emit('update:modelValue', Math.max(min, modelValue - 1))"
     >
-      <span class="material-symbols-outlined text-sm font-bold">remove</span>
+      <span class="material-symbols-outlined text-xs font-bold">remove</span>
     </button>
-    <span class="text-base font-bold px-2">{{ modelValue }}</span>
+    <span class="text-sm font-semibold min-w-[1.25rem] text-center">{{ modelValue }}</span>
     <button
-      class="flex h-8 w-8 items-center justify-center rounded-md bg-white dark:bg-gray-700 hover:text-primary transition-colors"
+      class="flex h-7 w-7 items-center justify-center rounded bg-white dark:bg-gray-700 hover:text-primary transition-colors"
       type="button"
       :disabled="modelValue >= max"
       @click="$emit('update:modelValue', Math.min(max, modelValue + 1))"
     >
-      <span class="material-symbols-outlined text-sm font-bold">add</span>
+      <span class="material-symbols-outlined text-xs font-bold">add</span>
     </button>
   </div>
 </template>
