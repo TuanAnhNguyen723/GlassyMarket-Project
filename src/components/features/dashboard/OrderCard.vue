@@ -4,10 +4,22 @@
   >
     <div class="flex flex-1 items-start gap-6 w-full">
       <div
-        class="w-32 h-20 bg-slate-50 dark:bg-slate-800 rounded-xl bg-center bg-no-repeat bg-contain"
-        :style="{ backgroundImage: order.image ? `url('${order.image}')` : undefined }"
+        class="w-32 h-24 bg-slate-50 dark:bg-slate-800 rounded-xl overflow-hidden"
         :aria-label="order.productName"
-      ></div>
+      >
+        <img
+          v-if="order.image"
+          :src="order.image"
+          :alt="order.productName"
+          class="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal"
+        />
+        <div
+          v-else
+          class="w-full h-full flex items-center justify-center text-slate-400 dark:text-slate-500"
+        >
+          <span class="material-symbols-outlined text-3xl">image</span>
+        </div>
+      </div>
       <div class="flex flex-col gap-1">
         <div class="flex items-center gap-3">
           <span

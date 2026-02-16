@@ -6,7 +6,9 @@
       <div class="flex items-center gap-12">
         <!-- Logo -->
         <RouterLink to="/" class="flex items-center gap-2">
-          <div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+          <div
+            class="size-8 bg-primary rounded-lg flex items-center justify-center text-white"
+          >
             <span class="material-symbols-outlined text-xl">visibility</span>
           </div>
           <h2 class="text-xl font-black tracking-tight uppercase">Optic</h2>
@@ -14,24 +16,37 @@
 
         <!-- Nav Links -->
         <nav class="hidden md:flex items-center gap-8">
-          <RouterLink class="text-sm font-semibold hover:text-primary transition-colors" to="/products"
-            >{{ $t('header.eyeglasses') }}</RouterLink
+          <RouterLink
+            class="text-sm font-semibold hover:text-primary transition-colors"
+            to="/products"
+            >{{ $t("header.eyeglasses") }}</RouterLink
           >
-          <RouterLink class="text-sm font-semibold hover:text-primary transition-colors" to="/products"
-            >{{ $t('header.sunglasses') }}</RouterLink
+          <RouterLink
+            class="text-sm font-semibold hover:text-primary transition-colors"
+            to="/products"
+            >{{ $t("header.sunglasses") }}</RouterLink
           >
-          <RouterLink class="text-sm font-semibold hover:text-primary transition-colors" to="/products"
-            >{{ $t('header.accessories') }}</RouterLink
+          <RouterLink
+            class="text-sm font-semibold hover:text-primary transition-colors"
+            to="/products"
+            >{{ $t("header.accessories") }}</RouterLink
           >
-          <RouterLink class="text-sm font-semibold hover:text-primary transition-colors" to="/About"
-          >{{ $t('header.aboutUs') }}</RouterLink>
+          <RouterLink
+            class="text-sm font-semibold hover:text-primary transition-colors"
+            to="/About"
+            >{{ $t("header.aboutUs") }}</RouterLink
+          >
         </nav>
       </div>
 
       <div class="flex items-center gap-6">
         <!-- Search Bar -->
-        <div class="hidden sm:flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-full px-4 py-2 w-64">
-          <span class="material-symbols-outlined text-zinc-400 text-lg">search</span>
+        <div
+          class="hidden sm:flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-full px-4 py-2 w-64"
+        >
+          <span class="material-symbols-outlined text-zinc-400 text-lg"
+            >search</span
+          >
           <input
             class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-zinc-400"
             :placeholder="$t('header.searchPlaceholder')"
@@ -60,12 +75,18 @@
               <button
                 type="button"
                 class="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors flex items-center gap-1.5"
+                style="margin-bottom: 5px"
                 :title="$t('header.accountTitle')"
                 @click="showUserMenu = !showUserMenu"
               >
                 <span class="material-symbols-outlined">person</span>
-                <span class="hidden sm:inline text-sm font-medium max-w-[80px] truncate">{{ user?.name }}</span>
-                <span class="material-symbols-outlined text-lg">expand_more</span>
+                <span
+                  class="hidden sm:inline text-sm font-medium max-w-[80px] truncate"
+                  >{{ user?.name }}</span
+                >
+                <span class="material-symbols-outlined text-lg"
+                  >expand_more</span
+                >
               </button>
               <div
                 v-show="showUserMenu"
@@ -76,14 +97,14 @@
                   class="block px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
                   @click="showUserMenu = false"
                 >
-                  {{ $t('common.account') }}
+                  {{ $t("common.account") }}
                 </RouterLink>
                 <button
                   type="button"
                   class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                   @click="handleLogout"
                 >
-                  {{ $t('auth.logout') }}
+                  {{ $t("auth.logout") }}
                 </button>
               </div>
             </div>
@@ -93,13 +114,13 @@
               to="/login"
               class="px-3 py-1.5 text-sm font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors"
             >
-              {{ $t('auth.login') }}
+              {{ $t("auth.login") }}
             </RouterLink>
             <RouterLink
               to="/register"
               class="px-3 py-1.5 text-sm font-semibold bg-primary text-white rounded-lg hover:opacity-90 transition-opacity"
             >
-              {{ $t('auth.register') }}
+              {{ $t("auth.register") }}
             </RouterLink>
           </template>
 
@@ -110,7 +131,9 @@
             :title="locale === 'en' ? 'Tiếng Việt' : 'English'"
             @click="toggleLanguage"
           >
-            <span class="text-sm font-bold">{{ locale === 'en' ? 'VI' : 'EN' }}</span>
+            <span class="text-sm font-bold">{{
+              locale === "en" ? "VI" : "EN"
+            }}</span>
           </button>
 
           <button
@@ -119,10 +142,16 @@
             :title="isDark ? $t('header.lightMode') : $t('header.darkMode')"
             @click="toggleDark"
           >
-            <span class="material-symbols-outlined">{{ isDark ? 'light_mode' : 'dark_mode' }}</span>
+            <span class="material-symbols-outlined">{{
+              isDark ? "light_mode" : "dark_mode"
+            }}</span>
           </button>
 
-          <button class="md:hidden p-2" type="button" :title="$t('common.menu')">
+          <button
+            class="md:hidden p-2"
+            type="button"
+            :title="$t('common.menu')"
+          >
             <span class="material-symbols-outlined">menu</span>
           </button>
         </div>
@@ -132,39 +161,39 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
-import { useTheme } from '@/composables/useTheme'
-import { useLanguage } from '@/composables/useLanguage'
-import { useCart } from '@/composables/useCart.js'
-import { useAuth } from '@/composables/useAuth'
+import { ref, onMounted, onUnmounted } from "vue";
+import { RouterLink, useRouter } from "vue-router";
+import { useTheme } from "@/composables/useTheme";
+import { useLanguage } from "@/composables/useLanguage";
+import { useCart } from "@/composables/useCart.js";
+import { useAuth } from "@/composables/useAuth";
 
-const { init, isDark, toggleDark } = useTheme()
-const { locale, toggleLanguage } = useLanguage()
-const cart = useCart()
-const cartItemsCount = cart.itemsCount
-const { user, isAuthenticated, logout } = useAuth()
-const router = useRouter()
-const showUserMenu = ref(false)
-const userMenuRef = ref(null)
+const { init, isDark, toggleDark } = useTheme();
+const { locale, toggleLanguage } = useLanguage();
+const cart = useCart();
+const cartItemsCount = cart.itemsCount;
+const { user, isAuthenticated, logout } = useAuth();
+const router = useRouter();
+const showUserMenu = ref(false);
+const userMenuRef = ref(null);
 
 const handleLogout = async () => {
-  showUserMenu.value = false
-  await logout()
-  router.push('/')
-}
+  showUserMenu.value = false;
+  await logout();
+  router.push("/");
+};
 
 const onDocumentClick = (e) => {
   if (userMenuRef.value && !userMenuRef.value.contains(e.target)) {
-    showUserMenu.value = false
+    showUserMenu.value = false;
   }
-}
+};
 
 onMounted(() => {
-  init()
-  document.addEventListener('click', onDocumentClick)
-})
+  init();
+  document.addEventListener("click", onDocumentClick);
+});
 onUnmounted(() => {
-  document.removeEventListener('click', onDocumentClick)
-})
+  document.removeEventListener("click", onDocumentClick);
+});
 </script>
