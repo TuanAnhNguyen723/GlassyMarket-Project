@@ -5,22 +5,25 @@
     <div class="flex flex-1 items-start gap-6 w-full">
       <div
         class="w-32 h-20 bg-slate-50 dark:bg-slate-800 rounded-xl bg-center bg-no-repeat bg-contain"
-        :style="{ backgroundImage: `url('${order.image}')` }"
+        :style="{ backgroundImage: order.image ? `url('${order.image}')` : undefined }"
         :aria-label="order.productName"
       ></div>
       <div class="flex flex-col gap-1">
         <div class="flex items-center gap-3">
           <span
             class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
-            :class="statusClasses[order.status]"
+            :class="statusClasses[order.statusDisplay || order.status]"
           >
-            {{ order.status }}
+            {{ order.statusDisplay || order.status }}
           </span>
           <p class="text-slate-400 dark:text-slate-500 text-xs">{{ order.statusMessage }}</p>
         </div>
-        <p class="text-slate-900 dark:text-white text-base font-bold">{{ order.orderNumber }}</p>
+        <p class="text-slate-900 dark:text-white text-base font-bold">#{{ order.orderNumber }}</p>
+        <p v-if="customerLabel" class="text-slate-500 dark:text-slate-400 text-xs">
+          {{ $t('orders.customerLabel') }}: {{ customerLabel }}
+        </p>
         <p class="text-slate-500 dark:text-slate-400 text-xs">
-          Ordered on {{ order.orderDate }} • <span class="font-semibold text-slate-900 dark:text-slate-200">${{ order.total }}</span>
+          {{ order.orderDate ? $t('orders.orderedOn', { date: order.orderDate }) : '—' }} • <span class="font-semibold text-slate-900 dark:text-slate-200">{{ order.totalFormatted || formatTotal(order.total) }}</span>
         </p>
       </div>
     </div>
@@ -42,6 +45,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   order: {
@@ -51,12 +55,28 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['action'])
+const { t } = useI18n()
 
 const statusClasses = {
   Shipped: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
   Delivered: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400',
   Processing: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
+  Confirmed: 'bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400',
+  Completed: 'bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400',
+  Pending: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
   Cancelled: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
+}
+
+const customerLabel = computed(() => {
+  const o = props.order
+  if (o.customerDisplay) return o.customerDisplay
+  return o.customer ? o.customer.name : t('orders.customerGuest')
+})
+
+function formatTotal(value) {
+  if (value == null) return '—'
+  const num = typeof value === 'number' ? value : Number(String(value).replace(/[^0-9.-]/g, '')) || 0
+  return num.toLocaleString('vi-VN') + ' đ'
 }
 
 const handleAction = (type, order) => {

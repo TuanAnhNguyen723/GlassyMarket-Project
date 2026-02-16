@@ -1,19 +1,22 @@
 import api from './api'
 
 /**
- * Trạng thái đơn → % tiến độ giao hàng
+ * Trạng thái đơn → % tiến độ giao hàng (hiển thị thanh progress).
+ * Frontend chỉ đọc status từ API; % lên 100% khi backend cập nhật status = "delivered" (đã giao tới khách).
+ * Luồng: pending/completed (0–25%) → confirmed (25%) → processing (50%) → shipped (85%) → delivered (100%).
  */
 export const ORDER_PROGRESS = {
   pending: 0,
+  completed: 25,   // Đơn vừa đặt/thanh toán xong (checkout gửi status "completed")
   confirmed: 25,
   processing: 50,
   shipped: 85,
-  delivered: 100,
+  delivered: 100,   // 100% khi backend set status = "delivered"
   cancelled: 0
 }
 
 /**
- * Lấy % tiến độ theo status
+ * Lấy % tiến độ theo status (do backend trả về).
  * @param {string} status
  * @returns {number}
  */
@@ -27,6 +30,7 @@ export function getOrderProgress(status) {
  */
 export const ORDER_STATUS_KEYS = {
   pending: 'orderStatusPending',
+  completed: 'orderStatusConfirmed',
   confirmed: 'orderStatusConfirmed',
   processing: 'orderStatusProcessing',
   shipped: 'orderStatusShipped',
@@ -83,15 +87,30 @@ export async function getOrderTrack(orderId) {
 }
 
 /**
- * Map order từ API sang format dùng trong RecentOrderCard
+ * Format ngày đặt hàng
+ * @param {string} dateStr
+ * @returns {string}
+ */
+export function formatOrderDate(dateStr) {
+  if (!dateStr) return '—'
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+/**
+ * Map order từ API sang format dùng trong RecentOrderCard / OrderCard
+ * API: customer = { id, name, email } khi có user_id; customer = null khi guest.
  * @param {Object} order - item từ data[]
  */
 export function mapOrderToCard(order) {
   const firstItem = order.items?.[0]
   const status = (order.status || 'pending').toLowerCase()
+  const customer = order.customer ?? null
+  const statusDisplay = status.charAt(0).toUpperCase() + status.slice(1)
   return {
     id: order.id,
     orderNumber: order.order_number || '',
+    statusDisplay,
     productName: firstItem?.product_name || '—',
     image: firstItem?.product_image_url || '',
     status,
@@ -102,6 +121,13 @@ export function mapOrderToCard(order) {
     statusMessageKey: status === 'shipped' ? 'statusMessage' : null,
     statusMessage: null,
     tracking_number: order.tracking_number,
+    // Customer: có tài khoản → customer; guest → hiển thị "Khách" hoặc shipping_name/shipping_email
+    customer,
+    customerId: customer?.id ?? order.user_id ?? null,
+    customerDisplay: customer ? customer.name : (order.shipping_name || null),
+    customerEmail: customer?.email ?? order.shipping_email ?? null,
+    orderDate: formatOrderDate(order.created_at ?? order.order_date ?? order.date),
+    total: order.total ?? order.total_amount ?? 0,
     raw: order
   }
 }

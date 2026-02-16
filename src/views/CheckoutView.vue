@@ -443,10 +443,13 @@ import { RouterLink, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Breadcrumbs from '@/components/common/Breadcrumbs.vue'
 import { useCart } from '@/composables/useCart.js'
+import { useAuth } from '@/composables/useAuth.js'
 import orderService from '@/services/orderService.js'
 import { useNotification } from '@/composables/useNotification.js'
+import { invalidateOrders } from '@/utils/cache.js'
 
 const { t: $t } = useI18n()
+const { user } = useAuth()
 const router = useRouter()
 const cart = useCart()
 const cartItems = cart.items
@@ -567,9 +570,15 @@ async function placeOrder() {
       payment_status: paymentStatus,
       status: paymentStatus === 'paid' ? 'completed' : 'pending',
     }
+    // Gửi user_id khi đã đăng nhập để backend gán đơn cho user (GET /orders trả về đơn theo user)
+    const userId = user.value?.id
+    if (userId != null) {
+      payload.user_id = userId
+    }
     const data = await orderService.createOrder(payload)
     const orderId = data.id ?? data.data?.id
     if (orderId) {
+      invalidateOrders()
       if (method === 'momo' || method === 'vnpay') {
         showNotification({
           message: $t('checkout.paymentDemoComplete'),
@@ -584,7 +593,7 @@ async function placeOrder() {
         })
       }
       cart.clear()
-      router.push('/')
+      router.push('/dashboard/orders')
     }
   } catch (e) {
     console.error('Create order failed:', e)

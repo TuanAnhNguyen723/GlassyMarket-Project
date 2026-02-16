@@ -9,10 +9,8 @@
 
         <!-- Main Content Area -->
         <main class="flex-1 flex flex-col overflow-y-auto px-6 py-10">
-          <!-- Heading -->
           <!-- Filters/Chips -->
           <div class="flex gap-2 flex-wrap mb-6">
-            
             <button
               v-for="filter in filters"
               :key="filter.value"
@@ -30,10 +28,21 @@
           </div>
           <p class="text-slate-500 dark:text-slate-400 text-sm mb-5">{{ $t('orders.totalOrders', { count: totalOrders }) }}</p>
 
+          <!-- Loading -->
+          <div v-if="isLoading" class="flex items-center justify-center py-12">
+            <span class="material-symbols-outlined animate-spin text-4xl text-primary">progress_activity</span>
+          </div>
+
+          <!-- Empty -->
+          <div v-else-if="filteredOrders.length === 0" class="text-center py-12 text-slate-500 dark:text-slate-400">
+            <span class="material-symbols-outlined text-5xl mb-4">package_2</span>
+            <p>{{ $t('dashboard.noRecentOrder') }}</p>
+          </div>
+
           <!-- Order Cards List -->
-          <div class="flex flex-col gap-4 mb-6">
+          <div v-else class="flex flex-col gap-4 mb-6">
             <OrderCard
-              v-for="order in filteredOrders"
+              v-for="order in orderCards"
               :key="order.id"
               :order="order"
               @action="handleOrderAction"
@@ -41,7 +50,7 @@
           </div>
 
           <!-- Pagination -->
-          <div class="flex items-center justify-center gap-4 py-6">
+          <div v-if="totalPages > 1" class="flex items-center justify-center gap-4 py-6">
             <button
               class="flex size-10 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 text-slate-400 disabled:opacity-50"
               type="button"
@@ -50,7 +59,7 @@
             >
               <span class="material-symbols-outlined">chevron_left</span>
             </button>
-            <span class="text-sm font-bold text-slate-900 dark:text-white">Page {{ currentPage }} of {{ totalPages }}</span>
+            <span class="text-sm font-bold text-slate-900 dark:text-white">{{ $t('orders.page', { current: currentPage, total: totalPages }) }}</span>
             <button
               class="flex size-10 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
               type="button"
@@ -72,128 +81,124 @@ import { useI18n } from 'vue-i18n'
 import { usePageLoading } from '@/composables/usePageLoading'
 import DashboardSidebar from '../components/features/dashboard/DashboardSidebar.vue'
 import OrderCard from '../components/features/dashboard/OrderCard.vue'
-
-const { setLoading } = usePageLoading()
-const activeFilter = ref('All Orders')
-const currentPage = ref(1)
-const totalPages = ref(3)
-
-onMounted(async () => {
-  // Simulate loading data
-  setLoading(true)
-  // In a real app, you would fetch orders here
-  await new Promise((resolve) => setTimeout(resolve, 300))
-  setLoading(false)
-})
+import { getOrders, mapOrderToCard } from '@/services/profileService'
 
 const { t } = useI18n()
+const { setLoading } = usePageLoading()
+const activeFilter = ref('all')
+const currentPage = ref(1)
+const perPage = 10
+const orders = ref([])
+const meta = ref({ total: 0, current_page: 1, last_page: 1 })
+const isLoading = ref(true)
 
 const filters = computed(() => [
-  { label: t('orders.allOrders'), value: 'All Orders' },
-  { label: t('orders.ongoing'), value: 'Ongoing' },
-  { label: t('orders.delivered'), value: 'Delivered' },
-  { label: t('orders.cancelled'), value: 'Cancelled' },
+  { label: t('orders.allOrders'), value: 'all' },
+  { label: t('orders.ongoing'), value: 'ongoing' },
+  { label: t('orders.delivered'), value: 'delivered' },
+  { label: t('orders.cancelled'), value: 'cancelled' },
 ])
 
-const orders = ref([
-  {
-    id: 'eye-90210',
-    orderNumber: 'Order #EYE-90210',
-    productName: 'Modern black frame eyewear',
-    status: 'Shipped',
-    statusMessage: 'Expected by Oct 18',
-    orderDate: 'Oct 12, 2023',
-    total: '129.00',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBPj0J4hXqID5rsCyHIkNXckeUELda4LRYh9fFpG04H5X7UMD5IYtod1PMGtF0yfeZ_EM-x7J7iJ8EQQ5usr9VkrsTmOUdKYqQGI4K7epIimyuopiNscD1axqxCyfsUD3fS4fiVELXGZhQv5tHAFDfyplku407KbXBchSqiC8z_Me_c2K89BGaDWQAKf2vntYNjm6WdW8AFNV6032F_QFlPFhjOniOxMUqXF1vRzwy3wxDCJmYbG_sNRKB-W_E1lOSJm46iwPyB65Rd',
-    actions: [
-      {
-        type: 'track',
-        label: 'Track Shipment',
-        icon: 'local_shipping',
-        classes: 'bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90',
-      },
-      {
-        type: 'details',
-        label: 'Details',
-        icon: null,
-        classes: 'border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800',
-      },
-    ],
-  },
-  {
-    id: 'eye-88432',
-    orderNumber: 'Order #EYE-88432',
-    productName: 'Classic tortoise shell glasses',
-    status: 'Delivered',
-    statusMessage: 'Arrived on Sep 24',
-    orderDate: 'Sep 18, 2023',
-    total: '210.50',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuCH5M1Oj5Jsmq1q03NEp-AEYhYSR5R1TKEeYVV08IqwmOaFqwzRAd7s3nd9xeprO-KDD-mtwIwXedaLLr6dUHWmPcz3cNf_RTnj2VVHJ3XouMPADm7sAgjYKM8huCq_bQmUdASVx8ZZue7f6660fUFLP3_ynPv8xsSjdmlrFE5gcIGg3G5D0w3LZgyH039XVWj3QzCfoj2izEVrvBrGMn4vEOjfNwQzWyKwhLOHrJfKLx_MnY6827fyNmQ5TUS36EyzOce5UsembFN4',
-    actions: [
-      {
-        type: 'buy-again',
-        label: 'Buy Again',
-        icon: 'rebase_edit',
-        classes: 'border border-primary text-primary hover:bg-primary/5',
-      },
-      {
-        type: 'details',
-        label: 'Details',
-        icon: null,
-        classes: 'border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800',
-      },
-    ],
-  },
-  {
-    id: 'eye-91105',
-    orderNumber: 'Order #EYE-91105',
-    productName: 'Gold rimmed circular frames',
-    status: 'Processing',
-    statusMessage: 'Estimated shipping: Tomorrow',
-    orderDate: 'Oct 14, 2023',
-    total: '185.00',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBeYiYRsUOvFt14Cyo94KjZUnFivGqohTDErNp3y1foJkHW4PHFugQtQKlzHIIIb72N7gOvv9fJSpv3gIuat06X-dHt_n9HaIYLedvXJ8_obwFyObLrGex6UuSCl9QfoR5yau6bmKmxLGIBzK8HCdlvgntMGGcB5ABxM84a759JyrKzeWqyD9ABD9QE3sPfRNWIg7m1O1yeUFWJHeWXOxehIgCHdVQQat1kJI67IFe5yPP57iDH6yS-2IeOGQPsvq6YA6m0qV7O96MS',
-    actions: [
-      {
-        type: 'cancel',
-        label: 'Cancel Order',
-        icon: null,
-        classes: 'border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800',
-      },
-      {
-        type: 'details',
-        label: 'Details',
-        icon: null,
-        classes: 'border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800',
-      },
-    ],
-  },
-])
+const totalOrders = computed(() => meta.value.total ?? orders.value.length)
 
-const totalOrders = computed(() => orders.value.length)
+const totalPages = computed(() => Math.max(1, meta.value.last_page ?? 1))
+
+/** Build status message for card display */
+function getStatusMessage(order) {
+  const s = (order.status || '').toLowerCase()
+  if (s === 'shipped') return order.estimatedArrival ? t('orders.expectedBy', { date: order.estimatedArrival }) : t('orders.estimatedShipping', { date: '—' })
+  if (s === 'delivered') return t('orders.arrivedOn', { date: order.estimatedArrival || '—' })
+  if (s === 'processing' || s === 'confirmed') return t('orders.estimatedShipping', { date: order.estimatedArrival || '—' })
+  return ''
+}
+
+/** Build actions theo status (giống mock) */
+function buildActions(order) {
+  const s = (order.status || '').toLowerCase()
+  const actions = []
+  if (s === 'shipped') {
+    actions.push({ type: 'track', label: t('common.track'), icon: 'local_shipping', classes: 'bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90' })
+  }
+  if (s === 'delivered') {
+    actions.push({ type: 'buy-again', label: t('common.buyAgain'), icon: 'rebase_edit', classes: 'border border-primary text-primary hover:bg-primary/5' })
+  }
+  if (s === 'processing' || s === 'confirmed') {
+    actions.push({ type: 'cancel', label: t('common.cancelOrder'), icon: null, classes: 'border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800' })
+  }
+  actions.push({ type: 'details', label: t('common.details'), icon: null, classes: 'border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800' })
+  return actions
+}
+
+/** Format total (VND) */
+function formatTotal(value) {
+  const num = typeof value === 'number' ? value : Number(String(value).replace(/[^0-9.-]/g, '')) || 0
+  return num.toLocaleString('vi-VN') + ' đ'
+}
 
 const filteredOrders = computed(() => {
-  if (activeFilter.value === 'All Orders') {
-    return orders.value
+  const list = orders.value
+  if (activeFilter.value === 'all') return list
+  if (activeFilter.value === 'ongoing') {
+    return list.filter((o) => ['confirmed', 'processing', 'shipped'].includes((o.status || '').toLowerCase()))
   }
-  if (activeFilter.value === 'Ongoing') {
-    return orders.value.filter((order) => order.status === 'Shipped' || order.status === 'Processing')
-  }
-  return orders.value.filter((order) => order.status === activeFilter.value)
+  if (activeFilter.value === 'delivered') return list.filter((o) => (o.status || '').toLowerCase() === 'delivered')
+  if (activeFilter.value === 'cancelled') return list.filter((o) => (o.status || '').toLowerCase() === 'cancelled')
+  return list
 })
 
-const goToPage = (page) => {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page
-    // In a real app, you would fetch orders for the new page here
+/** Order card shape for OrderCard component */
+const orderCards = computed(() =>
+  filteredOrders.value.map((order) => ({
+    ...order,
+    statusMessage: getStatusMessage(order),
+    orderDate: order.orderDate,
+    totalFormatted: formatTotal(order.total),
+    actions: buildActions(order),
+  }))
+)
+
+async function loadOrders(page = 1) {
+  setLoading(true)
+  isLoading.value = true
+  try {
+    const res = await getOrders({ page, per_page: perPage })
+    const data = res.data ?? []
+    const pagination = res.meta ?? {}
+    orders.value = data.map(mapOrderToCard)
+    meta.value = {
+      total: pagination.total ?? data.length,
+      current_page: pagination.current_page ?? page,
+      last_page: pagination.last_page ?? 1,
+    }
+    currentPage.value = meta.value.current_page
+  } catch {
+    orders.value = []
+    meta.value = { total: 0, current_page: 1, last_page: 1 }
+  } finally {
+    setLoading(false)
+    isLoading.value = false
   }
 }
 
+function goToPage(page) {
+  if (page < 1 || page > totalPages.value) return
+  currentPage.value = page
+  loadOrders(page)
+}
+
+onMounted(() => loadOrders(1))
+
 const handleOrderAction = ({ type, order }) => {
-  console.log('Order action:', type, order)
-  // Handle different action types: track, details, buy-again, cancel
+  if (type === 'track') {
+    // Có thể mở modal track hoặc navigate
+    return
+  }
+  if (type === 'details') {
+    // Sau này: trang chi tiết đơn GET /api/v1/orders/{id}
+    return
+  }
+  if (type === 'buy-again' || type === 'cancel') {
+    // TODO: buy-again thêm vào giỏ; cancel gọi API hủy đơn
+  }
 }
 </script>

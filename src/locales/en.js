@@ -95,6 +95,8 @@ export default {
   orders: {
     title: 'My Orders',
     totalOrders: 'You have {count} orders in total',
+    customerLabel: 'Customer',
+    customerGuest: 'Guest',
     allOrders: 'All Orders',
     ongoing: 'Ongoing',
     delivered: 'Delivered',

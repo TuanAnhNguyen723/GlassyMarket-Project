@@ -95,6 +95,8 @@ export default {
   orders: {
     title: 'Đơn hàng của tôi',
     totalOrders: 'Bạn có {count} đơn hàng tổng cộng',
+    customerLabel: 'Khách hàng',
+    customerGuest: 'Khách',
     allOrders: 'Tất cả đơn hàng',
     ongoing: 'Đang xử lý',
     delivered: 'Đã giao',
