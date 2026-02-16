@@ -3,11 +3,15 @@
     <div class="flex flex-col sm:flex-row items-center gap-6">
       <div class="relative">
         <div
-          class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-24 border-4 border-slate-50 dark:border-slate-800"
-          :style="{ backgroundImage: `url('${user.avatar}')` }"
-          :aria-label="`${user.name} profile picture`"
-        ></div>
+          class="aspect-square rounded-full size-24 border-4 border-slate-50 dark:border-slate-800 flex items-center justify-center bg-primary/10 text-primary text-2xl font-bold overflow-hidden"
+          :class="{ 'bg-center bg-no-repeat bg-cover': user?.avatar }"
+          :style="user?.avatar ? { backgroundImage: `url('${user.avatar}')` } : {}"
+          :aria-label="`${user?.name || 'User'} profile picture`"
+        >
+          <span v-if="!user?.avatar">{{ userInitial }}</span>
+        </div>
         <button
+          v-if="editable"
           class="absolute bottom-0 right-0 size-8 bg-primary text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-slate-900 hover:bg-primary/90 transition-colors"
           type="button"
           @click="$emit('edit-photo')"
@@ -16,12 +20,14 @@
         </button>
       </div>
       <div class="flex-1 text-center sm:text-left">
-        <h3 class="text-xl font-bold text-slate-900 dark:text-white">{{ user.name }}</h3>
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white">{{ user?.name || '—' }}</h3>
         <p class="text-slate-500 dark:text-slate-400 text-sm">
-          {{ $t('profileSettings.premiumMemberSince', { date: user.memberSince }) }}
+          {{ memberTypeLabel }}
         </p>
+        <p v-if="user?.email" class="text-slate-400 dark:text-slate-500 text-xs mt-1">{{ user.email }}</p>
       </div>
       <button
+        v-if="editable"
         class="bg-primary/10 text-primary hover:bg-primary/20 px-6 py-2 rounded-full font-bold text-sm transition-all"
         type="button"
         @click="$emit('change-photo')"
@@ -33,16 +39,33 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 
-defineProps({
+const props = defineProps({
   user: {
     type: Object,
-    required: true,
+    default: () => ({}),
+  },
+  editable: {
+    type: Boolean,
+    default: false,
   },
 })
 
 defineEmits(['edit-photo', 'change-photo'])
+
+const userInitial = computed(() => {
+  const name = props.user?.name
+  if (!name) return '?'
+  return name.trim().charAt(0).toUpperCase()
+})
+
+const memberTypeLabel = computed(() => {
+  return props.user?.is_premium
+    ? t('dashboard.memberTypePremium')
+    : t('dashboard.memberTypeRegular')
+})
 </script>

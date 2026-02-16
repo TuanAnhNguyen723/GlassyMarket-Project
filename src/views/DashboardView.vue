@@ -10,17 +10,56 @@
         <!-- Main Content Area -->
         <main class="flex-1 flex flex-col overflow-y-auto px-6 py-10">
 
+      <!-- Profile header (GET /api/v1/profile) -->
+      <section class="mb-8">
+        <ProfileHeaderCard :user="profile || {}" />
+      </section>
+
       <!-- Dashboard Grid -->
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <!-- Recent Order Card -->
-        <RecentOrderCard :order="recentOrder" />
+        <!-- Recent Order Card (GET /api/v1/orders?per_page=5) -->
+        <RecentOrderCard :order="recentOrder" @track="openTrackModal" />
 
-        <!-- Prescription Summary Card -->
+        <!-- Prescription: API chưa có → để trống -->
         <PrescriptionCard :prescription="prescription" />
-
-        <!-- Saved Styles Card (Carousel Style) -->
-        <SavedStylesCard :saved-styles="savedStyles" @style-click="handleStyleClick" />
       </div>
+
+      <!-- Modal theo dõi đơn (GET /api/v1/orders/{id}/track) -->
+      <Teleport to="body">
+        <div
+          v-if="trackModalOrder"
+          class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
+          @click.self="trackModalOrder = null"
+        >
+          <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ $t('common.track') }}</h3>
+              <button type="button" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full" @click="trackModalOrder = null">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+              <template v-if="trackDetail">
+                <p class="text-sm text-slate-500 dark:text-slate-400">#{{ trackDetail.order_number }}</p>
+                <p class="mt-1 font-bold text-slate-800 dark:text-white">{{ trackStatusLabel(trackDetail.status) }}</p>
+                <p v-if="trackDetail.tracking_number" class="mt-2 text-sm">Mã vận đơn: {{ trackDetail.tracking_number }}</p>
+                <p v-if="trackDetail.estimated_delivery_date" class="text-sm text-primary mt-1">{{ $t('dashboard.estArrival', { date: formatTrackDate(trackDetail.estimated_delivery_date) }) }}</p>
+                <div v-if="trackDetail.status_history?.length" class="mt-6 space-y-2">
+                  <p class="text-xs font-bold uppercase text-slate-400">{{ $t('orders.deliveryStatus') }}</p>
+                  <ul class="space-y-2">
+                    <li v-for="(h, i) in trackDetail.status_history" :key="i" class="text-sm text-slate-600 dark:text-slate-300 flex gap-2">
+                      <span class="text-primary">•</span> {{ h.status || h }} <span v-if="h.date" class="text-slate-400">{{ h.date }}</span>
+                    </li>
+                  </ul>
+                </div>
+              </template>
+              <div v-else class="flex items-center justify-center py-8">
+                <span class="material-symbols-outlined animate-spin text-3xl text-primary">progress_activity</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Teleport>
 
       <!-- Footer Section -->
       <footer
@@ -62,84 +101,130 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { usePageLoading } from '@/composables/usePageLoading'
 import DashboardSidebar from '../components/features/dashboard/DashboardSidebar.vue'
+import ProfileHeaderCard from '../components/features/dashboard/ProfileHeaderCard.vue'
 import RecentOrderCard from '../components/features/dashboard/RecentOrderCard.vue'
 import PrescriptionCard from '../components/features/dashboard/PrescriptionCard.vue'
-import SavedStylesCard from '../components/features/dashboard/SavedStylesCard.vue'
+import {
+  getProfile,
+  getOrders,
+  getOrderTrack,
+  mapOrderToCard,
+  getOrderStatusKey
+} from '@/services/profileService'
+import { useAuth } from '@/composables/useAuth'
+import { get, set, CACHE_KEYS, CACHE_TTL } from '@/utils/cache'
 
-const router = useRouter()
+const { t } = useI18n()
 const { setLoading } = usePageLoading()
-const userName = 'Alex'
+const { user: authUser } = useAuth()
+
+const profile = ref(null)
+const recentOrder = ref(null)
+const prescription = ref(null)
+const trackModalOrder = ref(null)
+const trackDetail = ref(null)
+
+function trackStatusLabel(status) {
+  const key = getOrderStatusKey(status || '')
+  return t(`dashboard.${key}`)
+}
+
+function formatTrackDate(dateStr) {
+  if (!dateStr) return '—'
+  const d = new Date(dateStr)
+  const today = new Date()
+  if (d.toDateString() === today.toDateString()) return 'Today'
+  return d.toLocaleDateString('vi-VN', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+/** Gọi nền, không chặn loading. Dùng cache nếu còn hạn, không thì gọi API và lưu cache. */
+function loadProfileInBackground() {
+  const cached = get(CACHE_KEYS.PROFILE)
+  if (cached && typeof cached === 'object') {
+    profile.value = { ...cached }
+  }
+  getProfile()
+    .then((data) => {
+      const next = {
+        name: data.name,
+        email: data.email,
+        avatar: data.avatar || '',
+        is_premium: !!data.is_premium,
+        phone: data.phone,
+        date_of_birth: data.date_of_birth,
+        gender: data.gender
+      }
+      profile.value = next
+      set(CACHE_KEYS.PROFILE, next, CACHE_TTL.PROFILE)
+    })
+    .catch(() => {
+      if (!profile.value?.name) profile.value = { name: '', email: '', avatar: '', is_premium: false }
+    })
+}
+
+async function loadOrders() {
+  const cached = get(CACHE_KEYS.ORDERS)
+  if (cached !== null) {
+    recentOrder.value = cached
+    return
+  }
+  try {
+    const res = await getOrders({ per_page: 5 })
+    const list = res.data || []
+    const first = list.length ? mapOrderToCard(list[0]) : null
+    recentOrder.value = first
+    set(CACHE_KEYS.ORDERS, first, CACHE_TTL.ORDERS)
+  } catch {
+    recentOrder.value = null
+  }
+}
+
+function openTrackModal(order) {
+  if (!order?.id) return
+  trackModalOrder.value = order
+  trackDetail.value = null
+  getOrderTrack(order.id)
+    .then((data) => {
+      trackDetail.value = data
+    })
+    .catch(() => {
+      trackDetail.value = { order_number: order.orderNumber, status: order.status }
+    })
+}
+
+watch(trackModalOrder, (v) => {
+  if (!v) trackDetail.value = null
+})
+
+/** Thời gian tối đa chờ orders (ms). */
+const DASHBOARD_LOAD_TIMEOUT = 4000
 
 onMounted(async () => {
-  // Simulate loading data
+  const u = authUser.value
+  if (u) {
+    profile.value = {
+      name: u.name,
+      email: u.email,
+      avatar: u.avatar || '',
+      is_premium: !!u.is_premium,
+      phone: u.phone,
+      date_of_birth: u.date_of_birth,
+      gender: u.gender
+    }
+  }
+  loadProfileInBackground()
+
   setLoading(true)
-  // In a real app, you would fetch data here
-  await new Promise((resolve) => setTimeout(resolve, 300))
-  setLoading(false)
+  try {
+    const dataPromise = loadOrders()
+    const timeoutPromise = new Promise((r) => setTimeout(r, DASHBOARD_LOAD_TIMEOUT))
+    await Promise.race([dataPromise, timeoutPromise])
+  } finally {
+    setLoading(false)
+  }
 })
-
-const recentOrder = ref({
-  orderNumber: 'ORD-8821',
-  productName: 'Urban Classic Frames',
-  status: 'Out for Delivery',
-  statusKey: 'outForDelivery',
-  estimatedArrival: 'Today',
-  progress: 85,
-  statusMessage: 'Package is at your local distribution center',
-  statusMessageKey: 'statusMessage',
-  image:
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuC_4tzGN9se0EhS7Mp59o3VVBZSNS8EnnQfOVZsg0_fcY4j42YaSPN-bjLGABVTLWKJh-hxCiELqtkyHOOesOnNHfs4Wz5wMjiB2oAp9ebS0z4-mSspTeEysadQgTVQNUeGn2RIBHVmk-FRGcMxKjU2lt1w_lpyLcE3S5XUJIhgNLbHpvlnXmUBK48ein2Jei-08TwIoCa2mmYp8K5XJj4zLiWaPk9CTriLGakyPkJ9odDLGb_nJFHLtNR5imVtVSJOQmcxJUkK6a8J',
-})
-
-const prescription = ref({
-  rightEye: {
-    sph: '-2.25',
-    cyl: '-0.75',
-    axis: '165',
-  },
-  leftEye: {
-    sph: '-2.50',
-    cyl: '-0.50',
-    axis: '010',
-  },
-  updatedDate: 'October 12, 2023',
-})
-
-const savedStyles = ref([
-  {
-    id: 'golden-retro',
-    name: 'Golden Retro Circle',
-    material: 'Gold Metal Finish',
-    price: 129,
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuD7Helo1RLSMpIjHS0h7xM0mM0lr8qIXiWb8As-X-Ed-5VMvdmKFhafei0TwZSDfl_ursRI7uBoRRyzAt4fRkftWoHJmzFcHXhQyCieuAIPXtgoyY_W5cRrH1pUymOe3WLxAcZeLIkD0Aq3de-CJpJwyCLEOXj3FjojJZ-O5YajCog6JFjamR36lpwcjobc3RRKnWdc843CNv47522e1oWz8-vTmUud_XpHDahUNf_fLuD6UKu0dqOC_4Eb02OMXKmZ5s-uIzsNQOOT',
-    isFavorite: true,
-  },
-  {
-    id: 'avenue-wayfarer',
-    name: 'Avenue Wayfarer',
-    material: 'Tortoise Shell Acetate',
-    price: 145,
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuD6OmGj_hxlY2rPg-GCzQnP2WwrJMmtE9MGWSvsOZYVFosgb66k_WPYnQ6UiWtkmwJ4vH3yhP-zBP1iEXHxwf7Eo95jHSsc9V8fqyobtJkVbFgea1XWX8UNJKCRKx2A9Otg0a3LCTZ0d3W56Y1HoxIN4wo0-S9-d6txXdv-z2Sk4oeajpzDBTXG74alR9QoBMrVFmws6L6AGgv-In7TUYj4RMmEO6LCY2Jeii_2-5l4zmRtULQYZ4aJP691JbUA3ceFLNRTjp_3iwIU',
-    isFavorite: true,
-  },
-  {
-    id: 'crystal-clear-square',
-    name: 'Crystal Clear Square',
-    material: 'Transparent Nylon',
-    price: 99,
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBN1xrSYyGt2wfM82VcUhOJOOiI9ufi8-m1H-5lkjbj7aQJFsmBRNDAtFYeqbiBA6lrXeDd41mbCMgPW1CI2_r-XS1sniiiukMwfaOnD0NUhb7dcLkeRYOnY4GwNMgIzVgBMSp4oDSJgw7PNhCFWb9RjXSgbBJQx1b6m-3eC0CthbIbsZ-HgQYoAYsHlSpu05Hxt1UfbHFyPw_XkRXoTKj8iDp-WrtINPpLrJgw2ZEUxv4AyTIyjMYoPCvrZQdElnQIISrmSIxDPFVj',
-    isFavorite: true,
-  },
-])
-
-const handleStyleClick = (style) => {
-  router.push(`/product/${style.id}`)
-}
 </script>

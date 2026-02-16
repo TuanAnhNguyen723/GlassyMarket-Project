@@ -51,20 +51,6 @@
           Quick View
         </button>
       </div>
-
-      <button
-        v-if="showFavorite"
-        class="absolute top-3 right-3 p-2 bg-white/90 rounded-full"
-        type="button"
-        @click.stop="toggleFavorite"
-      >
-        <span
-          class="material-symbols-outlined text-[20px] flex-custom color-btn-favorite"
-          :class="isFav ? 'text-red-500' : 'text-zinc-500'"
-        >
-          {{ isFav ? "favorite" : "favorite_border" }}
-        </span>
-      </button>
     </div>
 
     <!-- Content -->
@@ -140,8 +126,6 @@
 import { ref, watch, computed } from "vue";
 import { useRouter } from "vue-router";
 import ProductRating from "@/components/common/ProductRating.vue";
-import productService from "@/services/productService.js";
-import { useNotification } from "@/composables/useNotification.js";
 
 const props = defineProps({
   product: {
@@ -156,21 +140,15 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
-  showFavorite: {
-    type: Boolean,
-    default: false,
-  },
   showRating: {
     type: Boolean,
     default: true,
   },
 });
 
-const emit = defineEmits(["click", "quick-view", "favorite"]);
+const emit = defineEmits(["click", "quick-view"]);
 
 const router = useRouter();
-const { showNotification } = useNotification();
-const isFav = ref(!!props.product?.is_featured);
 const imageError = ref(false);
 
 // ===== Variant image (by color) =====
@@ -271,14 +249,6 @@ const handleQuickView = () => {
   emit("quick-view", props.product);
 };
 
-// Đồng bộ lại khi prop product thay đổi (ví dụ reload từ API)
-watch(
-  () => props.product?.is_featured,
-  (val) => {
-    isFav.value = !!val;
-  },
-);
-
 // Reset variant state khi chuyển product khác
 watch(
   () => props.product?.id,
@@ -288,41 +258,6 @@ watch(
     colorFetchSeq = 0;
   },
 );
-
-const toggleFavorite = async () => {
-  if (!props.product?.id) return;
-
-  const next = !isFav.value;
-  // Optimistic UI: đổi màu ngay
-  isFav.value = next;
-  emit("favorite", { product: props.product, isFavorite: next });
-
-  // Hiển thị noti ngay khi user ấn (optimistic)
-  if (next) {
-    showNotification({
-      message: "Đã thêm sản phẩm vào mục yêu thích",
-      type: "success",
-      icon: "favorite",
-      duration: 3000,
-    });
-  }
-
-  try {
-    await productService.updateFeaturedStatus(props.product.id, next);
-  } catch (error) {
-    console.error("Failed to update featured status:", error);
-    // revert UI nếu lỗi
-    isFav.value = !next;
-    emit("favorite", { product: props.product, isFavorite: isFav.value });
-
-    // Hiển thị notification lỗi
-    showNotification({
-      message: "Không thể cập nhật mục yêu thích. Vui lòng thử lại.",
-      type: "error",
-      duration: 3000,
-    });
-  }
-};
 
 const formatPrice = (price) => {
   // Normalize to number (handle "$1,234,567.00", "1,234,567.00", 1234567, etc.)

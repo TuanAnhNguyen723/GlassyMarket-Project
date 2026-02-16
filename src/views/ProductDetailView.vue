@@ -32,18 +32,6 @@
               <span>Virtual Try-On</span>
             </button>
           </div>
-          <button
-            class="absolute top-6 right-6 p-3 bg-white/80 backdrop-blur-md rounded-full shadow-sm hover-favorite-btn"
-            type="button"
-            @click.stop="toggleFavorite"
-          >
-            <span
-              class="material-symbols-outlined flex-custom color-btn-favorite"
-              :class="isFavorite ? 'text-red-500' : 'text-slate-900'"
-            >
-              {{ isFavorite ? "favorite" : "favorite_border" }}
-            </span>
-          </button>
         </div>
         <!-- Thumbnails -->
         <div class="grid grid-cols-4 gap-4">
@@ -278,7 +266,6 @@
             price: item.price,
           }"
           :show-quick-view="false"
-          :show-favorite="true"
           :show-rating="false"
         />
       </div>
@@ -287,7 +274,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import Breadcrumbs from "@/components/common/Breadcrumbs.vue";
 import ProductRating from "@/components/common/ProductRating.vue";
@@ -303,7 +290,6 @@ const { showNotification } = useNotification();
 const cart = useCart();
 const selectedImage = ref("");
 const selectedLens = ref(null);
-const isFavorite = ref(false);
 const isLoading = ref(true);
 const error = ref(null);
 
@@ -548,9 +534,6 @@ const loadProduct = async () => {
       categoryName: categoryName || null,
     };
 
-    // Đồng bộ trạng thái favorite từ API (is_featured)
-    isFavorite.value = !!res.is_featured;
-
     selectedImage.value = product.value.images[0]?.url || "";
     selectedLens.value = lensOptions[0]?.id ?? null;
     selectedProductColorId.value = null;
@@ -571,39 +554,6 @@ const loadProduct = async () => {
   } finally {
     isLoading.value = false;
     setLoading(false);
-  }
-};
-
-const toggleFavorite = async () => {
-  if (!product.value?.id) return;
-
-  const next = !isFavorite.value;
-  // Đổi UI ngay (optimistic)
-  isFavorite.value = next;
-
-  // Hiển thị noti ngay khi user ấn (optimistic)
-  if (next) {
-    showNotification({
-      message: "Đã thêm sản phẩm vào mục yêu thích",
-      type: "success",
-      icon: "favorite",
-      duration: 3000,
-    });
-  }
-
-  try {
-    await productService.updateFeaturedStatus(product.value.id, next);
-  } catch (e) {
-    console.error("Failed to update featured status:", e);
-    // revert nếu lỗi
-    isFavorite.value = !next;
-
-    // Hiển thị notification lỗi
-    showNotification({
-      message: "Không thể cập nhật mục yêu thích. Vui lòng thử lại.",
-      type: "error",
-      duration: 3000,
-    });
   }
 };
 

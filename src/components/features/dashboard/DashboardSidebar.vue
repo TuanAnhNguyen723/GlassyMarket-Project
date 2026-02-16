@@ -5,12 +5,14 @@
         <!-- Profile Section -->
         <div class="flex items-center gap-3">
           <div
-            class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-12 ring-2 ring-primary/20"
-            :style="{ backgroundImage: `url('${user.avatar}')` }"
-            :aria-label="`Portrait of ${user.name}`"
-          ></div>
+            class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-12 ring-2 ring-primary/20 flex items-center justify-center bg-primary/20 text-primary text-lg font-bold"
+            :style="userAvatarStyle"
+            :aria-label="`Portrait of ${authUser?.name}`"
+          >
+            <span v-if="!authUser?.avatar">{{ authUserInitial }}</span>
+          </div>
           <div class="flex flex-col">
-            <h1 class="text-[#0d171b] dark:text-white text-base font-bold leading-none">{{ user.name }}</h1>
+            <h1 class="text-[#0d171b] dark:text-white text-base font-bold leading-none">{{ authUser?.name || '—' }}</h1>
             <p class="text-[#578e89] dark:text-primary/70 text-xs mt-1 font-medium leading-normal">
               {{ $t('sidebar.premiumMember') }}
             </p>
@@ -59,21 +61,29 @@
 
 <script setup>
 import { computed } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useAuth } from '@/composables/useAuth'
 
 const route = useRoute()
+const router = useRouter()
+const { user: authUser, logout } = useAuth()
 
-const user = {
-  name: 'Alex Johnson',
-  tier: 'Premium Member',
-  avatar:
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuDecLItH5k87ecj97AkGRSrN336EvrPz75l3iupJRjhHuGKMtrrJbs3gYcFog6TuiqxopJZ2YAXX9XeImEaSdooCurLZEpnX9MtguE0towJv7Bnj1XJ7wPZ7LjrnN8IeyQjfVWWW6VrXZv6UVpk40P3A_xh3ZTLwivWM5SfEo4odOqDB-03GUcM1yTI6J0O7DnZ4vcy9hW9xBnuDgwFtEcvklTpyRN0Oa24HsI0RGt84ALv1oobiDvkzg6D_W4_mhaYfkVRGO-O34Ud',
-}
+const userAvatarStyle = computed(() => {
+  if (authUser.value?.avatar) {
+    return { backgroundImage: `url('${authUser.value.avatar}')` }
+  }
+  return {}
+})
+
+const authUserInitial = computed(() => {
+  const name = authUser.value?.name
+  if (!name) return '?'
+  return name.trim().charAt(0).toUpperCase()
+})
 
 const navItems = [
   { path: '/dashboard', key: 'dashboard', icon: 'dashboard' },
   { path: '/dashboard/orders', key: 'myOrders', icon: 'package_2' },
-  { path: '/dashboard/saved', key: 'savedStyles', icon: 'favorite' },
   { path: '/dashboard/prescriptions', key: 'prescriptions', icon: 'description' },
   { path: '/dashboard/settings', key: 'profileSettings', icon: 'person' },
   { path: '/dashboard/security', key: 'security', icon: 'lock' },
@@ -93,8 +103,8 @@ const getIconStyle = (path) => {
   return {}
 }
 
-const handleLogout = () => {
-  // Handle logout logic
-  console.log('Logout')
+const handleLogout = async () => {
+  await logout()
+  router.push('/')
 }
 </script>
