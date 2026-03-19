@@ -68,10 +68,8 @@
             >
               {{ product.name }}
             </h1>
-            <span
-              class="text-lg md:text-xl font-extrabold text-red-600 whitespace-nowrap flex-shrink-0"
-            >
-              {{ formatPrice(product.price) }}
+            <span class="text-lg md:text-xl font-extrabold text-red-600 whitespace-nowrap flex-shrink-0">
+              {{ formatPrice(finalPrice) }}
             </span>
           </div>
           <ProductRating
@@ -130,7 +128,7 @@
         </div>
 
         <!-- Lens Options -->
-        <div class="space-y-3">
+        <div v-if="activeLensOptions.length" class="space-y-3">
           <h3
             class="text-xs font-bold uppercase tracking-widest text-slate-400"
           >
@@ -138,7 +136,7 @@
           </h3>
           <div class="flex flex-col gap-2.5">
             <label
-              v-for="option in product.lensOptions"
+              v-for="option in activeLensOptions"
               :key="option.id"
               class="group relative flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-all text-xs md:text-sm"
               :class="
@@ -159,15 +157,13 @@
                 <span class="font-medium">{{ option.name }}</span>
               </div>
               <span
-                v-if="option.priceChange === 0"
+                v-if="Number(option.priceAdjustment || 0) === 0"
                 class="text-[11px] font-semibold bg-primary text-white px-2 py-0.5 rounded"
                 >Included</span
               >
-              <span v-else class="text-xs md:text-sm text-slate-500"
-                >{{ option.priceChange > 0 ? "+" : "" }}${{
-                  option.priceChange
-                }}</span
-              >
+              <span v-else class="text-xs md:text-sm text-slate-500">
+                {{ option.priceAdjustment > 0 ? '+' : '' }}{{ formatPrice(option.priceAdjustment) }}
+              </span>
               <input
                 v-model="selectedLens"
                 :value="option.id"
@@ -274,7 +270,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import Breadcrumbs from "@/components/common/Breadcrumbs.vue";
 import ProductRating from "@/components/common/ProductRating.vue";
@@ -296,7 +292,9 @@ const error = ref(null);
 const product = ref({
   id: null,
   name: "",
-  price: 0,
+  price: 0, // giữ tương thích cũ: = basePrice
+  basePrice: 0,
+  comparePrice: null,
   rating: 0,
   reviews: 0,
   stock: 0,
@@ -311,18 +309,37 @@ const selectedColorHex = ref(null);
 
 const relatedProducts = ref([]);
 
+function parsePrice(value) {
+  if (value == null) return 0;
+  if (typeof value === "number" && !Number.isNaN(value)) return value;
+  const cleaned = String(value).replace(/[^0-9.,-]/g, "").replace(/,/g, "");
+  const num = Number.parseFloat(cleaned);
+  return Number.isNaN(num) ? 0 : num;
+}
+
 const formatPrice = (price) => {
-  let value = 0;
-  if (typeof price === "number") {
-    value = price;
-  } else if (typeof price === "string") {
-    const cleaned = price.replace(/[^0-9.,-]/g, "").replace(/,/g, "");
-    const parsed = Number.parseFloat(cleaned);
-    value = Number.isNaN(parsed) ? 0 : parsed;
-  }
-  const vnd = Math.round(value);
+  const vnd = Math.round(parsePrice(price));
   return `${vnd.toLocaleString("vi-VN")} đ`;
 };
+
+const activeLensOptions = computed(() => {
+  const list = Array.isArray(product.value?.lensOptions) ? product.value.lensOptions : []
+  return list.filter((o) => o && (o.isActive === true || o.isActive === 1 || o.is_active === true || o.is_active === 1 || o.is_active == null))
+})
+
+const selectedLensOption = computed(() => {
+  const list = activeLensOptions.value
+  if (!list.length) return null
+  const found = list.find((o) => String(o.id) === String(selectedLens.value))
+  return found || null
+})
+
+const lensAdjustment = computed(() => parsePrice(selectedLensOption.value?.priceAdjustment || 0))
+
+const finalPrice = computed(() => {
+  const base = parsePrice(product.value?.basePrice ?? product.value?.price ?? 0)
+  return base + lensAdjustment.value
+})
 
 // Lấy sản phẩm liên quan cùng category
 const loadRelatedProducts = async (categoryId, currentId) => {
@@ -511,19 +528,30 @@ const loadProduct = async () => {
     ].filter(Boolean);
 
     const lensOptions = Array.isArray(res.lens_options)
-      ? res.lens_options.map((opt, idx) => ({
-          id: opt.id ?? `lens-${idx}`,
-          name: opt.name ?? "Tùy chọn tròng",
-          priceChange: opt.price_change ?? 0,
-        }))
+      ? res.lens_options
+          .map((opt, idx) => ({
+            id: opt.id ?? `lens-${idx}`,
+            name: opt.name ?? "Tùy chọn tròng",
+            description: opt.description ?? null,
+            priceAdjustment: parsePrice(opt.price_adjustment ?? opt.price_change ?? 0),
+            isDefault: !!opt.is_default,
+            isActive: opt.is_active ?? true,
+            sortOrder: opt.sort_order ?? idx,
+          }))
+          .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0))
       : [];
 
     const categoryName = loaiKinh || "";
 
+    const basePrice = parsePrice(res.base_price ?? res.price ?? 0)
+    const comparePrice = res.compare_price ?? res.comparePrice ?? null
+
     product.value = {
       id: res.id,
       name: res.name,
-      price: res.price,
+      price: basePrice,
+      basePrice,
+      comparePrice,
       rating: ratingAverage,
       reviews: ratingReviews,
       stock: res.stock ?? 0,
@@ -535,7 +563,10 @@ const loadProduct = async () => {
     };
 
     selectedImage.value = product.value.images[0]?.url || "";
-    selectedLens.value = lensOptions[0]?.id ?? null;
+    // Chọn lens mặc định: ưu tiên is_default, nếu không có thì lấy option active đầu tiên
+    const firstDefault = lensOptions.find((o) => o && o.isDefault && (o.isActive === true || o.isActive === 1 || o.isActive == null))
+    const firstActive = lensOptions.find((o) => o && (o.isActive === true || o.isActive === 1 || o.isActive == null))
+    selectedLens.value = firstDefault?.id ?? firstActive?.id ?? null;
     selectedProductColorId.value = null;
     selectedColorHex.value = null;
 
@@ -628,7 +659,8 @@ const addToCart = () => {
   cart.addItem({
     productId: p.id,
     name: p.name,
-    price: p.price,
+    // Giá dòng giỏ = base_price + price_adjustment (lens option)
+    price: finalPrice.value,
     image: selectedImage.value || (p.images?.[0]?.url ?? ""),
     alt: p.name,
     lensId: selectedLens.value,
