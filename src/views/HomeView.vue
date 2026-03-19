@@ -2,16 +2,24 @@
   <main class="max-w-[1440px] mx-auto px-6 lg:px-20">
     <HomeHero :image-url="heroImage" image-alt="Young model wearing stylish premium blue light glasses" />
     <HomeBadges :badges="badges" />
-    <HomeBestSellers :products="products" @add-to-cart="onAddToCart" />
+    <HomeBestSellers
+      title="Sản phẩm nổi bật"
+      subtitle="Những mẫu được chọn lọc dành cho bạn"
+      :products="featuredProducts"
+      @add-to-cart="onAddToCart"
+    />
     <HomePromoBanner />
   </main>
 </template>
 
 <script setup>
+import { computed, onMounted, ref } from 'vue'
 import HomeBadges from '@/components/features/home/HomeBadges.vue'
 import HomeBestSellers from '@/components/features/home/HomeBestSellers.vue'
 import HomeHero from '@/components/features/home/HomeHero.vue'
 import HomePromoBanner from '@/components/features/home/HomePromoBanner.vue'
+import productService from '@/services/productService.js'
+import { useCart } from '@/composables/useCart.js'
 
 const heroImage =
   'https://lh3.googleusercontent.com/aida-public/AB6AXuC78XrlIUgt9nkWLNt3NfDIWgy2lr6lY6gpVcH_rN0j1WahOSQOE6R34uxsqJWjjo2j81tqBSKDn9nLpmXN1PXY4GfpXP55N4Wqh3fFFDSHX274RRd-rBbLdlQvlJ45q-vTmZjJ84oqgq_FjcXEvZttAiDGmHlyTL71VX275kx8BrcXPqGz8DDTh1eljQ1Z0JJBsJtspHvJxVOmXM74vJFm0-9Vvg9cDwAxTfuRJKMhUQFGc31Ejf6Xbr8jOunHVmJ2f6fsyZ5VUuY1'
@@ -22,43 +30,99 @@ const badges = [
   { icon: 'ar_on_you', title: 'Virtual Try-on', subtitle: 'See how they look on you' },
 ]
 
-const products = [
-  {
-    name: 'The Maverick',
-    subtitle: 'Matte Tortoiseshell',
-    price: '$120',
-    badge: 'Premium',
-    alt: 'Classic Maverick style tortoiseshell eyeglasses',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAM4oMvefhulnwZqp3ndlA3zk_R2tveNvCawUPCQfMDD8BVzsLIEW9IxpFelSai2g1Kj3RQFt_eQJKdgMzjUfjQitAwemrIZ4lUa7gWsSlZ8_Yf78lu4_GcpyjgIMEWXM3Nos3fPQprt9tUZrzOdMayXRxATgBJHANvGydnWtpn9YVbkrciBcHfxD53WubUqej8Uh9mBn_YtNL0ymadkdxkIhHv8FPRAu1PU1xxI7NEL_tCGiDybzhBFpil8zk9I3T_1CsBwJ7f2tSC',
-  },
-  {
-    name: 'The Urbanite',
-    subtitle: 'Midnight Chrome',
-    price: '$145',
-    badge: null,
-    alt: 'Urbanite style sleek black metal frames',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBzdKmFXrcqYSWuACYf8pByvTgvJJM678JGozMLH7_H_gn_KbX9b1dozI2mW_lwG8ITdhXDk_m3-Njk7GvRMmHLI9yHZHXl_Kig6Zc2blQvdzGkyGJgmrV562J73GYpYEwZDQvxXQz6O7v_6MHL0W4nILBqq3bdRNS9si-2NVT4_QN2tc0l5yz-e1REzCJrWYeUF8CqrkV9aodW47vklDF95Bpadx0ukHE2i20HC3Xmw0nh3C116ZXf3GFwvPEGwthi-4evwLRgeBgk',
-  },
-  {
-    name: 'The Classic',
-    subtitle: '24k Gold Rim',
-    price: '$110',
-    badge: null,
-    alt: 'Classic gold rimmed circular glasses',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDyAIR5kJUy8DRR1TJpcNEHNWUb_dmQTwKpwVwWUJlxcegRI6weX1IY18r8rYtHroMvB-877wZh6hPBW5J0pVq79v4Y53b0wntY5qbS80q0zoJysqnFopQN-oXU8oPwKl0fV6QTE8uNXb3rHXWRQnd2sc1iGwwTJe3nsL14wiDr4qWc0zvZPR0G3FamQ_TL04MxpxP6Qh1vZRosjuVEQO8XCKGjWs20UzB4A18xT-iFR5UbYG_BvnYHLdKWOq6eevxvFOenk1kdwvT-',
-  },
-  {
-    name: 'The Minimalist',
-    subtitle: 'Crystal Clear',
-    price: '$135',
-    badge: 'New',
-    alt: 'Minimalist clear crystal frames for modern look',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBDBdDEO55EKHajg-BZvjpDzyYypdpxKgWbxoQgfE_tjE14nCi1QCEzd8wc7PXX3VrjrevP5wqwqEf3piV9Gp1CqmkxhpPtehOodzbLDumr2yDrt2uL7gRNqaO2S7hXnYbLUO6afAdCih_wf_JB9ikBT0-yeEUoVpXXVcBJme90zB--U06DyIybSyZxeDfzHvMHJv08QG9mpdFH1ti59yjWfT8gH-p-5bTvjFLG4fyWiHwhPUgKdiakshxO6KMLKXeLIuRBU8RpxBVr',
-  },
-]
+const cart = useCart()
+
+const allProducts = ref([])
+
+function parsePrice(value) {
+  if (value == null) return 0
+  if (typeof value === 'number' && !Number.isNaN(value)) return value
+  const cleaned = String(value).replace(/[^0-9.,-]/g, '').replace(/,/g, '')
+  const num = Number.parseFloat(cleaned)
+  return Number.isNaN(num) ? 0 : num
+}
+
+function formatVnd(value) {
+  const v = Math.round(parsePrice(value))
+  return `${v.toLocaleString('vi-VN')} đ`
+}
+
+function getProductImage(p) {
+  if (typeof p?.primary_image === 'string' && p.primary_image.trim()) return p.primary_image
+  if (Array.isArray(p?.images) && p.images.length) {
+    const primary =
+      p.images.find((img) => img && (img.is_primary === true || img.is_primary === 1)) || p.images[0]
+    if (primary) {
+      if (typeof primary.image_url === 'string' && primary.image_url.trim()) return primary.image_url
+      if (typeof primary.url === 'string' && primary.url.trim()) return primary.url
+    }
+  }
+  if (typeof p?.image_url === 'string' && p.image_url.trim()) return p.image_url
+  if (typeof p?.image === 'string' && p.image.trim()) return p.image
+  return ''
+}
+
+function normalizeProductsResponse(response) {
+  if (Array.isArray(response)) return response
+  if (response && typeof response === 'object') {
+    if (Array.isArray(response.data)) return response.data
+    if (Array.isArray(response.products)) return response.products
+  }
+  return []
+}
+
+const featuredProducts = computed(() => {
+  const list = allProducts.value.filter((p) => p && (p.is_featured === true || p.is_featured === 1))
+  return list.slice(0, 4).map((p) => ({
+    id: p.id ?? p.product_id ?? null,
+    name: p.name ?? p.title ?? 'Sản phẩm',
+    subtitle: p.material ?? p.frame_shape ?? p.category?.name ?? '',
+    price: formatVnd(p.base_price ?? p.price ?? 0),
+    badge: p.tag ?? (p.is_premium ? 'Premium' : null),
+    alt: p.alt ?? p.name ?? 'Product image',
+    image: getProductImage(p),
+    raw: p,
+  }))
+})
+
+async function loadFeaturedProducts() {
+  // Ưu tiên backend lọc nếu có hỗ trợ featured=1, fallback sang tự lọc.
+  try {
+    const res = await productService.getProducts({ featured: 1, limit: 12, per_page: 12 })
+    const data = normalizeProductsResponse(res)
+    if (data.length) {
+      allProducts.value = data
+      return
+    }
+  } catch {
+    // ignore -> fallback
+  }
+  try {
+    const res = await productService.getProducts({ limit: 50, per_page: 50 })
+    allProducts.value = normalizeProductsResponse(res)
+  } catch {
+    allProducts.value = []
+  }
+}
 
 function onAddToCart(product) {
-  // TODO: tích hợp cart store/service sau
-  console.log('add to cart', product)
+  const raw = product?.raw ?? product
+  const productId = raw?.id ?? product?.id
+  if (!productId) return
+  cart.addItem({
+    productId,
+    name: raw?.name ?? product?.name,
+    price: raw?.base_price ?? raw?.price ?? product?.price,
+    image: raw?.primary_image ?? product?.image,
+    alt: raw?.name ?? product?.alt,
+    lensId: null,
+    lensName: '—',
+    color: '—',
+    frameType: raw?.category?.name ?? '—',
+  })
 }
+
+onMounted(() => {
+  loadFeaturedProducts()
+})
 </script>

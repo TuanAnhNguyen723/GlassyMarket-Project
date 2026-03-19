@@ -11,7 +11,12 @@
   </section>
 
   <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-24">
-    <article v-for="p in products" :key="p.name" class="product-card group cursor-pointer">
+    <article
+      v-for="p in products"
+      :key="p.id ?? p.name"
+      class="product-card group cursor-pointer"
+      @click="goToDetail(p)"
+    >
       <div class="relative aspect-square rounded-2xl overflow-hidden bg-zinc-50 dark:bg-zinc-900 mb-4">
         <div
           class="product-image w-full h-full bg-cover bg-center"
@@ -37,19 +42,19 @@
         </div>
       </div>
 
-      <div class="flex justify-between items-start">
+      <div class="flex justify-between items-start gap-4">
         <div>
-          <h4 class="font-bold text-lg">{{ p.name }}</h4>
-          <p class="text-zinc-500 text-sm italic">{{ p.subtitle }}</p>
+          <h4 class="font-bold text-[15px] leading-snug">{{ p.name }}</h4>
+          <p class="text-zinc-500 text-xs italic mt-0.5">{{ p.subtitle }}</p>
         </div>
-        <p class="font-black text-primary">{{ p.price }}</p>
+        <p class="font-extrabold text-primary text-sm whitespace-nowrap">{{ p.price }}</p>
       </div>
     </article>
   </section>
 </template>
 
 <script setup>
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 
 defineProps({
   title: { type: String, default: 'Best Sellers' },
@@ -60,5 +65,13 @@ defineProps({
 })
 
 defineEmits(['addToCart'])
+
+const router = useRouter()
+
+function goToDetail(p) {
+  const id = p?.id
+  if (!id) return
+  router.push(`/product/${id}`)
+}
 </script>
 

@@ -3,8 +3,12 @@
     <div
       class="bg-primary rounded-3xl p-12 md:p-20 relative overflow-hidden flex flex-col items-center text-center text-white"
     >
-      <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
-      <div class="absolute bottom-0 left-0 w-64 h-64 bg-black/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl"></div>
+      <div
+        class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"
+      ></div>
+      <div
+        class="absolute bottom-0 left-0 w-64 h-64 bg-black/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl"
+      ></div>
       <h2 class="text-4xl md:text-5xl font-black mb-6 max-w-2xl relative z-10">
         {{ title }}
       </h2>
@@ -33,16 +37,18 @@
 
 <script setup>
 defineProps({
-  title: { type: String, default: 'Eye Health is Wealth. Get your checkup today.' },
+  title: {
+    type: String,
+    default: "Eye Health is Wealth. Get your checkup today.",
+  },
   subtitle: {
     type: String,
     default:
-      'Schedule a free consultation with our licensed optometrists and find your perfect fit with our virtual AI tool.',
+      "Schedule a free consultation with our licensed optometrists and find your perfect fit with our virtual AI tool.",
   },
-  primaryText: { type: String, default: 'Book Free Consultation' },
-  secondaryText: { type: String, default: 'Launch Virtual AI' },
-})
+  primaryText: { type: String, default: "Book Free Consultation" },
+  secondaryText: { type: String, default: "Launch Virtual AI" },
+});
 
-defineEmits(['primary', 'secondary'])
+defineEmits(["primary", "secondary"]);
 </script>
-

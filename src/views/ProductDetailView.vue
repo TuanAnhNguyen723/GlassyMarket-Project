@@ -22,16 +22,6 @@
             }"
             :aria-label="product.images[0]?.alt || product.name"
           ></div>
-          <!-- Virtual Try-On Floating CTA -->
-          <div class="absolute bottom-6 left-6">
-            <button
-              class="flex items-center gap-3 bg-primary text-white px-6 py-4 rounded-xl font-bold shadow-xl hover:bg-primary/90 hover:scale-105 transition-all"
-              type="button"
-            >
-              <span class="material-symbols-outlined">videocam</span>
-              <span>Virtual Try-On</span>
-            </button>
-          </div>
         </div>
         <!-- Thumbnails -->
         <div class="grid grid-cols-4 gap-4">
@@ -68,7 +58,9 @@
             >
               {{ product.name }}
             </h1>
-            <span class="text-lg md:text-xl font-extrabold text-red-600 whitespace-nowrap flex-shrink-0">
+            <span
+              class="text-lg md:text-xl font-extrabold text-red-600 whitespace-nowrap flex-shrink-0"
+            >
               {{ formatPrice(finalPrice) }}
             </span>
           </div>
@@ -85,7 +77,9 @@
 
         <!-- Màu sắc -->
         <div v-if="product.colors && product.colors.length" class="space-y-3">
-          <h3 class="text-sm font-bold uppercase tracking-widest text-slate-400">
+          <h3
+            class="text-sm font-bold uppercase tracking-widest text-slate-400"
+          >
             Màu sắc
           </h3>
           <div class="flex flex-wrap gap-2">
@@ -162,7 +156,8 @@
                 >Included</span
               >
               <span v-else class="text-xs md:text-sm text-slate-500">
-                {{ option.priceAdjustment > 0 ? '+' : '' }}{{ formatPrice(option.priceAdjustment) }}
+                {{ option.priceAdjustment > 0 ? "+" : ""
+                }}{{ formatPrice(option.priceAdjustment) }}
               </span>
               <input
                 v-model="selectedLens"
@@ -312,7 +307,9 @@ const relatedProducts = ref([]);
 function parsePrice(value) {
   if (value == null) return 0;
   if (typeof value === "number" && !Number.isNaN(value)) return value;
-  const cleaned = String(value).replace(/[^0-9.,-]/g, "").replace(/,/g, "");
+  const cleaned = String(value)
+    .replace(/[^0-9.,-]/g, "")
+    .replace(/,/g, "");
   const num = Number.parseFloat(cleaned);
   return Number.isNaN(num) ? 0 : num;
 }
@@ -323,23 +320,37 @@ const formatPrice = (price) => {
 };
 
 const activeLensOptions = computed(() => {
-  const list = Array.isArray(product.value?.lensOptions) ? product.value.lensOptions : []
-  return list.filter((o) => o && (o.isActive === true || o.isActive === 1 || o.is_active === true || o.is_active === 1 || o.is_active == null))
-})
+  const list = Array.isArray(product.value?.lensOptions)
+    ? product.value.lensOptions
+    : [];
+  return list.filter(
+    (o) =>
+      o &&
+      (o.isActive === true ||
+        o.isActive === 1 ||
+        o.is_active === true ||
+        o.is_active === 1 ||
+        o.is_active == null),
+  );
+});
 
 const selectedLensOption = computed(() => {
-  const list = activeLensOptions.value
-  if (!list.length) return null
-  const found = list.find((o) => String(o.id) === String(selectedLens.value))
-  return found || null
-})
+  const list = activeLensOptions.value;
+  if (!list.length) return null;
+  const found = list.find((o) => String(o.id) === String(selectedLens.value));
+  return found || null;
+});
 
-const lensAdjustment = computed(() => parsePrice(selectedLensOption.value?.priceAdjustment || 0))
+const lensAdjustment = computed(() =>
+  parsePrice(selectedLensOption.value?.priceAdjustment || 0),
+);
 
 const finalPrice = computed(() => {
-  const base = parsePrice(product.value?.basePrice ?? product.value?.price ?? 0)
-  return base + lensAdjustment.value
-})
+  const base = parsePrice(
+    product.value?.basePrice ?? product.value?.price ?? 0,
+  );
+  return base + lensAdjustment.value;
+});
 
 // Lấy sản phẩm liên quan cùng category
 const loadRelatedProducts = async (categoryId, currentId) => {
@@ -487,7 +498,8 @@ const loadProduct = async () => {
       for (const img of res.images) {
         const url = (img?.url ?? img?.image_url)?.trim?.() || "";
         const key = normalizeUrl(url);
-        const productColorId = img?.product_color_id ?? img?.productColorId ?? null;
+        const productColorId =
+          img?.product_color_id ?? img?.productColorId ?? null;
         if (key && !seenUrls.has(key)) {
           images.push({ url, alt: res.name, product_color_id: productColorId });
           seenUrls.add(key);
@@ -500,7 +512,11 @@ const loadProduct = async () => {
         ? res.colors.map((c) => ({
             id: c?.color_id ?? c?.id ?? null,
             productColorId:
-              c?.id ?? c?.product_color_id ?? c?.product_color?.id ?? c?.pivot?.id ?? null,
+              c?.id ??
+              c?.product_color_id ??
+              c?.product_color?.id ??
+              c?.pivot?.id ??
+              null,
             name: c?.name ?? "",
             hex: c?.hex_code ?? c?.hex ?? c?.hex_color ?? "#9ca3af",
           }))
@@ -523,8 +539,6 @@ const loadProduct = async () => {
       loaiKinh && { label: "Loại", value: loaiKinh },
       res.frame_shape && { label: "Hình dạng", value: res.frame_shape },
       res.material && { label: "Chất liệu", value: res.material },
-      res.size && { label: "Kích cỡ", value: res.size },
-      res.bridge && { label: "Cầu kính", value: res.bridge },
     ].filter(Boolean);
 
     const lensOptions = Array.isArray(res.lens_options)
@@ -533,7 +547,9 @@ const loadProduct = async () => {
             id: opt.id ?? `lens-${idx}`,
             name: opt.name ?? "Tùy chọn tròng",
             description: opt.description ?? null,
-            priceAdjustment: parsePrice(opt.price_adjustment ?? opt.price_change ?? 0),
+            priceAdjustment: parsePrice(
+              opt.price_adjustment ?? opt.price_change ?? 0,
+            ),
             isDefault: !!opt.is_default,
             isActive: opt.is_active ?? true,
             sortOrder: opt.sort_order ?? idx,
@@ -543,8 +559,8 @@ const loadProduct = async () => {
 
     const categoryName = loaiKinh || "";
 
-    const basePrice = parsePrice(res.base_price ?? res.price ?? 0)
-    const comparePrice = res.compare_price ?? res.comparePrice ?? null
+    const basePrice = parsePrice(res.base_price ?? res.price ?? 0);
+    const comparePrice = res.compare_price ?? res.comparePrice ?? null;
 
     product.value = {
       id: res.id,
@@ -564,8 +580,16 @@ const loadProduct = async () => {
 
     selectedImage.value = product.value.images[0]?.url || "";
     // Chọn lens mặc định: ưu tiên is_default, nếu không có thì lấy option active đầu tiên
-    const firstDefault = lensOptions.find((o) => o && o.isDefault && (o.isActive === true || o.isActive === 1 || o.isActive == null))
-    const firstActive = lensOptions.find((o) => o && (o.isActive === true || o.isActive === 1 || o.isActive == null))
+    const firstDefault = lensOptions.find(
+      (o) =>
+        o &&
+        o.isDefault &&
+        (o.isActive === true || o.isActive === 1 || o.isActive == null),
+    );
+    const firstActive = lensOptions.find(
+      (o) =>
+        o && (o.isActive === true || o.isActive === 1 || o.isActive == null),
+    );
     selectedLens.value = firstDefault?.id ?? firstActive?.id ?? null;
     selectedProductColorId.value = null;
     selectedColorHex.value = null;
@@ -610,7 +634,10 @@ const handleSelectColor = (color) => {
   });
   const primary =
     matching.find(
-      (img) => img?.is_primary === true || img?.is_primary === 1 || img?.isPrimary === true
+      (img) =>
+        img?.is_primary === true ||
+        img?.is_primary === 1 ||
+        img?.isPrimary === true,
     ) ?? matching[0];
   const url = primary?.url ?? primary?.image_url ?? primary?.imageUrl ?? "";
   selectedImage.value = url || (product.value.images?.[0]?.url ?? "");
@@ -649,12 +676,12 @@ const addToCart = () => {
   const lensName = lensOpt?.name ?? "—";
   const selectedColorObj = p.colors?.find((c) => isColorSelected(c));
   const colorDetail = p.frameDetails?.find(
-    (d) => d.label === "Chất liệu" || d.label === "Loại"
+    (d) => d.label === "Chất liệu" || d.label === "Loại",
   );
   const color = selectedColorObj?.name ?? "—";
   const colorHex = selectedColorObj?.hex ?? null; // API: colors.hex_code
   const frameType =
-    colorDetail?.value ?? p.categoryName ?? (p.frameDetails?.[0]?.value) ?? "—";
+    colorDetail?.value ?? p.categoryName ?? p.frameDetails?.[0]?.value ?? "—";
 
   cart.addItem({
     productId: p.id,
