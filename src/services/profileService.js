@@ -1,4 +1,5 @@
-import api from './api'
+import api, { resolveAssetUrl } from './api'
+import { get, set, CACHE_KEYS, CACHE_TTL } from '@/utils/cache'
 
 /**
  * Trạng thái đơn → % tiến độ giao hàng (hiển thị thanh progress).
@@ -59,22 +60,97 @@ export function formatEstimatedDelivery(dateStr) {
 }
 
 /**
- * GET /api/v1/profile - Thông tin người dùng
+ * GET /api/v1/profile - Thông tin người dùng (có cache, TTL 5 phút)
+ * Khi đã gọi API rồi thì chuyển tab không gọi lại nữa cho đến khi hết hạn.
  * @returns {Promise<{ id, name, email, avatar, is_premium, phone, date_of_birth, gender, ... }>}
  */
 export async function getProfile() {
-  return api.get('/profile')
+  const cached = get(CACHE_KEYS.PROFILE)
+  if (cached != null && typeof cached === 'object') {
+    return cached
+  }
+  const data = await api.get('/profile')
+  set(CACHE_KEYS.PROFILE, data, CACHE_TTL.PROFILE)
+  return data
 }
 
 /**
- * GET /api/v1/orders - Danh sách đơn hàng
+ * PUT /api/v1/profile - Cập nhật thông tin cá nhân
+ * @param {Object} data - { name, phone, date_of_birth, gender, language?, ... }
+ * @returns {Promise<Object>}
+ */
+export async function updateProfile(data) {
+  const payload = {
+    name: data.name ?? data.fullName,
+    phone: data.phone,
+    date_of_birth: data.date_of_birth ?? data.dateOfBirth ?? null,
+    gender: data.gender ?? null,
+  }
+  if (data.language != null) payload.language = data.language
+  return api.put('/profile', payload)
+}
+
+/**
+ * Trích avatar URL từ response (nhiều format backend có thể trả).
+ * Chuẩn hóa path tương đối thành URL đầy đủ.
+ */
+export function extractAvatarUrl(res) {
+  if (!res || typeof res !== 'object') return ''
+  const raw =
+    res.avatar ??
+    res.url ??
+    res.avatar_url ??
+    res.image ??
+    res.path ??
+    res.data?.avatar ??
+    res.data?.url ??
+    res.data?.avatar_url ??
+    res.user?.avatar ??
+    res.user?.avatar_url ??
+    ''
+  return resolveAssetUrl(raw)
+}
+
+/**
+ * POST /api/v1/profile/avatar - Upload ảnh đại diện
+ * @param {File} file - File ảnh (image/jpeg, image/png, ...)
+ * @returns {Promise<{ avatar?: string }>} - Trả về object có avatar URL đã chuẩn hóa
+ */
+export async function uploadAvatar(file) {
+  if (!file || !(file instanceof File)) {
+    throw new Error('Vui lòng chọn file ảnh hợp lệ.')
+  }
+  const form = new FormData()
+  form.append('avatar', file)
+  const res = await api.postFormData('/profile/avatar', form)
+  return { ...res, avatar: extractAvatarUrl(res) || res?.avatar || res?.url }
+}
+
+/** Cache key cho getOrders theo page + per_page */
+function getOrdersCacheKey(params) {
+  const page = params?.page ?? 1
+  const perPage = params?.per_page ?? 10
+  return `${CACHE_KEYS.ORDERS}_p${page}_pp${perPage}`
+}
+
+/**
+ * GET /api/v1/orders - Danh sách đơn hàng (có cache 2 phút theo page/per_page)
+ * Chuyển tab Đơn hàng không gọi lại API khi cache còn hạn.
  * @param {{ per_page?: number, page?: number }} params
  * @returns {Promise<{ data: Array, meta: Object }>}
  */
 export async function getOrders(params = {}) {
+  const cacheKey = getOrdersCacheKey(params)
+  const cached = get(cacheKey)
+  if (cached != null && typeof cached === 'object' && Array.isArray(cached.data)) {
+    return cached
+  }
   const search = new URLSearchParams(params).toString()
   const query = search ? `?${search}` : ''
-  return api.get(`/orders${query}`)
+  const res = await api.get(`/orders${query}`)
+  const payload = { data: res.data ?? [], meta: res.meta ?? {} }
+  set(cacheKey, payload, CACHE_TTL.ORDERS)
+  return payload
 }
 
 /**

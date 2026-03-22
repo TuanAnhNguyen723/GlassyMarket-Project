@@ -33,12 +33,12 @@ export async function logout() {
 }
 
 /**
- * Lấy thông tin user hiện tại (cần token)
+ * Lấy thông tin user hiện tại (cần token) - dùng API profile
  * @returns {Promise<{ user: object }>}
  */
-export async function getMe() {
-  const res = await api.get('/me')
-  return res
+export async function getCurrentUser() {
+  const res = await api.get('/profile')
+  return { user: res }
 }
 
 /**

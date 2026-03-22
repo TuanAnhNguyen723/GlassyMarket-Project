@@ -251,6 +251,13 @@ export default {
     prescriptionRemindersDesc: 'Get notified 30 days before your prescription expires',
     discardChanges: 'Discard Changes',
     saveChanges: 'Save Changes',
+    errorLoadProfile: 'Could not load profile',
+    errorSaveProfile: 'Could not save profile',
+    profileUpdated: 'Profile updated',
+    changesDiscarded: 'Changes discarded',
+    avatarUpdated: 'Avatar updated',
+    errorUploadAvatar: 'Could not upload avatar',
+    avatarTooLarge: 'Image must be under 5MB',
   },
   savedStyles: {
     title: 'Saved Styles',

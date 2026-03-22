@@ -19,9 +19,6 @@
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <!-- Recent Order Card (GET /api/v1/orders?per_page=5) -->
         <RecentOrderCard :order="recentOrder" @track="openTrackModal" />
-
-        <!-- Prescription: API chưa có → để trống -->
-        <PrescriptionCard :prescription="prescription" />
       </div>
 
       <!-- Modal theo dõi đơn (GET /api/v1/orders/{id}/track) -->
@@ -107,7 +104,6 @@ import { usePageLoading } from '@/composables/usePageLoading'
 import DashboardSidebar from '../components/features/dashboard/DashboardSidebar.vue'
 import ProfileHeaderCard from '../components/features/dashboard/ProfileHeaderCard.vue'
 import RecentOrderCard from '../components/features/dashboard/RecentOrderCard.vue'
-import PrescriptionCard from '../components/features/dashboard/PrescriptionCard.vue'
 import {
   getProfile,
   getOrders,
@@ -116,7 +112,7 @@ import {
   getOrderStatusKey
 } from '@/services/profileService'
 import { useAuth } from '@/composables/useAuth'
-import { get, set, CACHE_KEYS, CACHE_TTL } from '@/utils/cache'
+import { get, CACHE_KEYS } from '@/utils/cache'
 
 const { t } = useI18n()
 const { setLoading } = usePageLoading()
@@ -124,7 +120,6 @@ const { user: authUser } = useAuth()
 
 const profile = ref(null)
 const recentOrder = ref(null)
-const prescription = ref(null)
 const trackModalOrder = ref(null)
 const trackDetail = ref(null)
 
@@ -141,11 +136,19 @@ function formatTrackDate(dateStr) {
   return d.toLocaleDateString('vi-VN', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-/** Gọi nền, không chặn loading. Dùng cache nếu còn hạn, không thì gọi API và lưu cache. */
+/** Gọi nền, không chặn loading. getProfile() có cache 5 phút - chuyển tab không gọi lại. */
 function loadProfileInBackground() {
   const cached = get(CACHE_KEYS.PROFILE)
   if (cached && typeof cached === 'object') {
-    profile.value = { ...cached }
+    profile.value = {
+      name: cached.name,
+      email: cached.email,
+      avatar: cached.avatar || '',
+      is_premium: !!cached.is_premium,
+      phone: cached.phone,
+      date_of_birth: cached.date_of_birth,
+      gender: cached.gender
+    }
   }
   getProfile()
     .then((data) => {
@@ -159,25 +162,19 @@ function loadProfileInBackground() {
         gender: data.gender
       }
       profile.value = next
-      set(CACHE_KEYS.PROFILE, next, CACHE_TTL.PROFILE)
     })
     .catch(() => {
       if (!profile.value?.name) profile.value = { name: '', email: '', avatar: '', is_premium: false }
     })
 }
 
+/** getOrders đã có cache - chuyển tab Dashboard không gọi lại API. */
 async function loadOrders() {
-  const cached = get(CACHE_KEYS.ORDERS)
-  if (cached !== null) {
-    recentOrder.value = cached
-    return
-  }
   try {
     const res = await getOrders({ per_page: 5 })
     const list = res.data || []
     const first = list.length ? mapOrderToCard(list[0]) : null
     recentOrder.value = first
-    set(CACHE_KEYS.ORDERS, first, CACHE_TTL.ORDERS)
   } catch {
     recentOrder.value = null
   }

@@ -9,12 +9,16 @@ const store = new Map()
 export const CACHE_KEYS = {
   PROFILE: 'kinhmat_cache_profile',
   ORDERS: 'kinhmat_cache_orders',
+  PRODUCTS: 'kinhmat_cache_products',
+  PRODUCT_DETAIL: 'kinhmat_cache_product_detail',
 }
 
 /** TTL mặc định (ms) */
 export const CACHE_TTL = {
-  PROFILE: 5 * 60 * 1000,  // 5 phút
-  ORDERS: 2 * 60 * 1000,   // 2 phút
+  PROFILE: 5 * 60 * 1000,     // 5 phút
+  ORDERS: 2 * 60 * 1000,      // 2 phút
+  PRODUCTS: 5 * 60 * 1000,    // 5 phút
+  PRODUCT_DETAIL: 5 * 60 * 1000,  // 5 phút
 }
 
 /**
@@ -57,6 +61,16 @@ export function remove(key) {
   store.delete(key)
 }
 
+/**
+ * Xóa tất cả cache có key bắt đầu bằng prefix (dùng cho orders: mỗi page/per_page một key)
+ * @param {string} prefix - VD: CACHE_KEYS.ORDERS
+ */
+export function removeByPrefix(prefix) {
+  for (const key of store.keys()) {
+    if (String(key).startsWith(prefix)) store.delete(key)
+  }
+}
+
 /** Xóa toàn bộ cache (gọi khi logout) */
 export function clear() {
   store.clear()
@@ -67,7 +81,13 @@ export function invalidateProfile() {
   remove(CACHE_KEYS.PROFILE)
 }
 
-/** Xóa cache orders (gọi sau khi đặt đơn mới) */
+/** Xóa tất cả cache orders (gọi sau khi đặt đơn mới) */
 export function invalidateOrders() {
-  remove(CACHE_KEYS.ORDERS)
+  removeByPrefix(CACHE_KEYS.ORDERS)
+}
+
+/** Xóa tất cả cache products và product detail (gọi khi cập nhật catalog từ admin) */
+export function invalidateProducts() {
+  removeByPrefix(CACHE_KEYS.PRODUCTS)
+  removeByPrefix(CACHE_KEYS.PRODUCT_DETAIL)
 }

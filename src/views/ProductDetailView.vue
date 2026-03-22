@@ -272,6 +272,7 @@ import ProductRating from "@/components/common/ProductRating.vue";
 import ProductCard from "@/components/features/products/ProductCard.vue";
 import productService from "@/services/productService.js";
 import { usePageLoading } from "@/composables/usePageLoading";
+import { get, CACHE_KEYS } from "@/utils/cache";
 import { useNotification } from "@/composables/useNotification.js";
 import { useCart } from "@/composables/useCart.js";
 
@@ -468,141 +469,149 @@ const loadRelatedProducts = async (categoryId, currentId) => {
   }
 };
 
+/** Xử lý response API → gán vào product.value (dùng chung cho cache và API) */
+const applyProductResponse = (res) => {
+  const ratingAverage = res?.rating?.average ?? 0;
+  const ratingReviews = res?.rating?.reviews ?? res?.rating?.count ?? 0;
+
+  const normalizeUrl = (u) => {
+    if (typeof u !== "string" || !u.trim()) return "";
+    return u.trim().replace(/\/+$/, "");
+  };
+
+  const images = [];
+  const seenUrls = new Set();
+
+  if (res.primary_image) {
+    const url = res.primary_image.trim();
+    images.push({ url, alt: res.name });
+    seenUrls.add(normalizeUrl(url));
+  }
+
+  if (Array.isArray(res.images)) {
+    for (const img of res.images) {
+      const url = (img?.url ?? img?.image_url)?.trim?.() || "";
+      const key = normalizeUrl(url);
+      const productColorId = img?.product_color_id ?? img?.productColorId ?? null;
+      if (key && !seenUrls.has(key)) {
+        images.push({ url, alt: res.name, product_color_id: productColorId });
+        seenUrls.add(key);
+      }
+    }
+  }
+
+  const colors =
+    Array.isArray(res.colors) && res.colors.length > 0
+      ? res.colors.map((c) => ({
+          id: c?.color_id ?? c?.id ?? null,
+          productColorId:
+            c?.id ??
+            c?.product_color_id ??
+            c?.product_color?.id ??
+            c?.pivot?.id ??
+            null,
+          name: c?.name ?? "",
+          hex: c?.hex_code ?? c?.hex ?? c?.hex_color ?? "#9ca3af",
+        }))
+      : [
+          { productColorId: null, id: null, name: "Đen", hex: "#111827" },
+          { productColorId: null, id: null, name: "Nâu", hex: "#78350f" },
+          { productColorId: null, id: null, name: "Xám", hex: "#4b5563" },
+          { productColorId: null, id: null, name: "Bạc", hex: "#f3f4f6" },
+        ];
+
+  const loaiKinh =
+    (typeof res.category?.slug === "string" && res.category.slug.trim()
+      ? res.category.slug.trim()
+      : null) ??
+    res.category?.name ??
+    "";
+
+  const frameDetails = [
+    loaiKinh && { label: "Loại", value: loaiKinh },
+    res.frame_shape && { label: "Hình dạng", value: res.frame_shape },
+    res.material && { label: "Chất liệu", value: res.material },
+  ].filter(Boolean);
+
+  const lensOptions = Array.isArray(res.lens_options)
+    ? res.lens_options
+        .map((opt, idx) => ({
+          id: opt.id ?? `lens-${idx}`,
+          name: opt.name ?? "Tùy chọn tròng",
+          description: opt.description ?? null,
+          priceAdjustment: parsePrice(
+            opt.price_adjustment ?? opt.price_change ?? 0,
+          ),
+          isDefault: !!opt.is_default,
+          isActive: opt.is_active ?? true,
+          sortOrder: opt.sort_order ?? idx,
+        }))
+        .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0))
+    : [];
+
+  const categoryName = loaiKinh || "";
+  const basePrice = parsePrice(res.base_price ?? res.price ?? 0);
+  const comparePrice = res.compare_price ?? res.comparePrice ?? null;
+
+  product.value = {
+    id: res.id,
+    name: res.name,
+    price: basePrice,
+    basePrice,
+    comparePrice,
+    rating: ratingAverage,
+    reviews: ratingReviews,
+    stock: res.stock ?? 0,
+    images: images.length ? images : [{ url: "", alt: res.name }],
+    frameDetails,
+    lensOptions,
+    colors,
+    categoryName: categoryName || null,
+  };
+
+  selectedImage.value = product.value.images[0]?.url || "";
+  const firstDefault = lensOptions.find(
+    (o) =>
+      o &&
+      o.isDefault &&
+      (o.isActive === true || o.isActive === 1 || o.isActive == null),
+  );
+  const firstActive = lensOptions.find(
+    (o) =>
+      o && (o.isActive === true || o.isActive === 1 || o.isActive == null),
+  );
+  selectedLens.value = firstDefault?.id ?? firstActive?.id ?? null;
+  selectedProductColorId.value = null;
+  selectedColorHex.value = null;
+
+  const categoryId =
+    res?.category?.id ?? res.category_id ?? res.categories_id;
+  if (categoryId) {
+    loadRelatedProducts(categoryId, res.id);
+  } else {
+    relatedProducts.value = [];
+  }
+};
+
 const loadProduct = async () => {
+  const id = route.params.id;
+  if (!id) return;
+
+  const cacheKey = `${CACHE_KEYS.PRODUCT_DETAIL}_${id}`;
+  const cached = get(cacheKey);
+  if (cached != null && typeof cached === "object") {
+    applyProductResponse(cached);
+    error.value = null;
+    isLoading.value = false;
+    return;
+  }
+
   isLoading.value = true;
   error.value = null;
   setLoading(true);
   try {
-    const id = route.params.id;
     const res = await productService.getProductById(id);
-
-    const ratingAverage = res?.rating?.average ?? 0;
-    const ratingReviews = res?.rating?.reviews ?? res?.rating?.count ?? 0;
-
-    // build images list: primary_image + images[] (loại bỏ trùng lặp)
-    const normalizeUrl = (u) => {
-      if (typeof u !== "string" || !u.trim()) return "";
-      return u.trim().replace(/\/+$/, "");
-    };
-
-    const images = [];
-    const seenUrls = new Set();
-
-    if (res.primary_image) {
-      const url = res.primary_image.trim();
-      images.push({ url, alt: res.name });
-      seenUrls.add(normalizeUrl(url));
-    }
-
-    if (Array.isArray(res.images)) {
-      for (const img of res.images) {
-        const url = (img?.url ?? img?.image_url)?.trim?.() || "";
-        const key = normalizeUrl(url);
-        const productColorId =
-          img?.product_color_id ?? img?.productColorId ?? null;
-        if (key && !seenUrls.has(key)) {
-          images.push({ url, alt: res.name, product_color_id: productColorId });
-          seenUrls.add(key);
-        }
-      }
-    }
-
-    const colors =
-      Array.isArray(res.colors) && res.colors.length > 0
-        ? res.colors.map((c) => ({
-            id: c?.color_id ?? c?.id ?? null,
-            productColorId:
-              c?.id ??
-              c?.product_color_id ??
-              c?.product_color?.id ??
-              c?.pivot?.id ??
-              null,
-            name: c?.name ?? "",
-            hex: c?.hex_code ?? c?.hex ?? c?.hex_color ?? "#9ca3af",
-          }))
-        : [
-            { productColorId: null, id: null, name: "Đen", hex: "#111827" },
-            { productColorId: null, id: null, name: "Nâu", hex: "#78350f" },
-            { productColorId: null, id: null, name: "Xám", hex: "#4b5563" },
-            { productColorId: null, id: null, name: "Bạc", hex: "#f3f4f6" },
-          ];
-
-    // Loại kính = Loại trong Frame Details, lấy từ API: data.category.slug
-    const loaiKinh =
-      (typeof res.category?.slug === "string" && res.category.slug.trim()
-        ? res.category.slug.trim()
-        : null) ??
-      res.category?.name ??
-      "";
-
-    const frameDetails = [
-      loaiKinh && { label: "Loại", value: loaiKinh },
-      res.frame_shape && { label: "Hình dạng", value: res.frame_shape },
-      res.material && { label: "Chất liệu", value: res.material },
-    ].filter(Boolean);
-
-    const lensOptions = Array.isArray(res.lens_options)
-      ? res.lens_options
-          .map((opt, idx) => ({
-            id: opt.id ?? `lens-${idx}`,
-            name: opt.name ?? "Tùy chọn tròng",
-            description: opt.description ?? null,
-            priceAdjustment: parsePrice(
-              opt.price_adjustment ?? opt.price_change ?? 0,
-            ),
-            isDefault: !!opt.is_default,
-            isActive: opt.is_active ?? true,
-            sortOrder: opt.sort_order ?? idx,
-          }))
-          .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0))
-      : [];
-
-    const categoryName = loaiKinh || "";
-
-    const basePrice = parsePrice(res.base_price ?? res.price ?? 0);
-    const comparePrice = res.compare_price ?? res.comparePrice ?? null;
-
-    product.value = {
-      id: res.id,
-      name: res.name,
-      price: basePrice,
-      basePrice,
-      comparePrice,
-      rating: ratingAverage,
-      reviews: ratingReviews,
-      stock: res.stock ?? 0,
-      images: images.length ? images : [{ url: "", alt: res.name }],
-      frameDetails,
-      lensOptions,
-      colors,
-      categoryName: categoryName || null,
-    };
-
-    selectedImage.value = product.value.images[0]?.url || "";
-    // Chọn lens mặc định: ưu tiên is_default, nếu không có thì lấy option active đầu tiên
-    const firstDefault = lensOptions.find(
-      (o) =>
-        o &&
-        o.isDefault &&
-        (o.isActive === true || o.isActive === 1 || o.isActive == null),
-    );
-    const firstActive = lensOptions.find(
-      (o) =>
-        o && (o.isActive === true || o.isActive === 1 || o.isActive == null),
-    );
-    selectedLens.value = firstDefault?.id ?? firstActive?.id ?? null;
-    selectedProductColorId.value = null;
-    selectedColorHex.value = null;
-
-    // Sau khi có thông tin category => load related products cùng category.
-    // Không await để trang detail hiển thị nhanh hơn; phần gợi ý sẽ load sau.
-    const categoryId =
-      res?.category?.id ?? res.category_id ?? res.categories_id;
-    if (categoryId) {
-      loadRelatedProducts(categoryId, res.id);
-    } else {
-      relatedProducts.value = [];
-    }
+    applyProductResponse(res);
   } catch (e) {
     console.error("Failed to load product detail:", e);
     error.value = "Không thể tải thông tin sản phẩm.";

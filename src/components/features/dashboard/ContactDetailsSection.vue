@@ -6,14 +6,8 @@
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="flex flex-col gap-2">
-        <label class="text-sm font-semibold text-slate-700 dark:text-slate-300 px-1 flex justify-between">
+        <label class="text-sm font-semibold text-slate-700 dark:text-slate-300 px-1">
           {{ $t('profileSettings.emailAddress') }}
-          <span
-            v-if="isEmailVerified"
-            class="text-[10px] uppercase tracking-wider text-green-500 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full border border-green-200 dark:border-green-900/50"
-          >
-            {{ $t('profileSettings.verified') }}
-          </span>
         </label>
         <input
           v-model="formData.email"
@@ -43,10 +37,6 @@ const props = defineProps({
   formData: {
     type: Object,
     required: true,
-  },
-  isEmailVerified: {
-    type: Boolean,
-    default: true,
   },
 })
 

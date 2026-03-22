@@ -4,11 +4,16 @@
       <div class="relative">
         <div
           class="aspect-square rounded-full size-24 border-4 border-slate-50 dark:border-slate-800 flex items-center justify-center bg-primary/10 text-primary text-2xl font-bold overflow-hidden"
-          :class="{ 'bg-center bg-no-repeat bg-cover': user?.avatar }"
-          :style="user?.avatar ? { backgroundImage: `url('${user.avatar}')` } : {}"
           :aria-label="`${user?.name || 'User'} profile picture`"
         >
-          <span v-if="!user?.avatar">{{ userInitial }}</span>
+          <img
+            v-if="user?.avatar && !avatarLoadError"
+            :src="user.avatar"
+            :alt="`${user?.name || 'User'}`"
+            class="w-full h-full object-cover"
+            @error="avatarLoadError = true"
+          />
+          <span v-if="!user?.avatar || avatarLoadError" class="relative z-10">{{ userInitial }}</span>
         </div>
         <button
           v-if="editable"
@@ -21,9 +26,6 @@
       </div>
       <div class="flex-1 text-center sm:text-left">
         <h3 class="text-xl font-bold text-slate-900 dark:text-white">{{ user?.name || '—' }}</h3>
-        <p class="text-slate-500 dark:text-slate-400 text-sm">
-          {{ memberTypeLabel }}
-        </p>
         <p v-if="user?.email" class="text-slate-400 dark:text-slate-500 text-xs mt-1">{{ user.email }}</p>
       </div>
       <button
@@ -39,10 +41,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-const { t } = useI18n()
+useI18n()
 
 const props = defineProps({
   user: {
@@ -57,15 +59,16 @@ const props = defineProps({
 
 defineEmits(['edit-photo', 'change-photo'])
 
+const avatarLoadError = ref(false)
+watch(
+  () => props.user?.avatar,
+  () => { avatarLoadError.value = false },
+)
+
 const userInitial = computed(() => {
   const name = props.user?.name
   if (!name) return '?'
   return name.trim().charAt(0).toUpperCase()
 })
 
-const memberTypeLabel = computed(() => {
-  return props.user?.is_premium
-    ? t('dashboard.memberTypePremium')
-    : t('dashboard.memberTypeRegular')
-})
 </script>

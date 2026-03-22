@@ -22,14 +22,14 @@ export function useAuth() {
     }
   }
 
-  /** Gọi khi khởi động app: có token thì khôi phục user từ localStorage, rồi gọi /me để cập nhật */
+  /** Gọi khi khởi động app: có token thì khôi phục user từ localStorage, rồi gọi profile để cập nhật */
   const checkAuth = async () => {
     const token = localStorage.getItem(authService.AUTH_TOKEN_KEY)
     if (!token) {
       user.value = null
       return
     }
-    // Khôi phục user từ localStorage ngay để reload không bị đăng xuất trong lúc chờ getMe()
+    // Khôi phục user từ localStorage ngay để reload không bị đăng xuất trong lúc chờ getCurrentUser()
     try {
       const stored = localStorage.getItem('user')
       if (stored) user.value = JSON.parse(stored)
@@ -37,7 +37,7 @@ export function useAuth() {
       // ignore invalid JSON
     }
     try {
-      const res = await authService.getMe()
+      const res = await authService.getCurrentUser()
       if (res.user) {
         user.value = res.user
         localStorage.setItem('user', JSON.stringify(res.user))

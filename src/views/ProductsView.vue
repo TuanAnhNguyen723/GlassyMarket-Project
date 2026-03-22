@@ -249,8 +249,9 @@ import Breadcrumbs from "@/components/common/Breadcrumbs.vue";
 import ProductCard from "@/components/features/products/ProductCard.vue";
 import Pagination from "@/components/common/Pagination.vue";
 import { usePageLoading } from "@/composables/usePageLoading";
-import productService from "@/services/productService.js";
+import productService, { getProductsCacheKey } from "@/services/productService.js";
 import categoryService from "@/services/categoryService.js";
+import { get } from "@/utils/cache";
 
 const { setLoading } = usePageLoading();
 const { t } = useI18n();
@@ -562,65 +563,64 @@ const totalPages = computed(() => {
   return total === 0 ? 1 : Math.ceil(total / PAGE_SIZE);
 });
 
+/** Build params cho API (dùng chung cho fetch và cache key) */
+const buildFetchParams = (page = 1) => {
+  const params = {
+    page,
+    per_page: 100,
+    limit: 100,
+  };
+  if (selectedSort.value === "newest") {
+    params.sort_by = "created_at";
+    params.sort_dir = "desc";
+  } else if (selectedSort.value === "priceAsc") {
+    params.sort_by = "base_price";
+    params.sort_dir = "asc";
+  } else if (selectedSort.value === "priceDesc") {
+    params.sort_by = "base_price";
+    params.sort_dir = "desc";
+  } else if (selectedSort.value === "popular") {
+    params.sort_by = "popular";
+    params.sort_dir = "desc";
+  }
+  if (selectedCategoryId.value !== null && selectedCategoryId.value !== undefined) {
+    params.categories_id = selectedCategoryId.value;
+    params.category_id = selectedCategoryId.value;
+  }
+  if (priceMax.value != null) {
+    params.min_price = priceMin.value;
+    params.max_price = priceMax.value;
+  }
+  if (selectedFrameShape.value) {
+    params.frame_shape = selectedFrameShape.value;
+    params.frame_shapes = selectedFrameShape.value;
+  }
+  return params;
+};
+
 /**
- * Fetch products from API
+ * Fetch products from API (có cache - chuyển tab/filter không gọi lại khi cache còn hạn)
  */
 const fetchProducts = async (page = 1) => {
+  const params = buildFetchParams(page);
+  const cacheKey = getProductsCacheKey(params);
+  const cached = get(cacheKey);
+  if (cached != null && typeof cached === "object") {
+    let productsData = [];
+    if (Array.isArray(cached)) productsData = cached;
+    else if (Array.isArray(cached.data)) productsData = cached.data;
+    else if (Array.isArray(cached.products)) productsData = cached.products;
+    products.value = productsData.map(transformProduct).filter((p) => p !== null);
+    error.value = null;
+    return;
+  }
+
   const seq = ++fetchSeq;
   isLoading.value = true;
   error.value = null;
   setLoading(true);
 
   try {
-    const params = {
-      page,
-      // Lấy nhiều sản phẩm để filter + phân trang phía client
-      per_page: 100,
-      limit: 100,
-    };
-
-    // ==== sort params (backend có thể dùng hoặc bỏ qua) ====
-    // Nếu backend bạn đang có param riêng, đổi mapping tại đây
-    if (selectedSort.value === "newest") {
-      params.sort_by = "created_at";
-      params.sort_dir = "desc";
-    } else if (selectedSort.value === "priceAsc") {
-      // Backend/DB dùng cột base_price (không có cột price)
-      params.sort_by = "base_price";
-      params.sort_dir = "asc";
-    } else if (selectedSort.value === "priceDesc") {
-      // Backend/DB dùng cột base_price (không có cột price)
-      params.sort_by = "base_price";
-      params.sort_dir = "desc";
-    } else if (selectedSort.value === "popular") {
-      params.sort_by = "popular";
-      params.sort_dir = "desc";
-    }
-
-    // ==== filter params ====
-    if (
-      selectedCategoryId.value !== null &&
-      selectedCategoryId.value !== undefined
-    ) {
-      // theo yêu cầu backend: filter bằng categories_id
-      params.categories_id = selectedCategoryId.value;
-      // fallback tên param thường gặp
-      params.category_id = selectedCategoryId.value;
-    }
-
-    // price
-    if (priceMax.value !== null && priceMax.value !== undefined) {
-      params.min_price = priceMin.value;
-      params.max_price = priceMax.value;
-    }
-
-    // frame shape (single)
-    if (selectedFrameShape.value) {
-      params.frame_shape = selectedFrameShape.value;
-      // fallback param name (nếu backend dùng)
-      params.frame_shapes = selectedFrameShape.value;
-    }
-
     const response = await productService.getProducts(params);
 
     // Handle Laravel paginated response: { data: [...], meta: {...}, links: {...} }

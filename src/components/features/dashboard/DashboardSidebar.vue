@@ -13,9 +13,6 @@
           </div>
           <div class="flex flex-col">
             <h1 class="text-[#0d171b] dark:text-white text-base font-bold leading-none">{{ authUser?.name || '—' }}</h1>
-            <p class="text-[#578e89] dark:text-primary/70 text-xs mt-1 font-medium leading-normal">
-              {{ $t('sidebar.premiumMember') }}
-            </p>
           </div>
         </div>
 
@@ -84,7 +81,6 @@ const authUserInitial = computed(() => {
 const navItems = [
   { path: '/dashboard', key: 'dashboard', icon: 'dashboard' },
   { path: '/dashboard/orders', key: 'myOrders', icon: 'package_2' },
-  { path: '/dashboard/prescriptions', key: 'prescriptions', icon: 'description' },
   { path: '/dashboard/settings', key: 'profileSettings', icon: 'person' },
   { path: '/dashboard/security', key: 'security', icon: 'lock' },
 ]

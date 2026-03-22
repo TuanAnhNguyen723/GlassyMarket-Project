@@ -82,6 +82,7 @@ import { usePageLoading } from '@/composables/usePageLoading'
 import DashboardSidebar from '../components/features/dashboard/DashboardSidebar.vue'
 import OrderCard from '../components/features/dashboard/OrderCard.vue'
 import { getOrders, mapOrderToCard } from '@/services/profileService'
+import { get, CACHE_KEYS } from '@/utils/cache'
 
 const { t } = useI18n()
 const { setLoading } = usePageLoading()
@@ -157,7 +158,27 @@ const orderCards = computed(() =>
   }))
 )
 
+function getOrdersCacheKey(p) {
+  return `${CACHE_KEYS.ORDERS}_p${p ?? 1}_pp${perPage}`
+}
+
 async function loadOrders(page = 1) {
+  // Dùng cache trước - chuyển tab Đơn hàng không gọi API lại
+  const cacheKey = getOrdersCacheKey(page)
+  const cached = get(cacheKey)
+  if (cached && typeof cached === 'object' && Array.isArray(cached.data)) {
+    const pagination = cached.meta ?? {}
+    orders.value = (cached.data ?? []).map(mapOrderToCard)
+    meta.value = {
+      total: pagination.total ?? cached.data.length,
+      current_page: pagination.current_page ?? page,
+      last_page: pagination.last_page ?? 1,
+    }
+    currentPage.value = meta.value.current_page
+    isLoading.value = false
+    return
+  }
+
   setLoading(true)
   isLoading.value = true
   try {
