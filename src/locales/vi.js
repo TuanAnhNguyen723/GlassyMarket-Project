@@ -260,8 +260,7 @@ export default {
     gender: 'Giới tính',
     male: 'Nam',
     female: 'Nữ',
-    nonBinary: 'Không phân biệt',
-    preferNotToSay: 'Không muốn nói',
+    other: 'Khác',
     contactDetails: 'Thông tin liên hệ',
     emailAddress: 'Địa chỉ email',
     phoneNumber: 'Số điện thoại',
@@ -280,7 +279,7 @@ export default {
     changesDiscarded: 'Đã hủy thay đổi',
     avatarUpdated: 'Đã cập nhật ảnh đại diện',
     errorUploadAvatar: 'Không thể tải ảnh lên',
-    avatarTooLarge: 'Ảnh tối đa 5MB',
+    avatarTooLarge: 'Ảnh tối đa 2MB',
   },
   savedStyles: {
     title: 'Phong cách đã lưu',

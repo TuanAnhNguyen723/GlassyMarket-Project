@@ -29,8 +29,7 @@
         >
           <option value="male">{{ $t('profileSettings.male') }}</option>
           <option value="female">{{ $t('profileSettings.female') }}</option>
-          <option value="non-binary">{{ $t('profileSettings.nonBinary') }}</option>
-          <option value="prefer-not-to-say">{{ $t('profileSettings.preferNotToSay') }}</option>
+          <option value="other">{{ $t('profileSettings.other') }}</option>
         </select>
       </div>
     </div>

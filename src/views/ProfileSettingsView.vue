@@ -107,7 +107,8 @@ function syncFormFromProfile(profile) {
   const phone = data?.phone ?? ''
   const dateRaw = data?.date_of_birth ?? data?.dateOfBirth ?? ''
   const dateOfBirth = dateRaw ? String(dateRaw).slice(0, 10) : ''
-  const gender = data?.gender ?? 'male'
+  const genderRaw = data?.gender ?? 'male'
+  const gender = ['male', 'female', 'other'].includes(genderRaw) ? genderRaw : 'male'
   const avatarResolved = extractAvatarUrl(data) || extractAvatarUrl(profile)
 
   user.value = {
@@ -175,10 +176,10 @@ async function onAvatarFileSelected(event) {
   const file = event.target?.files?.[0]
   if (!file || !(file instanceof File)) return
 
-  const maxSize = 5 * 1024 * 1024 // 5MB
+  const maxSize = 2 * 1024 * 1024 // 2MB theo spec backend
   if (file.size > maxSize) {
     showNotification({
-      message: t('profileSettings.avatarTooLarge', 'Ảnh tối đa 5MB'),
+      message: t('profileSettings.avatarTooLarge', 'Ảnh tối đa 2MB'),
       type: 'error',
       duration: 3000,
     })
@@ -237,16 +238,18 @@ async function handleSave() {
   try {
     const payload = {
       name: formData.value.fullName?.trim() ?? '',
+      email: (formData.value.email ?? '').trim() || null,
       phone: (formData.value.phone ?? '').trim() || null,
       date_of_birth: (formData.value.dateOfBirth ?? '').trim() || null,
       gender: formData.value.gender || null,
     }
-    await updateProfile(payload)
+    const putRes = await updateProfile(payload)
 
     invalidateProfile()
     const updated = {
       ...authUser.value,
       name: payload.name || authUser.value?.name,
+      email: payload.email ?? authUser.value?.email,
       phone: payload.phone ?? authUser.value?.phone,
       date_of_birth: payload.date_of_birth ?? authUser.value?.date_of_birth,
       gender: payload.gender ?? authUser.value?.gender,
@@ -254,11 +257,19 @@ async function handleSave() {
     setUser(updated, null)
     user.value = { ...user.value, name: payload.name || user.value.name }
 
-    // Refetch để đồng bộ với response từ server (avatar, format ngày...)
-    const res = await getProfile()
-    const data = res?.data ?? res?.user ?? res
-    if (data) syncFormFromProfile(data)
-    else initialFormDataSnapshot.value = JSON.stringify(formData.value)
+    // Ưu tiên dùng response từ PUT (backend thường trả dữ liệu đã lưu)
+    const fromPut = putRes?.data ?? putRes?.user ?? putRes
+    if (fromPut && typeof fromPut === 'object' && (fromPut.name != null || fromPut.email != null)) {
+      syncFormFromProfile(fromPut)
+    } else {
+      // Fallback: sync từ payload đã gửi, tránh bị ghi đè bởi GET trả dữ liệu cũ
+      syncFormFromProfile({
+        ...authUser.value,
+        ...payload,
+        email: formData.value.email ?? authUser.value?.email,
+      })
+    }
+    initialFormDataSnapshot.value = JSON.stringify(formData.value)
 
     showNotification({
       message: t('profileSettings.profileUpdated', 'Đã lưu thông tin'),

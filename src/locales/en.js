@@ -261,8 +261,7 @@ export default {
     gender: 'Gender',
     male: 'Male',
     female: 'Female',
-    nonBinary: 'Non-binary',
-    preferNotToSay: 'Prefer not to say',
+    other: 'Other',
     contactDetails: 'Contact Details',
     emailAddress: 'Email Address',
     phoneNumber: 'Phone Number',
@@ -281,7 +280,7 @@ export default {
     changesDiscarded: 'Changes discarded',
     avatarUpdated: 'Avatar updated',
     errorUploadAvatar: 'Could not upload avatar',
-    avatarTooLarge: 'Image must be under 5MB',
+    avatarTooLarge: 'Image must be under 2MB',
   },
   savedStyles: {
     title: 'Saved Styles',

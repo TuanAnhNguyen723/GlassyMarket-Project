@@ -95,17 +95,26 @@ export async function getProfile() {
   return data
 }
 
+/** Backend chỉ chấp nhận male, female, other */
+function normalizeGender(val) {
+  const v = (val || '').toLowerCase()
+  if (v === 'male' || v === 'female') return v
+  return v ? 'other' : null
+}
+
 /**
  * PUT /api/v1/profile - Cập nhật thông tin cá nhân
- * @param {Object} data - { name, phone, date_of_birth, gender, language?, ... }
+ * Spec: name, email, phone, date_of_birth, gender (male|female|other), language?
+ * @param {Object} data - { name, fullName?, email?, phone, date_of_birth?, dateOfBirth?, gender, language? }
  * @returns {Promise<Object>}
  */
 export async function updateProfile(data) {
   const payload = {
-    name: data.name ?? data.fullName,
-    phone: data.phone,
-    date_of_birth: data.date_of_birth ?? data.dateOfBirth ?? null,
-    gender: data.gender ?? null,
+    name: (data.name ?? data.fullName ?? '').trim() || null,
+    email: (data.email ?? '').trim() || null,
+    phone: (data.phone ?? '').trim() || null,
+    date_of_birth: (data.date_of_birth ?? data.dateOfBirth ?? '').trim() || null,
+    gender: normalizeGender(data.gender),
   }
   if (data.language != null) payload.language = data.language
   return api.put('/profile', payload)
