@@ -228,6 +228,12 @@
       </div>
     </div>
 
+    <!-- Reviews Section -->
+    <ProductReviewsSection
+      :product-id="product.id"
+      @summary-updated="onReviewSummaryUpdated"
+    />
+
     <!-- Related Products Section -->
     <section v-if="relatedProducts.length" class="mt-20">
       <div class="flex justify-between items-end mb-8">
@@ -270,6 +276,7 @@ import { RouterLink, useRoute } from "vue-router";
 import Breadcrumbs from "@/components/common/Breadcrumbs.vue";
 import ProductRating from "@/components/common/ProductRating.vue";
 import ProductCard from "@/components/features/products/ProductCard.vue";
+import ProductReviewsSection from "@/components/features/products/ProductReviewsSection.vue";
 import productService from "@/services/productService.js";
 import { usePageLoading } from "@/composables/usePageLoading";
 import { get, CACHE_KEYS } from "@/utils/cache";
@@ -713,6 +720,21 @@ const addToCart = () => {
     duration: 3000,
   });
 };
+
+function onReviewSummaryUpdated(summary) {
+  if (!summary) return;
+  const rating = Number(
+    summary.rating_average ?? summary.average_rating ?? product.value.rating ?? 0
+  );
+  const reviews = Number(
+    summary.review_count ?? summary.reviews_count ?? product.value.reviews ?? 0
+  );
+  product.value = {
+    ...product.value,
+    rating,
+    reviews,
+  };
+}
 
 onMounted(() => {
   loadProduct();

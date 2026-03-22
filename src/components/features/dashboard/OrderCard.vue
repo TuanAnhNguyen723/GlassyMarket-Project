@@ -8,10 +8,11 @@
         :aria-label="order.productName"
       >
         <img
-          v-if="order.image"
-          :src="order.image"
+          v-if="displayImage"
+          :src="displayImage"
           :alt="order.productName"
           class="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal"
+          @error="imageError = true"
         />
         <div
           v-else
@@ -56,7 +57,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
@@ -65,6 +66,13 @@ const props = defineProps({
     required: true,
   },
 })
+
+const imageError = ref(false)
+const displayImage = computed(() => {
+  if (imageError.value || !props.order?.image) return ''
+  return props.order.image
+})
+watch(() => props.order?.image, () => { imageError.value = false })
 
 const emit = defineEmits(['action'])
 const { t } = useI18n()

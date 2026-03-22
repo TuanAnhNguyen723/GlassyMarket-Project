@@ -48,14 +48,15 @@
             class="w-32 h-24 bg-slate-50 dark:bg-slate-800 rounded-lg overflow-hidden"
           >
             <img
-              v-if="order.image"
+              v-if="displayImage"
               :alt="order.productName"
               class="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal"
-              :src="order.image"
+              :src="displayImage"
+              @error="imageError = true"
             />
             <span
               v-else
-              class="material-symbols-outlined text-slate-400 text-3xl"
+              class="w-full h-full flex items-center justify-center material-symbols-outlined text-slate-400 text-3xl"
               >image</span
             >
           </div>
@@ -122,9 +123,10 @@
 </template>
 
 <script setup>
+import { ref, computed, watch } from "vue";
 import { RouterLink } from "vue-router";
 
-defineProps({
+const props = defineProps({
   order: {
     type: Object,
     default: null,
@@ -132,4 +134,16 @@ defineProps({
 });
 
 defineEmits(["track"]);
+
+const imageError = ref(false);
+const displayImage = computed(() => {
+  if (imageError.value || !props.order?.image) return "";
+  return props.order.image;
+});
+watch(
+  () => props.order?.image,
+  () => {
+    imageError.value = false;
+  }
+);
 </script>

@@ -1,4 +1,25 @@
 import api, { resolveAssetUrl } from './api'
+
+/** Lấy URL ảnh từ order item (nhiều format backend có thể trả) */
+function getOrderItemImageUrl(firstItem) {
+  if (!firstItem) return ''
+  const product = firstItem.product ?? firstItem
+  const raw =
+    firstItem.product_image_url ??
+    firstItem.product_image ??
+    firstItem.image_url ??
+    firstItem.image ??
+    product?.primary_image ??
+    product?.image_url ??
+    product?.image
+  if (raw && typeof raw === 'string') return resolveAssetUrl(raw)
+  if (Array.isArray(product?.images) && product.images.length > 0) {
+    const img = product.images.find((i) => i?.is_primary) ?? product.images[0]
+    const url = img?.image_url ?? img?.url ?? img?.image
+    if (url) return resolveAssetUrl(url)
+  }
+  return ''
+}
 import { get, set, CACHE_KEYS, CACHE_TTL } from '@/utils/cache'
 
 /**
@@ -187,8 +208,8 @@ export function mapOrderToCard(order) {
     id: order.id,
     orderNumber: order.order_number || '',
     statusDisplay,
-    productName: firstItem?.product_name || '—',
-    image: firstItem?.product_image_url || '',
+    productName: firstItem?.product_name || firstItem?.product?.name || '—',
+    image: getOrderItemImageUrl(firstItem),
     status,
     statusKey: getOrderStatusKey(status),
     estimatedArrival: formatEstimatedDelivery(order.estimated_delivery_date),

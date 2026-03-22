@@ -91,3 +91,8 @@ export function invalidateProducts() {
   removeByPrefix(CACHE_KEYS.PRODUCTS)
   removeByPrefix(CACHE_KEYS.PRODUCT_DETAIL)
 }
+
+/** Xóa cache chi tiết 1 sản phẩm (gọi khi review thay đổi) */
+export function invalidateProductDetail(productId) {
+  remove(`${CACHE_KEYS.PRODUCT_DETAIL}_${productId}`)
+}

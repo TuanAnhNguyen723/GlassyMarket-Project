@@ -34,11 +34,6 @@
           <!-- Contact Details Section -->
           <ContactDetailsSection v-model:form-data="formData" />
 
-          <div class="h-px bg-slate-200 dark:bg-slate-800 w-full my-8"></div>
-
-          <!-- Shopping Preferences Section -->
-          <ShoppingPreferencesSection v-model:form-data="formData" />
-
           <!-- Footer Actions -->
           <div class="flex items-center justify-end gap-4 py-6 mt-8">
             <button
@@ -72,7 +67,6 @@ import DashboardSidebar from '../components/features/dashboard/DashboardSidebar.
 import ProfileHeaderCard from '../components/features/dashboard/ProfileHeaderCard.vue'
 import PersonalInformationSection from '../components/features/dashboard/PersonalInformationSection.vue'
 import ContactDetailsSection from '../components/features/dashboard/ContactDetailsSection.vue'
-import ShoppingPreferencesSection from '../components/features/dashboard/ShoppingPreferencesSection.vue'
 import { getProfile, updateProfile, uploadAvatar, extractAvatarUrl } from '@/services/profileService'
 import { useAuth } from '@/composables/useAuth'
 import { get, invalidateProfile, CACHE_KEYS } from '@/utils/cache'
@@ -99,9 +93,6 @@ const defaultFormData = () => ({
   gender: 'male',
   email: '',
   phone: '',
-  preferredFrameStyle: 'round',
-  marketingNewsletter: true,
-  prescriptionReminders: true,
 })
 
 const formData = ref(defaultFormData())
@@ -131,9 +122,6 @@ function syncFormFromProfile(profile) {
     gender: gender || 'male',
     email,
     phone: phone || '',
-    preferredFrameStyle: data?.preferred_frame_style ?? 'round',
-    marketingNewsletter: !!data?.marketing_newsletter,
-    prescriptionReminders: !!data?.prescription_reminders,
   }
   initialFormDataSnapshot.value = JSON.stringify(formData.value)
 }
@@ -157,9 +145,6 @@ async function loadProfile() {
         gender: auth.gender ?? 'male',
         email: auth.email ?? '',
         phone: auth.phone ?? '',
-        preferredFrameStyle: auth.preferred_frame_style ?? 'round',
-        marketingNewsletter: !!auth.marketing_newsletter,
-        prescriptionReminders: !!auth.prescription_reminders,
       }
       initialFormDataSnapshot.value = JSON.stringify(formData.value)
     }

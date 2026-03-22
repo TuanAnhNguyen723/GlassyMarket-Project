@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import * as authService from '@/services/authService'
-import { clear as clearCache } from '@/utils/cache'
+import { clear as clearCache, invalidateOrders } from '@/utils/cache'
 
 const user = ref(null)
 const isAuthenticated = computed(() => !!user.value)
@@ -8,6 +8,7 @@ const isAuthenticated = computed(() => !!user.value)
 export function useAuth() {
   /** Lưu user và token sau khi login/register (gọi từ authService response) */
   const setUser = (userData, token) => {
+    if (token) invalidateOrders() // Xóa cache đơn cũ để không hiển thị đơn của user khác
     user.value = userData
     if (token) authService.setToken(token)
     localStorage.setItem('user', JSON.stringify(userData))
@@ -19,6 +20,7 @@ export function useAuth() {
     } finally {
       user.value = null
       clearCache()
+      // Giỏ hàng tự chuyển sang guest khi user = null (useCart sync với auth)
     }
   }
 

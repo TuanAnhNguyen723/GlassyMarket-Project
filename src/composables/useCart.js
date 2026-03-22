@@ -1,10 +1,16 @@
 import { ref, computed, watch } from "vue";
+import { useAuth } from "@/composables/useAuth";
 
-const CART_STORAGE_KEY = "kinhmat_cart";
+const CART_KEY_GUEST = "kinhmat_cart_guest";
 
-function loadFromStorage() {
+function getCartKey(userId) {
+  if (userId == null || userId === "") return CART_KEY_GUEST;
+  return `kinhmat_cart_user_${userId}`;
+}
+
+function loadFromStorage(key) {
   try {
-    const raw = localStorage.getItem(CART_STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return [];
     const data = JSON.parse(raw);
     return Array.isArray(data) ? data : [];
@@ -13,9 +19,9 @@ function loadFromStorage() {
   }
 }
 
-function saveToStorage(items) {
+function saveToStorage(key, items) {
   try {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    localStorage.setItem(key, JSON.stringify(items));
   } catch (e) {
     console.warn("useCart: could not persist cart", e);
   }
@@ -40,15 +46,59 @@ function parsePrice(value) {
 }
 
 /**
- * State giỏ hàng dùng chung (singleton) để badge header và màn cart/product cập nhật theo thời gian thực.
+ * State giỏ hàng dùng chung (singleton).
+ * Mỗi user có giỏ riêng: guest = kinhmat_cart_guest, user = kinhmat_cart_user_{id}
  */
-const items = ref(loadFromStorage());
+const items = ref([]);
+let cartInitialized = false;
 
-watch(
-  items,
-  (val) => saveToStorage(val),
-  { deep: true }
-);
+function initCartSync() {
+  if (cartInitialized) return;
+  cartInitialized = true;
+  const { user } = useAuth();
+
+  // Khi đổi user (login/logout) → lưu giỏ hiện tại, tải giỏ của user mới
+  let isFirstSync = true;
+  watch(
+    () => user.value?.id ?? null,
+    (newUserId, oldUserId) => {
+      const newKey = getCartKey(newUserId);
+      let loaded;
+
+      if (isFirstSync) {
+        isFirstSync = false;
+        loaded = loadFromStorage(newKey);
+      } else {
+        const oldKey = getCartKey(oldUserId);
+        saveToStorage(oldKey, items.value);
+        loaded = loadFromStorage(newKey);
+      }
+
+      // Migrate từ key cũ (kinhmat_cart) nếu có và đang load guest
+      if (loaded.length === 0 && !newUserId) {
+        const legacy = loadFromStorage("kinhmat_cart");
+        if (legacy.length > 0) {
+          loaded = legacy;
+          try {
+            localStorage.removeItem("kinhmat_cart");
+          } catch (_) {}
+        }
+      }
+      items.value = loaded;
+    },
+    { immediate: true }
+  );
+
+  // Lưu giỏ khi items thay đổi
+  watch(
+    items,
+    (val) => {
+      const key = getCartKey(user.value?.id ?? null);
+      saveToStorage(key, val);
+    },
+    { deep: true }
+  );
+}
 
 const itemsCount = computed(() =>
   items.value.reduce((sum, i) => sum + (i.quantity || 0), 0)
@@ -68,10 +118,10 @@ const tax = computed(() =>
 
 /**
  * Composable quản lý giỏ hàng (chỉ cart, không làm thanh toán).
- * Lưu localStorage, hỗ trợ add / update quantity / remove.
- * Trả về cùng một state cho mọi component → badge giỏ hàng cập nhật realtime.
+ * Mỗi tài khoản có giỏ riêng, chuyển đổi tự động khi login/logout.
  */
 export function useCart() {
+  initCartSync();
   /**
    * Thêm vào giỏ (hoặc tăng quantity nếu đã có cùng productId + lensId).
    * @param {Object} payload
