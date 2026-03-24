@@ -264,6 +264,7 @@ export default {
     other: 'Other',
     contactDetails: 'Contact Details',
     emailAddress: 'Email Address',
+    emailReadOnlyHint: 'Email cannot be changed here',
     phoneNumber: 'Phone Number',
     verified: 'Verified',
     shoppingPreferences: 'Shopping Preferences',

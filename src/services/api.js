@@ -21,8 +21,10 @@ export function resolveAssetUrl(url) {
   if (!s) return ''
   if (s.startsWith('http://') || s.startsWith('https://')) return s
   if (s.startsWith('//')) return `https:${s}`
-  if (s.startsWith('/')) return `${getApiOrigin()}${s}`
-  return s
+  const origin = getApiOrigin()
+  if (s.startsWith('/')) return `${origin}${s}`
+  // Path tương đối (vd: avatars/xxx.jpg, storage/avatars/xxx.jpg) → thêm origin
+  return `${origin}/${s.replace(/^\//, '')}`
 }
 
 export const AUTH_TOKEN_KEY = 'auth_token'

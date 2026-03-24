@@ -104,19 +104,22 @@ function normalizeGender(val) {
 
 /**
  * PUT /api/v1/profile - Cập nhật thông tin cá nhân
- * Spec: name, email, phone, date_of_birth, gender (male|female|other), language?
- * @param {Object} data - { name, fullName?, email?, phone, date_of_birth?, dateOfBirth?, gender, language? }
+ * Spec: name, phone, date_of_birth, gender, language? (+ password, password_confirmation khi đổi MK)
+ * @param {Object} data - { name, fullName?, phone, date_of_birth?, dateOfBirth?, gender, language?, password?, password_confirmation? }
  * @returns {Promise<Object>}
  */
 export async function updateProfile(data) {
   const payload = {
     name: (data.name ?? data.fullName ?? '').trim() || null,
-    email: (data.email ?? '').trim() || null,
     phone: (data.phone ?? '').trim() || null,
     date_of_birth: (data.date_of_birth ?? data.dateOfBirth ?? '').trim() || null,
     gender: normalizeGender(data.gender),
   }
   if (data.language != null) payload.language = data.language
+  if (data.password) {
+    payload.password = data.password
+    payload.password_confirmation = data.password_confirmation ?? data.password
+  }
   return api.put('/profile', payload)
 }
 
@@ -135,6 +138,8 @@ export function extractAvatarUrl(res) {
     res.data?.avatar ??
     res.data?.url ??
     res.data?.avatar_url ??
+    res.data?.user?.avatar ??
+    res.data?.user?.avatar_url ??
     res.user?.avatar ??
     res.user?.avatar_url ??
     ''

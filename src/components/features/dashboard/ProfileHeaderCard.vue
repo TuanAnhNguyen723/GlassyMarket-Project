@@ -7,13 +7,14 @@
           :aria-label="`${user?.name || 'User'} profile picture`"
         >
           <img
-            v-if="user?.avatar && !avatarLoadError"
-            :src="user.avatar"
+            v-if="avatarSrc && !avatarLoadError"
+            :key="avatarSrc"
+            :src="avatarSrc"
             :alt="`${user?.name || 'User'}`"
             class="w-full h-full object-cover"
-            @error="avatarLoadError = true"
+            @error="onAvatarError"
           />
-          <span v-if="!user?.avatar || avatarLoadError" class="relative z-10">{{ userInitial }}</span>
+          <span v-if="!avatarSrc || avatarLoadError" class="relative z-10">{{ userInitial }}</span>
         </div>
         <button
           v-if="editable"
@@ -43,6 +44,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { resolveAssetUrl } from '@/services/api'
 
 useI18n()
 
@@ -60,10 +62,20 @@ const props = defineProps({
 defineEmits(['edit-photo', 'change-photo'])
 
 const avatarLoadError = ref(false)
+const avatarSrc = computed(() => {
+  const url = props.user?.avatar
+  if (!url || typeof url !== 'string') return ''
+  return resolveAssetUrl(url)
+})
+
 watch(
   () => props.user?.avatar,
   () => { avatarLoadError.value = false },
 )
+
+function onAvatarError() {
+  avatarLoadError.value = true
+}
 
 const userInitial = computed(() => {
   const name = props.user?.name

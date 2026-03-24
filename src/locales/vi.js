@@ -263,6 +263,7 @@ export default {
     other: 'Khác',
     contactDetails: 'Thông tin liên hệ',
     emailAddress: 'Địa chỉ email',
+    emailReadOnlyHint: 'Email không thể thay đổi tại đây',
     phoneNumber: 'Số điện thoại',
     verified: 'Đã xác minh',
     shoppingPreferences: 'Tùy chọn mua sắm',

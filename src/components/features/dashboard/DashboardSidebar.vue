@@ -60,16 +60,18 @@
 import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { resolveAssetUrl } from '@/services/api'
 
 const route = useRoute()
 const router = useRouter()
 const { user: authUser, logout } = useAuth()
 
 const userAvatarStyle = computed(() => {
-  if (authUser.value?.avatar) {
-    return { backgroundImage: `url('${authUser.value.avatar}')` }
-  }
-  return {}
+  const url = authUser.value?.avatar
+  if (!url) return {}
+  const resolved = resolveAssetUrl(url)
+  if (!resolved) return {}
+  return { backgroundImage: `url(${JSON.stringify(resolved)})` }
 })
 
 const authUserInitial = computed(() => {

@@ -60,7 +60,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { usePageLoading } from '@/composables/usePageLoading'
 import { useI18n } from 'vue-i18n'
 import DashboardSidebar from '../components/features/dashboard/DashboardSidebar.vue'
@@ -80,6 +80,7 @@ const { showNotification } = useNotification()
 const avatarInputRef = ref(null)
 const isSaving = ref(false)
 const isUploadingAvatar = ref(false)
+const pendingObjectUrl = ref(null)
 
 const user = ref({
   name: '',
@@ -188,9 +189,18 @@ async function onAvatarFileSelected(event) {
   }
 
   isUploadingAvatar.value = true
+  if (pendingObjectUrl.value) {
+    URL.revokeObjectURL(pendingObjectUrl.value)
+    pendingObjectUrl.value = null
+  }
   try {
     const res = await uploadAvatar(file)
-    const avatarUrl = res?.avatar ?? extractAvatarUrl(res)
+    let avatarUrl = res?.avatar ?? extractAvatarUrl(res)
+    // Fallback: nếu API không trả URL → dùng preview từ file (hiển thị ngay)
+    if (!avatarUrl) {
+      pendingObjectUrl.value = URL.createObjectURL(file)
+      avatarUrl = pendingObjectUrl.value
+    }
     if (avatarUrl) {
       user.value = { ...user.value, avatar: avatarUrl }
       invalidateProfile()
@@ -201,6 +211,25 @@ async function onAvatarFileSelected(event) {
         type: 'success',
         duration: 3000,
       })
+      // Nếu dùng object URL tạm: sau vài giây thử refetch profile để lấy URL thật từ server
+      if (pendingObjectUrl.value) {
+        const objUrl = pendingObjectUrl.value
+        setTimeout(async () => {
+          try {
+            const fresh = await getProfile()
+            const data = fresh?.data ?? fresh?.user ?? fresh
+            const realUrl = data ? extractAvatarUrl(data) : ''
+            if (realUrl) {
+              user.value = { ...user.value, avatar: realUrl }
+              setUser({ ...authUser.value, avatar: realUrl }, null)
+              URL.revokeObjectURL(objUrl)
+              pendingObjectUrl.value = null
+            }
+          } catch {
+            // Giữ object URL
+          }
+        }, 1500)
+      }
     } else {
       showNotification({
         message: t('profileSettings.errorUploadAvatar', 'Backend không trả URL ảnh'),
@@ -238,7 +267,6 @@ async function handleSave() {
   try {
     const payload = {
       name: formData.value.fullName?.trim() ?? '',
-      email: (formData.value.email ?? '').trim() || null,
       phone: (formData.value.phone ?? '').trim() || null,
       date_of_birth: (formData.value.dateOfBirth ?? '').trim() || null,
       gender: formData.value.gender || null,
@@ -249,7 +277,6 @@ async function handleSave() {
     const updated = {
       ...authUser.value,
       name: payload.name || authUser.value?.name,
-      email: payload.email ?? authUser.value?.email,
       phone: payload.phone ?? authUser.value?.phone,
       date_of_birth: payload.date_of_birth ?? authUser.value?.date_of_birth,
       gender: payload.gender ?? authUser.value?.gender,
@@ -289,5 +316,12 @@ async function handleSave() {
 
 onMounted(() => {
   loadProfile()
+})
+
+onBeforeUnmount(() => {
+  if (pendingObjectUrl.value) {
+    URL.revokeObjectURL(pendingObjectUrl.value)
+    pendingObjectUrl.value = null
+  }
 })
 </script>

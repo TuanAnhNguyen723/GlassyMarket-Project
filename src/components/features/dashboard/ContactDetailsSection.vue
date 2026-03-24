@@ -11,8 +11,10 @@
         </label>
         <input
           v-model="formData.email"
-          class="w-full rounded-full border-slate-200 dark:border-slate-800 dark:bg-slate-900 px-4 py-2.5 focus:ring-primary focus:border-primary transition-all"
+          class="w-full rounded-full border-slate-200 dark:border-slate-800 dark:bg-slate-900 px-4 py-2.5 focus:ring-primary focus:border-primary transition-all bg-slate-50 dark:bg-slate-800/50"
           type="email"
+          readonly
+          :title="$t('profileSettings.emailReadOnlyHint', 'Email không thể thay đổi tại đây')"
         />
       </div>
       <div class="flex flex-col gap-2">
