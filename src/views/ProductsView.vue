@@ -1,7 +1,8 @@
 <template>
-  <main class="max-w-[1440px] mx-auto px-6 lg:px-12 py-8">
+  <main class="relative max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-14 py-8 md:py-10">
+    <div class="pointer-events-none absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-primary/10 to-transparent rounded-3xl" />
     <!-- Breadcrumbs & Heading -->
-    <div class="mb-8">
+    <div class="mb-8 relative z-10">
       <Breadcrumbs
         :items="[
           { label: $t('products.home'), to: '/' },
@@ -10,27 +11,27 @@
         class-name="mb-4"
       />
 
-      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-5">
         <div>
           <h1
-            class="text-4xl font-black tracking-tight text-[#101918] dark:text-white mb-2"
+            class="text-3xl md:text-5xl font-black tracking-tight text-zinc-900 dark:text-zinc-100 mb-2"
           >
             {{ $t("products.title") }}
           </h1>
-          <p class="text-[#578e89] max-w-lg">
+          <p class="text-zinc-600 dark:text-zinc-300 max-w-2xl">
             {{ $t("products.subtitle") }}
           </p>
         </div>
 
         <div
-          class="flex items-center gap-4 bg-white dark:bg-gray-800 p-2 rounded-xl border border-[#e9f1f1] dark:border-gray-700"
+          class="flex items-center justify-between gap-3 bg-white dark:bg-zinc-900 p-2.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 min-w-[280px]"
         >
-          <span class="text-sm font-medium px-2">{{
+          <span class="text-sm font-semibold text-zinc-600 dark:text-zinc-300 px-2">{{
             $t("products.sortBy")
           }}</span>
           <select
             v-model="selectedSort"
-            class="bg-transparent border-none text-sm font-bold focus:ring-0 py-0 pr-8 cursor-pointer"
+            class="bg-zinc-100 dark:bg-zinc-800 border-none text-sm font-semibold rounded-xl focus:ring-0 py-2 pl-3 pr-8 cursor-pointer text-zinc-800 dark:text-zinc-100"
           >
             <option value="newest">{{ $t("products.newestArrivals") }}</option>
             <option value="priceAsc">
@@ -45,16 +46,16 @@
       </div>
     </div>
 
-    <div class="flex flex-col lg:flex-row gap-10">
+    <div class="flex flex-col lg:flex-row gap-6 lg:gap-8">
       <!-- Sidebar Filters -->
-      <aside class="w-full lg:w-72 flex-shrink-0">
+      <aside class="w-full lg:w-80 flex-shrink-0">
         <div
-          class="sticky top-28 space-y-8 bg-white dark:bg-gray-900 p-6 rounded-2xl border border-[#e9f1f1] dark:border-gray-800 shadow-sm"
+          class="sticky top-24 space-y-7 bg-white/95 dark:bg-zinc-900/90 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-[0_20px_45px_-40px_rgba(0,0,0,0.8)]"
         >
           <div class="flex items-center justify-between">
-            <h3 class="font-bold text-lg">{{ $t("products.filters") }}</h3>
+            <h3 class="font-extrabold text-lg text-zinc-900 dark:text-zinc-100">{{ $t("products.filters") }}</h3>
             <button
-              class="text-primary text-xs font-bold uppercase tracking-widest hover:underline"
+              class="text-xs font-bold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
               type="button"
               @click="clearAllFilters"
             >
@@ -65,18 +66,18 @@
           <!-- Categories Filter -->
           <div class="space-y-4">
             <p
-              class="text-xs font-bold text-[#578e89] uppercase tracking-widest"
+              class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-[0.18em]"
             >
               {{ $t("products.type") }}
             </p>
             <div class="flex flex-wrap gap-2">
               <button
-                class="px-4 py-2 rounded-lg text-sm font-bold"
+                class="px-4 py-2 rounded-xl text-sm font-semibold border"
                 type="button"
                 :class="
                   selectedCategoryId === null
-                    ? 'bg-primary text-white'
-                    : 'bg-[#e9f1f1] dark:bg-gray-800 hover:bg-primary/10 transition-colors'
+                    ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-zinc-900 dark:border-zinc-100'
+                    : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors'
                 "
                 @click="selectedCategoryId = null"
               >
@@ -85,12 +86,12 @@
               <button
                 v-for="cat in categories"
                 :key="cat.id"
-                class="px-4 py-2 rounded-lg text-sm font-medium"
+                class="px-4 py-2 rounded-xl text-sm font-medium border"
                 type="button"
                 :class="
                   selectedCategoryId === cat.id
-                    ? 'bg-primary text-white font-bold'
-                    : 'bg-[#e9f1f1] dark:bg-gray-800 hover:bg-primary/10 transition-colors'
+                    ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-semibold border-zinc-900 dark:border-zinc-100'
+                    : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors'
                 "
                 @click="selectedCategoryId = cat.id"
               >
@@ -103,16 +104,16 @@
           <div class="space-y-4">
             <div class="flex justify-between items-center">
               <p
-                class="text-xs font-bold text-[#578e89] uppercase tracking-widest"
+                class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-[0.18em]"
               >
                 {{ $t("products.priceRange") }}
               </p>
-              <span class="text-sm font-bold text-primary">{{
+              <span class="text-sm font-bold text-zinc-900 dark:text-zinc-100">{{
                 priceRangeLabel
               }}</span>
             </div>
             <input
-              class="w-full accent-primary h-1.5 bg-[#e9f1f1] dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+              class="w-full accent-zinc-900 dark:accent-zinc-100 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer"
               type="range"
               :min="priceMin"
               :max="priceMaxLimit"
@@ -125,7 +126,7 @@
           <!-- Frame Shape (single select) -->
           <div class="space-y-3">
             <p
-              class="text-xs font-bold text-[#578e89] uppercase tracking-widest"
+              class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-[0.18em]"
             >
               {{ $t("products.frameShape") }}
             </p>
@@ -134,12 +135,12 @@
                 <input
                   v-model="selectedFrameShape"
                   :value="null"
-                  class="rounded-full border-gray-300 text-primary focus:ring-primary"
+                  class="rounded-full border-gray-300 text-zinc-900 focus:ring-zinc-900 dark:text-zinc-100 dark:focus:ring-zinc-100"
                   type="radio"
                   name="frame-shape"
                 />
                 <span
-                  class="text-sm group-hover:text-primary transition-colors"
+                  class="text-sm text-zinc-700 dark:text-zinc-200 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors"
                   >{{ $t("products.all") }}</span
                 >
               </label>
@@ -152,12 +153,12 @@
                 <input
                   v-model="selectedFrameShape"
                   :value="shape"
-                  class="rounded-full border-gray-300 text-primary focus:ring-primary"
+                  class="rounded-full border-gray-300 text-zinc-900 focus:ring-zinc-900 dark:text-zinc-100 dark:focus:ring-zinc-100"
                   type="radio"
                   name="frame-shape"
                 />
                 <span
-                  class="text-sm group-hover:text-primary transition-colors"
+                  class="text-sm text-zinc-700 dark:text-zinc-200 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors"
                   >{{ frameShapeLabel(shape) }}</span
                 >
               </label>
@@ -166,16 +167,16 @@
 
           <!-- Promotion Card -->
           <div
-            class="mt-8 bg-primary/10 dark:bg-primary/5 rounded-xl p-4 border border-primary/20"
+            class="mt-2 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60"
           >
-            <p class="text-sm font-bold text-primary mb-1">
+            <p class="text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-1">
               {{ $t("products.freeEyeExam") }}
             </p>
-            <p class="text-xs text-[#578e89] leading-relaxed">
+            <p class="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
               {{ $t("products.freeEyeExamDesc") }}
             </p>
             <button
-              class="mt-3 w-full py-2 bg-primary text-white text-xs font-bold rounded-lg hover:brightness-105 transition-all"
+              class="mt-3 w-full py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-bold rounded-xl hover:opacity-90 transition-all"
               type="button"
             >
               {{ $t("products.bookNow") }}
@@ -186,10 +187,15 @@
 
       <!-- Product Grid -->
       <section class="flex-1">
+        <div class="mb-5 flex items-center justify-between">
+          <p class="text-sm text-zinc-500 dark:text-zinc-400">
+            {{ sortedProducts.length }} sản phẩm phù hợp
+          </p>
+        </div>
         <!-- Error Message -->
         <div
           v-if="error"
-          class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl"
+          class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl"
         >
           <p class="text-red-600 dark:text-red-400 text-sm font-medium">
             {{ error }}
@@ -199,19 +205,19 @@
         <!-- Loading State -->
         <div
           v-if="isLoading && products.length === 0"
-          class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8"
+          class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5"
         >
           <div
             v-for="i in 6"
             :key="i"
-            class="bg-gray-200 dark:bg-gray-700 rounded-2xl aspect-[4/5] animate-pulse"
+            class="bg-gray-200 dark:bg-gray-700 rounded-3xl aspect-[4/5] animate-pulse"
           ></div>
         </div>
 
         <!-- Products Grid -->
         <div
           v-else-if="sortedProducts.length > 0"
-          class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8"
+          class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5"
         >
           <ProductCard
             v-for="product in pagedProducts"
@@ -223,7 +229,7 @@
         </div>
 
         <!-- Empty State -->
-        <div v-else-if="!isLoading && !error" class="text-center py-12">
+        <div v-else-if="!isLoading && !error" class="text-center py-14 rounded-3xl border border-dashed border-zinc-300 dark:border-zinc-700">
           <p class="text-gray-500 dark:text-gray-400 text-lg">
             {{ "Không có sản phẩm nào" }}
           </p>
@@ -244,7 +250,6 @@
 <script setup>
 import { ref, onMounted, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { RouterLink } from "vue-router";
 import Breadcrumbs from "@/components/common/Breadcrumbs.vue";
 import ProductCard from "@/components/features/products/ProductCard.vue";
 import Pagination from "@/components/common/Pagination.vue";

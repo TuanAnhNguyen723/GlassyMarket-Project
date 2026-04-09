@@ -1,14 +1,24 @@
 <template>
-  <div class="min-h-screen w-full overflow-x-hidden">
+  <div class="min-h-screen w-full overflow-x-hidden relative">
+    <div class="pointer-events-none absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-primary/10 to-transparent rounded-3xl" />
     <div class="max-w-[1440px] mx-auto">
-      <div class="flex w-full gap-8">
+      <div class="flex w-full gap-6 lg:gap-8">
         <!-- Side Navigation -->
-        <div class="px-6 lg:px-20">
+        <div class="px-5 sm:px-8 lg:px-14 py-8">
           <DashboardSidebar />
         </div>
 
         <!-- Content Area -->
-        <main class="flex-1 flex flex-col overflow-y-auto px-6 py-10">
+        <main class="flex-1 flex flex-col overflow-y-auto pr-5 sm:pr-8 lg:pr-14 py-8 lg:py-10">
+          <div class="mb-4">
+            <h1 class="text-3xl lg:text-4xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">
+              {{ $t('profileSettings.title') }}
+            </h1>
+            <p class="text-zinc-500 dark:text-zinc-400 text-sm mt-1">
+              {{ $t('profileSettings.subtitle') }}
+            </p>
+          </div>
+
           <!-- Profile Header Card -->
           <ProfileHeaderCard
             :user="user"
@@ -27,17 +37,21 @@
           />
 
           <!-- Personal Information Section -->
-          <PersonalInformationSection v-model:form-data="formData" />
+          <div class="mt-2 rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 p-5">
+            <PersonalInformationSection v-model:form-data="formData" />
+          </div>
 
-          <div class="h-px bg-slate-200 dark:bg-slate-800 w-full my-8"></div>
+          <div class="h-px bg-zinc-200 dark:bg-zinc-800 w-full my-8"></div>
 
           <!-- Contact Details Section -->
-          <ContactDetailsSection v-model:form-data="formData" />
+          <div class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 p-5">
+            <ContactDetailsSection v-model:form-data="formData" />
+          </div>
 
           <!-- Footer Actions -->
           <div class="flex items-center justify-end gap-4 py-6 mt-8">
             <button
-              class="px-8 py-3 rounded-full text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all"
+              class="px-6 py-3 rounded-xl text-sm font-bold text-zinc-600 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
               type="button"
               :disabled="isSaving"
               @click="handleDiscard"
@@ -45,7 +59,7 @@
               {{ $t('profileSettings.discardChanges') }}
             </button>
             <button
-              class="px-10 py-3 rounded-full bg-primary text-white font-bold text-sm shadow-md hover:bg-primary/90 transition-all disabled:opacity-60"
+              class="px-8 py-3 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-sm hover:opacity-90 transition-all disabled:opacity-60"
               type="button"
               :disabled="isSaving"
               @click="handleSave"

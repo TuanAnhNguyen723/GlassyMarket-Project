@@ -3,16 +3,43 @@ import api, { resolveAssetUrl } from './api'
 /** Lấy URL ảnh từ order item (nhiều format backend có thể trả) */
 function getOrderItemImageUrl(firstItem) {
   if (!firstItem) return ''
-  const product = firstItem.product ?? firstItem
-  const raw =
-    firstItem.product_image_url ??
-    firstItem.product_image ??
-    firstItem.image_url ??
-    firstItem.image ??
-    product?.primary_image ??
-    product?.image_url ??
-    product?.image
-  if (raw && typeof raw === 'string') return resolveAssetUrl(raw)
+  const product =
+    firstItem.product ??
+    firstItem.product_data ??
+    firstItem.product_snapshot ??
+    firstItem
+
+  const candidates = [
+    firstItem.product_image_url,
+    firstItem.product_image,
+    firstItem.image_url,
+    firstItem.image,
+    firstItem.thumbnail,
+    firstItem.photo,
+    firstItem?.product?.primary_image,
+    firstItem?.product?.image_url,
+    firstItem?.product?.image,
+    firstItem?.product_snapshot?.primary_image,
+    firstItem?.product_snapshot?.image_url,
+    firstItem?.product_snapshot?.image,
+    product?.primary_image,
+    product?.image_url,
+    product?.image,
+  ]
+
+  for (const raw of candidates) {
+    if (!raw) continue
+    if (typeof raw === 'string' && raw.trim()) {
+      return resolveAssetUrl(raw)
+    }
+    if (typeof raw === 'object') {
+      const url = raw.url ?? raw.image_url ?? raw.path ?? ''
+      if (typeof url === 'string' && url.trim()) {
+        return resolveAssetUrl(url)
+      }
+    }
+  }
+
   if (Array.isArray(product?.images) && product.images.length > 0) {
     const img = product.images.find((i) => i?.is_primary) ?? product.images[0]
     const url = img?.image_url ?? img?.url ?? img?.image
@@ -38,12 +65,61 @@ export const ORDER_PROGRESS = {
 }
 
 /**
+ * Chuẩn hóa status từ backend về tập key nội bộ:
+ * pending | confirmed | processing | shipped | delivered | cancelled
+ */
+export function normalizeOrderStatus(status) {
+  const raw = String(status || '').trim().toLowerCase()
+  if (!raw) return 'pending'
+
+  const normalized = raw
+    .replace(/[\s-]+/g, '_')
+    .replace(/[^\w]/g, '')
+
+  const aliasMap = {
+    pending: 'pending',
+    waiting: 'pending',
+    queued: 'pending',
+    new: 'pending',
+
+    confirmed: 'confirmed',
+    complete: 'confirmed',
+    completed: 'confirmed',
+    approved: 'confirmed',
+    accepted: 'confirmed',
+
+    processing: 'processing',
+    preparing: 'processing',
+    packing: 'processing',
+    in_progress: 'processing',
+
+    shipped: 'shipped',
+    in_transit: 'shipped',
+    on_delivery: 'shipped',
+    delivering: 'shipped',
+    out_for_delivery: 'shipped',
+
+    delivered: 'delivered',
+    done: 'delivered',
+    success: 'delivered',
+
+    cancelled: 'cancelled',
+    canceled: 'cancelled',
+    reject: 'cancelled',
+    rejected: 'cancelled',
+    failed: 'cancelled',
+  }
+
+  return aliasMap[normalized] || 'pending'
+}
+
+/**
  * Lấy % tiến độ theo status (do backend trả về).
  * @param {string} status
  * @returns {number}
  */
 export function getOrderProgress(status) {
-  const key = (status || '').toLowerCase()
+  const key = normalizeOrderStatus(status)
   return ORDER_PROGRESS[key] ?? 0
 }
 
@@ -61,7 +137,7 @@ export const ORDER_STATUS_KEYS = {
 }
 
 export function getOrderStatusKey(status) {
-  const key = (status || '').toLowerCase()
+  const key = normalizeOrderStatus(status)
   return ORDER_STATUS_KEYS[key] || 'orderStatusPending'
 }
 
@@ -214,8 +290,15 @@ export function formatOrderDate(dateStr) {
  * @param {Object} order - item từ data[]
  */
 export function mapOrderToCard(order) {
-  const firstItem = order.items?.[0]
-  const status = (order.status || 'pending').toLowerCase()
+  const orderItems = Array.isArray(order.items)
+    ? order.items
+    : Array.isArray(order.order_items)
+      ? order.order_items
+      : Array.isArray(order.lines)
+        ? order.lines
+        : []
+  const firstItem = orderItems[0]
+  const status = normalizeOrderStatus(order.status || 'pending')
   const customer = order.customer ?? null
   const statusDisplay = status.charAt(0).toUpperCase() + status.slice(1)
   return {
@@ -223,6 +306,7 @@ export function mapOrderToCard(order) {
     orderNumber: order.order_number || '',
     statusDisplay,
     productName: firstItem?.product_name || firstItem?.product?.name || '—',
+    productId: firstItem?.product_id ?? firstItem?.product?.id ?? null,
     image: getOrderItemImageUrl(firstItem),
     status,
     statusKey: getOrderStatusKey(status),

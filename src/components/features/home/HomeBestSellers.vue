@@ -1,23 +1,27 @@
 <template>
-  <section class="flex items-end justify-between mb-8">
+  <section class="mb-6 mt-2 flex items-end justify-between gap-6">
     <div>
-      <h2 class="text-3xl font-bold tracking-tight">{{ title }}</h2>
-      <p class="text-zinc-500">{{ subtitle }}</p>
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400 mb-2">Featured Picks</p>
+      <h2 class="text-3xl md:text-4xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">{{ title }}</h2>
+      <p class="text-zinc-500 dark:text-zinc-400 mt-2 max-w-2xl">{{ subtitle }}</p>
     </div>
-    <RouterLink class="text-primary font-bold text-sm flex items-center gap-1 hover:underline" :to="viewAllTo">
+    <RouterLink
+      class="hidden md:inline-flex items-center gap-1.5 border border-zinc-300 dark:border-zinc-700 px-4 py-2 rounded-xl text-sm font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+      :to="viewAllTo"
+    >
       {{ viewAllText }}
-      <span class="material-symbols-outlined text-xs">open_in_new</span>
+      <span class="material-symbols-outlined text-base">arrow_outward</span>
     </RouterLink>
   </section>
 
-  <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-24">
+  <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pb-16">
     <article
       v-for="p in products"
       :key="p.id ?? p.name"
-      class="product-card group cursor-pointer"
+      class="group cursor-pointer rounded-3xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 hover:shadow-[0_24px_45px_-35px_rgba(0,0,0,0.55)] hover:-translate-y-1 transition-all"
       @click="goToDetail(p)"
     >
-      <div class="relative aspect-square rounded-2xl overflow-hidden bg-zinc-50 dark:bg-zinc-900 mb-4">
+      <div class="relative aspect-square rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 mb-4">
         <div
           class="product-image w-full h-full bg-cover bg-center"
           :style="{ backgroundImage: `url('${p.image}')` }"
@@ -25,32 +29,43 @@
         />
 
         <button
-          class="absolute bottom-4 right-4 size-10 bg-white dark:bg-zinc-800 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg translate-y-2 group-hover:translate-y-0"
+          class="absolute bottom-3 right-3 h-9 px-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg translate-y-2 group-hover:translate-y-0"
           type="button"
           title="Thêm vào giỏ"
           @click.stop="$emit('addToCart', p)"
         >
-          <span class="material-symbols-outlined text-xl">add_shopping_cart</span>
+          <span class="material-symbols-outlined text-[18px] mr-1">add_shopping_cart</span>
+          <span class="text-xs font-semibold">Thêm</span>
         </button>
 
         <div
           v-if="p.badge"
-          class="absolute top-4 left-4 px-3 py-1 backdrop-blur-sm text-[10px] font-bold rounded-full uppercase tracking-widest"
-          :class="p.badge === 'New' ? 'bg-primary text-white' : 'bg-white/90 dark:bg-zinc-800/90'"
+          class="absolute top-3 left-3 px-3 py-1 bg-black/70 text-white backdrop-blur-sm text-[10px] font-bold rounded-full uppercase tracking-widest"
         >
           {{ p.badge }}
         </div>
       </div>
 
-      <div class="flex justify-between items-start gap-4">
-        <div>
-          <h4 class="font-bold text-[15px] leading-snug">{{ p.name }}</h4>
-          <p class="text-zinc-500 text-xs italic mt-0.5">{{ p.subtitle }}</p>
+      <div class="space-y-2">
+        <h4 class="font-bold text-[15px] leading-snug text-zinc-900 dark:text-zinc-100 min-h-[2.7rem]">{{ p.name }}</h4>
+        <p class="text-zinc-500 dark:text-zinc-400 text-xs italic">{{ p.subtitle || 'Thiết kế thanh lịch, đeo nhẹ cả ngày' }}</p>
+        <div class="flex items-center justify-between pt-1">
+          <p class="font-extrabold text-zinc-900 dark:text-zinc-100 text-base whitespace-nowrap">{{ p.price }}</p>
+          <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded-full">Còn hàng</span>
         </div>
-        <p class="font-extrabold text-primary text-sm whitespace-nowrap">{{ p.price }}</p>
       </div>
     </article>
   </section>
+
+  <div class="md:hidden pb-10">
+    <RouterLink
+      class="inline-flex items-center gap-1.5 border border-zinc-300 dark:border-zinc-700 px-4 py-2 rounded-xl text-sm font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+      :to="viewAllTo"
+    >
+      {{ viewAllText }}
+      <span class="material-symbols-outlined text-base">arrow_outward</span>
+    </RouterLink>
+  </div>
 </template>
 
 <script setup>

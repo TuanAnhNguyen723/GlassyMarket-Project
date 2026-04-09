@@ -1,14 +1,17 @@
 <template>
-  <main class="max-w-[1440px] mx-auto px-6 lg:px-20">
-    <HomeHero :image-url="heroImage" image-alt="Young model wearing stylish premium blue light glasses" />
-    <HomeBadges :badges="badges" />
-    <HomeBestSellers
-      title="Sản phẩm nổi bật"
-      subtitle="Những mẫu được chọn lọc dành cho bạn"
-      :products="featuredProducts"
-      @add-to-cart="onAddToCart"
-    />
-    <HomePromoBanner />
+  <main class="relative overflow-hidden">
+    <div class="pointer-events-none absolute inset-x-0 -top-44 h-[420px] bg-gradient-to-b from-primary/15 to-transparent" />
+    <div class="max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-14 pb-20">
+      <HomeHero :image-url="heroImage" image-alt="Young model wearing stylish premium blue light glasses" />
+      <HomeBadges :badges="badges" />
+      <HomeBestSellers
+        title="Sản phẩm nổi bật"
+        subtitle="Những thiết kế nổi bật với độ hoàn thiện cao cho phong cách thường ngày."
+        :products="featuredProducts"
+        @add-to-cart="onAddToCart"
+      />
+      <HomePromoBanner />
+    </div>
   </main>
 </template>
 
@@ -22,12 +25,12 @@ import productService from '@/services/productService.js'
 import { useCart } from '@/composables/useCart.js'
 
 const heroImage =
-  'https://lh3.googleusercontent.com/aida-public/AB6AXuC78XrlIUgt9nkWLNt3NfDIWgy2lr6lY6gpVcH_rN0j1WahOSQOE6R34uxsqJWjjo2j81tqBSKDn9nLpmXN1PXY4GfpXP55N4Wqh3fFFDSHX274RRd-rBbLdlQvlJ45q-vTmZjJ84oqgq_FjcXEvZttAiDGmHlyTL71VX275kx8BrcXPqGz8DDTh1eljQ1Z0JJBsJtspHvJxVOmXM74vJFm0-9Vvg9cDwAxTfuRJKMhUQFGc31Ejf6Xbr8jOunHVmJ2f6fsyZ5VUuY1'
+  'https://images.unsplash.com/photo-1485875437342-9b39470b3d95?auto=format&fit=crop&w=1400&q=80'
 
 const badges = [
-  { icon: 'local_shipping', title: 'Free Shipping', subtitle: 'On all orders over $150' },
-  { icon: 'replay', title: '30-Day Returns', subtitle: 'Hassle-free exchange policy' },
-  { icon: 'ar_on_you', title: 'Virtual Try-on', subtitle: 'See how they look on you' },
+  { icon: 'local_shipping', title: 'Giao nhanh toàn quốc', subtitle: 'Miễn phí vận chuyển cho đơn từ 2.000.000đ' },
+  { icon: 'verified', title: 'Bảo hành chính hãng', subtitle: 'Bảo hành 12 tháng cho gọng và tròng tiêu chuẩn' },
+  { icon: 'ar_on_you', title: 'Thử kính trực tuyến', subtitle: 'Xem trước kiểu dáng phù hợp ngay trên thiết bị của bạn' },
 ]
 
 const cart = useCart()

@@ -1,18 +1,18 @@
 <template>
-  <aside class="flex w-72 flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-6 shrink-0">
+  <aside class="hidden lg:flex w-72 flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shrink-0 shadow-[0_20px_45px_-38px_rgba(0,0,0,0.8)]">
     <div class="flex flex-col h-full justify-between">
       <div class="flex flex-col gap-8">
         <!-- Profile Section -->
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 p-2 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700">
           <div
-            class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-12 ring-2 ring-primary/20 flex items-center justify-center bg-primary/20 text-primary text-lg font-bold"
+            class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-12 ring-2 ring-zinc-300 dark:ring-zinc-600 flex items-center justify-center bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-100 text-lg font-bold"
             :style="userAvatarStyle"
             :aria-label="`Portrait of ${authUser?.name}`"
           >
             <span v-if="!authUser?.avatar">{{ authUserInitial }}</span>
           </div>
           <div class="flex flex-col">
-            <h1 class="text-[#0d171b] dark:text-white text-base font-bold leading-none">{{ authUser?.name || '—' }}</h1>
+            <h1 class="text-zinc-900 dark:text-white text-base font-bold leading-none">{{ authUser?.name || '—' }}</h1>
           </div>
         </div>
 
@@ -25,8 +25,8 @@
             class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors"
             :class="
               isActive(item.path)
-                ? 'bg-primary/10 text-primary'
-                : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'
+                ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900'
+                : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
             "
           >
             <span
@@ -44,7 +44,7 @@
 
       <div class="flex flex-col gap-1 mt-auto">
         <button
-          class="flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+          class="flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
           type="button"
           @click="handleLogout"
         >

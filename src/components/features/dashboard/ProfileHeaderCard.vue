@@ -1,9 +1,9 @@
 <template>
-  <div class="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-100 dark:border-slate-800">
+  <div class="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-[0_24px_45px_-38px_rgba(0,0,0,0.8)] border border-zinc-200 dark:border-zinc-800">
     <div class="flex flex-col sm:flex-row items-center gap-6">
       <div class="relative">
         <div
-          class="aspect-square rounded-full size-24 border-4 border-slate-50 dark:border-slate-800 flex items-center justify-center bg-primary/10 text-primary text-2xl font-bold overflow-hidden"
+          class="aspect-square rounded-full size-24 border-4 border-zinc-100 dark:border-zinc-800 flex items-center justify-center bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-100 text-2xl font-bold overflow-hidden"
           :aria-label="`${user?.name || 'User'} profile picture`"
         >
           <img
@@ -26,12 +26,13 @@
         </button>
       </div>
       <div class="flex-1 text-center sm:text-left">
-        <h3 class="text-xl font-bold text-slate-900 dark:text-white">{{ user?.name || '—' }}</h3>
-        <p v-if="user?.email" class="text-slate-400 dark:text-slate-500 text-xs mt-1">{{ user.email }}</p>
+        <p class="text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400 font-bold mb-1">Tài khoản của bạn</p>
+        <h3 class="text-2xl font-black tracking-tight text-zinc-900 dark:text-white">{{ user?.name || '—' }}</h3>
+        <p v-if="user?.email" class="text-zinc-500 dark:text-zinc-400 text-sm mt-1">{{ user.email }}</p>
       </div>
       <button
         v-if="editable"
-        class="bg-primary/10 text-primary hover:bg-primary/20 px-6 py-2 rounded-full font-bold text-sm transition-all"
+        class="bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 px-5 py-2.5 rounded-xl font-bold text-sm transition-all"
         type="button"
         @click="$emit('change-photo')"
       >

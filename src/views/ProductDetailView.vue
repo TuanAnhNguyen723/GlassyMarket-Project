@@ -1,19 +1,29 @@
 <template>
-  <main class="max-w-[1440px] mx-auto w-full px-6 lg:px-20 py-8 lg:py-12">
+  <main class="relative max-w-[1440px] mx-auto w-full px-5 sm:px-8 lg:px-14 py-8 lg:py-10">
+    <div class="pointer-events-none absolute inset-x-0 top-0 h-52 bg-gradient-to-b from-primary/10 to-transparent rounded-3xl" />
     <!-- Breadcrumbs -->
     <Breadcrumbs
       :items="[
-        { label: 'Home', to: '/' },
-        { label: 'Eyewear', to: '/products' },
+        { label: 'Trang chủ', to: '/' },
+        { label: 'Sản phẩm', to: '/products' },
         { label: product.name },
       ]"
     />
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+    <div v-if="error" class="mt-6 rounded-2xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-red-600 dark:text-red-300 text-sm font-medium">
+      {{ error }}
+    </div>
+
+    <div v-if="isLoading" class="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div class="lg:col-span-7 rounded-3xl bg-zinc-200 dark:bg-zinc-800 aspect-[4/3] animate-pulse" />
+      <div class="lg:col-span-5 rounded-3xl bg-zinc-200 dark:bg-zinc-800 min-h-[420px] animate-pulse" />
+    </div>
+
+    <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start mt-4">
       <!-- Left: Gallery Side -->
       <div class="lg:col-span-7 flex flex-col gap-5">
         <div
-          class="relative group aspect-[4/5] max-h-[420px] lg:max-h-[480px] rounded-xl overflow-hidden bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 shadow-sm"
+          class="relative group aspect-[4/5] max-h-[430px] lg:max-h-[540px] rounded-3xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800"
         >
           <div
             class="w-full h-full bg-center bg-no-repeat bg-cover transition-transform duration-700 group-hover:scale-105"
@@ -24,15 +34,15 @@
           ></div>
         </div>
         <!-- Thumbnails -->
-        <div class="grid grid-cols-4 gap-4">
+        <div class="grid grid-cols-4 gap-3">
           <div
             v-for="(img, idx) in product.images"
             :key="idx"
-            class="aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-all bg-white dark:bg-slate-800"
+            class="aspect-square rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition-all bg-zinc-100 dark:bg-zinc-800"
             :class="
               selectedImage === img.url
-                ? 'border-2 border-primary'
-                : 'border border-slate-200 dark:border-slate-800'
+                ? 'border-2 border-zinc-900 dark:border-zinc-100'
+                : 'border border-zinc-200 dark:border-zinc-700'
             "
             @click="handleSelectImage(img)"
           >
@@ -47,19 +57,20 @@
 
       <!-- Right: Product Detail Side -->
       <div
-        class="lg:col-span-5 flex flex-col gap-7 bg-white dark:bg-slate-900/50 p-6 lg:p-8 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 ring-1 ring-slate-100 dark:ring-slate-800"
+        class="lg:col-span-5 flex flex-col gap-7 bg-white dark:bg-zinc-900/90 p-5 lg:p-7 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-[0_24px_45px_-38px_rgba(0,0,0,0.75)]"
       >
         <div>
+          <p class="text-xs uppercase tracking-[0.18em] font-bold text-zinc-500 dark:text-zinc-400 mb-2">Chi tiết sản phẩm</p>
           <div
             class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4 mb-2"
           >
             <h1
-              class="text-lg md:text-xl font-semibold tracking-tight text-slate-900 dark:text-white flex-1 min-w-0"
+              class="text-xl md:text-2xl font-black tracking-tight text-zinc-900 dark:text-white flex-1 min-w-0"
             >
               {{ product.name }}
             </h1>
             <span
-              class="text-lg md:text-xl font-extrabold text-red-600 whitespace-nowrap flex-shrink-0"
+              class="text-xl md:text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 whitespace-nowrap flex-shrink-0"
             >
               {{ formatPrice(finalPrice) }}
             </span>
@@ -69,17 +80,15 @@
             :reviews="product.reviews"
             size="md"
             :show-reviews-count="false"
-            :reviews-text="`${product.reviews} reviews`"
+            :reviews-text="`${product.reviews} đánh giá`"
             text-color="amber"
           />
         </div>
-        <div class="h-px bg-slate-100 dark:bg-slate-800"></div>
+        <div class="h-px bg-zinc-200 dark:bg-zinc-800"></div>
 
         <!-- Màu sắc -->
         <div v-if="product.colors && product.colors.length" class="space-y-3">
-          <h3
-            class="text-sm font-bold uppercase tracking-widest text-slate-400"
-          >
+          <h3 class="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">
             Màu sắc
           </h3>
           <div class="flex flex-wrap gap-2">
@@ -87,9 +96,9 @@
               v-for="(color, index) in product.colors"
               :key="color.productColorId ?? color.id ?? index"
               type="button"
-              class="w-8 h-8 rounded-full border-2 border-white dark:border-slate-800 shadow-sm ring-1 ring-slate-300 dark:ring-slate-600 transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              class="w-8 h-8 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm ring-1 ring-zinc-300 dark:ring-zinc-600 transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 focus:ring-offset-2"
               :class="{
-                'ring-2 ring-primary ring-offset-2 ring-offset-white dark:ring-offset-slate-900':
+                'ring-2 ring-zinc-900 dark:ring-zinc-100 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900':
                   isColorSelected(color),
               }"
               :style="{ backgroundColor: color.hex || '#9ca3af' }"
@@ -102,18 +111,14 @@
 
         <!-- Frame Details -->
         <div class="space-y-3">
-          <h3
-            class="text-sm font-bold uppercase tracking-widest text-slate-400"
-          >
-            Frame Details
-          </h3>
+          <h3 class="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">Thông số gọng</h3>
           <div class="grid grid-cols-2 gap-3">
             <div
               v-for="detail in product.frameDetails"
               :key="detail.label"
-              class="flex flex-col gap-1 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700"
+              class="flex flex-col gap-1 p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700"
             >
-              <span class="text-xs text-slate-500">{{ detail.label }}</span>
+              <span class="text-xs text-zinc-500 dark:text-zinc-400">{{ detail.label }}</span>
               <span class="text-xs md:text-sm font-medium">{{
                 detail.value
               }}</span>
@@ -123,11 +128,7 @@
 
         <!-- Lens Options -->
         <div v-if="activeLensOptions.length" class="space-y-3">
-          <h3
-            class="text-xs font-bold uppercase tracking-widest text-slate-400"
-          >
-            Lens Options
-          </h3>
+          <h3 class="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">Tùy chọn tròng kính</h3>
           <div class="flex flex-col gap-2.5">
             <label
               v-for="option in activeLensOptions"
@@ -135,8 +136,8 @@
               class="group relative flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-all text-xs md:text-sm"
               :class="
                 selectedLens === option.id
-                  ? 'border border-primary bg-primary/5'
-                  : 'border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700'
+                  ? 'border border-zinc-900 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800'
+                  : 'border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
               "
             >
               <div class="flex items-center gap-2.5">
@@ -144,18 +145,18 @@
                   class="w-3.5 h-3.5 rounded-full"
                   :class="
                     selectedLens === option.id
-                      ? 'border-[3px] border-primary bg-white'
-                      : 'border border-slate-300'
+                      ? 'border-[3px] border-zinc-900 dark:border-zinc-100 bg-white dark:bg-zinc-900'
+                      : 'border border-zinc-300 dark:border-zinc-600'
                   "
                 ></div>
                 <span class="font-medium">{{ option.name }}</span>
               </div>
               <span
                 v-if="Number(option.priceAdjustment || 0) === 0"
-                class="text-[11px] font-semibold bg-primary text-white px-2 py-0.5 rounded"
-                >Included</span
+                class="text-[11px] font-semibold bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 px-2 py-0.5 rounded"
+                >Bao gồm</span
               >
-              <span v-else class="text-xs md:text-sm text-slate-500">
+              <span v-else class="text-xs md:text-sm text-zinc-500 dark:text-zinc-400">
                 {{ option.priceAdjustment > 0 ? "+" : ""
                 }}{{ formatPrice(option.priceAdjustment) }}
               </span>
@@ -173,54 +174,54 @@
         <!-- CTA Actions -->
         <div class="flex flex-col gap-2.5 mt-3">
           <button
-            class="w-full bg-primary text-white py-3.5 rounded-lg font-semibold text-sm md:text-base hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-md shadow-primary/20"
+            class="w-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 py-3.5 rounded-xl font-semibold text-sm md:text-base hover:opacity-90 transition-all flex items-center justify-center gap-2"
             type="button"
             @click="addToCart"
           >
             <span class="material-symbols-outlined text-base md:text-lg"
               >add_shopping_cart</span
             >
-            Add to Cart
+            Thêm vào giỏ hàng
           </button>
-          <p class="text-center text-xs text-slate-400 mt-2">
-            Hurry! Only {{ product.stock }} pairs left in stock.
+          <p class="text-center text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+            Còn khoảng {{ product.stock }} sản phẩm sẵn kho.
           </p>
         </div>
 
         <!-- Delivery & Info -->
         <div
-          class="mt-4 pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-4"
+          class="mt-2 pt-6 border-t border-zinc-200 dark:border-zinc-800 flex flex-col gap-4"
         >
           <div class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-primary"
+            <span class="material-symbols-outlined text-zinc-900 dark:text-zinc-100"
               >local_shipping</span
             >
             <div>
-              <h4 class="text-sm font-semibold">Free Express Shipping</h4>
-              <p class="text-xs text-slate-500">
-                Arrives between Oct 24 - Oct 26
+              <h4 class="text-sm font-semibold">Giao nhanh miễn phí</h4>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                Dự kiến nhận hàng trong 2-3 ngày làm việc
               </p>
             </div>
           </div>
           <div class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-primary"
+            <span class="material-symbols-outlined text-zinc-900 dark:text-zinc-100"
               >verified_user</span
             >
             <div>
-              <h4 class="text-sm font-semibold">2-Year Lumina Warranty</h4>
-              <p class="text-xs text-slate-500">
-                Complete protection for your premium eyewear
+              <h4 class="text-sm font-semibold">Bảo hành chính hãng 12 tháng</h4>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                Hỗ trợ kỹ thuật và đổi mới theo chính sách thương hiệu
               </p>
             </div>
           </div>
           <div class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-primary"
+            <span class="material-symbols-outlined text-zinc-900 dark:text-zinc-100"
               >keyboard_return</span
             >
             <div>
-              <h4 class="text-sm font-semibold">30-Day Hassle-Free Returns</h4>
-              <p class="text-xs text-slate-500">
-                Not the right fit? Send them back for free
+              <h4 class="text-sm font-semibold">Đổi trả linh hoạt 30 ngày</h4>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                Hỗ trợ đổi mẫu nếu chưa phù hợp khuôn mặt và nhu cầu
               </p>
             </div>
           </div>
@@ -235,25 +236,25 @@
     />
 
     <!-- Related Products Section -->
-    <section v-if="relatedProducts.length" class="mt-20">
+    <section v-if="relatedProducts.length" class="mt-16">
       <div class="flex justify-between items-end mb-8">
         <div>
-          <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-            You Might Also Like
+          <h2 class="text-3xl font-black tracking-tight text-zinc-900 dark:text-white mb-2">
+            Gợi ý phù hợp với bạn
           </h2>
-          <p class="text-slate-500">
-            Curated styles that match the Aviator aesthetic.
+          <p class="text-zinc-500 dark:text-zinc-400">
+            Các thiết kế cùng phong cách để bạn dễ so sánh và chọn nhanh hơn.
           </p>
         </div>
         <RouterLink
-          class="text-primary font-bold text-sm uppercase tracking-wider flex items-center gap-1 hover:underline"
+          class="inline-flex items-center gap-1.5 border border-zinc-300 dark:border-zinc-700 px-4 py-2 rounded-xl text-sm font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           to="/products"
         >
-          View All
-          <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          Xem tất cả
+          <span class="material-symbols-outlined text-sm">arrow_outward</span>
         </RouterLink>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <ProductCard
           v-for="item in relatedProducts"
           :key="item.id"

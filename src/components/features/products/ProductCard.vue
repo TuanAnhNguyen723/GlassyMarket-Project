@@ -1,17 +1,16 @@
 <template>
   <article
-    class="product-card group relative bg-white dark:bg-gray-900 rounded-2xl overflow-hidden border border-transparent transition-all duration-700 ease-out hover:shadow-lg hover:shadow-black/5"
+    class="product-card group relative bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-200 dark:border-zinc-800 transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[0_24px_45px_-35px_rgba(0,0,0,0.6)]"
     :class="{ 'cursor-pointer': clickable }"
     @click="handleClick"
-    style="border: 1px solid #e9f1f1"
   >
     <!-- Image -->
     <div
-      class="relative aspect-square overflow-hidden bg-white dark:bg-gray-900"
+      class="relative aspect-square overflow-hidden bg-zinc-100 dark:bg-zinc-800"
     >
       <img
         v-if="imageSrc"
-        class="w-full h-full object-contain transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+        class="w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-[1.04]"
         :src="imageSrc"
         :alt="product.alt || product.name || 'Product image'"
         @error="handleImageError"
@@ -31,7 +30,7 @@
 
       <div v-if="product.badge" class="absolute top-4 left-4">
         <span
-          class="bg-primary text-white text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full"
+          class="bg-zinc-900/85 dark:bg-zinc-100/90 text-white dark:text-zinc-900 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-sm"
         >
           {{ product.badge }}
         </span>
@@ -57,14 +56,14 @@
     <div class="px-4 pb-5 pt-4">
       <!-- Brand/Category -->
       <p
-        class="text-[11px] font-extrabold tracking-widest uppercase text-zinc-400 mb-1"
+        class="text-[11px] font-bold tracking-[0.18em] uppercase text-zinc-500 dark:text-zinc-400 mb-1"
       >
         {{ (product.brand || product.category || "").toString() }}
       </p>
 
       <!-- Name -->
       <h3
-        class="text-sm font-extrabold tracking-wide uppercase text-zinc-800 dark:text-zinc-100 leading-snug"
+        class="text-sm font-extrabold tracking-wide uppercase text-zinc-900 dark:text-zinc-100 leading-snug min-h-[2.6rem]"
       >
         {{ product.name }}
       </h3>
@@ -73,11 +72,11 @@
       <div class="mt-2 flex items-baseline gap-2">
         <span
           v-if="product.comparePrice"
-          class="text-sm font-bold text-zinc-900 dark:text-zinc-200 line-through"
+          class="text-sm font-bold text-zinc-500 dark:text-zinc-400 line-through"
         >
           {{ formatPrice(product.comparePrice) }}
         </span>
-        <span class="text-sm font-extrabold text-red-600">
+        <span class="text-base font-extrabold text-zinc-900 dark:text-zinc-100">
           {{ formatPrice(product.price) }}
         </span>
       </div>

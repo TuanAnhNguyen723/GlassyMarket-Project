@@ -1,11 +1,11 @@
 <template>
-  <section class="mt-16 pt-10 border-t border-slate-200 dark:border-slate-700">
+  <section class="mt-16 pt-10 border-t border-zinc-200 dark:border-zinc-800">
     <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
       <div>
-        <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-1">
+        <h2 class="text-3xl font-black tracking-tight text-zinc-900 dark:text-white mb-1">
           {{ $t('reviews.title') }}
         </h2>
-        <p class="text-slate-500 dark:text-slate-400 text-sm">
+        <p class="text-zinc-500 dark:text-zinc-400 text-sm">
           {{ $t('reviews.subtitle', { count: productSummary?.review_count ?? 0 }) }}
         </p>
       </div>
@@ -23,7 +23,7 @@
       <!-- can_review = false -->
       <div
         v-if="myReviewState !== null && !myReviewState.can_review"
-        class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-sm"
+        class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 text-sm"
       >
         {{ $t('reviews.needPurchase') }}
       </div>
@@ -31,14 +31,14 @@
       <!-- can_review = true, review = null → Form đánh giá mới -->
       <div
         v-else-if="myReviewState?.can_review && !myReviewState.review && !isEditing"
-        class="p-6 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700"
+        class="p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-800/30 border border-zinc-200 dark:border-zinc-700"
       >
-        <h3 class="text-sm font-bold text-slate-800 dark:text-white mb-3">
+        <h3 class="text-sm font-bold text-zinc-900 dark:text-white mb-3">
           {{ $t('reviews.writeReview') }}
         </h3>
         <form @submit.prevent="handleSubmitNew" class="space-y-4">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">
+            <label class="block text-xs font-semibold text-zinc-600 dark:text-zinc-300 mb-2">
               {{ $t('reviews.rating') }} *
             </label>
             <div class="flex gap-1">
@@ -54,7 +54,7 @@
                   viewBox="0 0 24 24"
                   fill="currentColor"
                   class="w-8 h-8 transition-colors"
-                  :class="i <= formRating ? 'text-amber-400' : 'text-slate-300 dark:text-slate-600'"
+                  :class="i <= formRating ? 'text-amber-400' : 'text-zinc-300 dark:text-zinc-600'"
                 >
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                 </svg>
@@ -62,21 +62,21 @@
             </div>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">
+            <label class="block text-xs font-semibold text-zinc-600 dark:text-zinc-300 mb-2">
               {{ $t('reviews.comment') }}
             </label>
             <textarea
               v-model="formComment"
-              class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm resize-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              class="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white text-sm resize-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 focus:border-transparent"
               rows="4"
               :placeholder="$t('reviews.commentPlaceholder')"
               maxlength="2000"
             ></textarea>
-            <p class="text-xs text-slate-500 mt-1">{{ formComment.length }}/2000</p>
+            <p class="text-xs text-zinc-500 mt-1">{{ formComment.length }}/2000</p>
           </div>
           <button
             type="submit"
-            class="px-6 py-2.5 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-all disabled:opacity-60"
+            class="px-6 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-sm font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-60"
             :disabled="isSubmitting || formRating < 1"
           >
             {{ isSubmitting ? $t('common.loading') : $t('reviews.submit') }}
@@ -87,7 +87,7 @@
       <!-- can_review = true, review có data → Hiện review của user + nút Sửa/Xóa -->
       <div
         v-else-if="myReviewState?.can_review && myReviewState.review"
-        class="p-6 rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/20 mb-6"
+        class="p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 mb-6"
       >
         <!-- Đang chỉnh sửa -->
         <form
@@ -95,11 +95,11 @@
           @submit.prevent="handleSubmitEdit"
           class="space-y-4"
         >
-          <h3 class="text-sm font-bold text-slate-800 dark:text-white">
+          <h3 class="text-sm font-bold text-zinc-900 dark:text-white">
             {{ $t('reviews.editReview') }}
           </h3>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">
+            <label class="block text-xs font-semibold text-zinc-600 dark:text-zinc-300 mb-2">
               {{ $t('reviews.rating') }} *
             </label>
             <div class="flex gap-1">
@@ -115,7 +115,7 @@
                   viewBox="0 0 24 24"
                   fill="currentColor"
                   class="w-8 h-8 transition-colors"
-                  :class="i <= formRating ? 'text-amber-400' : 'text-slate-300 dark:text-slate-600'"
+                  :class="i <= formRating ? 'text-amber-400' : 'text-zinc-300 dark:text-zinc-600'"
                 >
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                 </svg>
@@ -123,12 +123,12 @@
             </div>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">
+            <label class="block text-xs font-semibold text-zinc-600 dark:text-zinc-300 mb-2">
               {{ $t('reviews.comment') }}
             </label>
             <textarea
               v-model="formComment"
-              class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm resize-none"
+              class="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white text-sm resize-none"
               rows="4"
               maxlength="2000"
             ></textarea>
@@ -136,14 +136,14 @@
           <div class="flex gap-2">
             <button
               type="submit"
-              class="px-6 py-2.5 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 disabled:opacity-60"
+              class="px-6 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-sm font-bold rounded-xl hover:opacity-90 disabled:opacity-60"
               :disabled="isSubmitting"
             >
               {{ isSubmitting ? $t('common.loading') : $t('common.save') }}
             </button>
             <button
               type="button"
-              class="px-6 py-2.5 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800"
+              class="px-6 py-2.5 border border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 text-sm font-medium rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800"
               @click="cancelEdit"
             >
               {{ $t('common.cancel') }}
@@ -162,31 +162,31 @@
                 :show-reviews="false"
                 text-color="amber"
               />
-              <span class="text-xs text-slate-500">
+              <span class="text-xs text-zinc-500 dark:text-zinc-400">
                 {{ formatDate(myReviewState.review.created_at) }}
               </span>
             </div>
             <p
               v-if="myReviewState.review.comment"
-              class="text-sm text-slate-700 dark:text-slate-300"
+              class="text-sm text-zinc-700 dark:text-zinc-200"
             >
               {{ myReviewState.review.comment }}
             </p>
-            <p v-else class="text-sm text-slate-500 italic">
+            <p v-else class="text-sm text-zinc-500 italic">
               {{ $t('reviews.noComment') }}
             </p>
           </div>
           <div class="flex gap-2 flex-shrink-0">
             <button
               type="button"
-              class="px-4 py-2 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary/5 transition-colors"
+              class="px-4 py-2 text-sm font-medium text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-600 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               @click="startEdit"
             >
               {{ $t('reviews.edit') }}
             </button>
             <button
               type="button"
-              class="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              class="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
               :disabled="isDeleting"
               @click="handleDelete"
             >
@@ -202,7 +202,7 @@
       <span class="material-symbols-outlined animate-spin text-4xl text-primary">progress_activity</span>
     </div>
 
-    <div v-else-if="reviews.length === 0" class="text-center py-12 text-slate-500 dark:text-slate-400">
+    <div v-else-if="reviews.length === 0" class="text-center py-12 text-zinc-500 dark:text-zinc-400">
       <span class="material-symbols-outlined text-5xl mb-3 opacity-50">rate_review</span>
       <p>{{ $t('reviews.noReviews') }}</p>
     </div>
@@ -211,11 +211,11 @@
       <li
         v-for="review in displayedReviews"
         :key="review.id"
-        class="p-4 sm:p-6 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700"
+        class="p-4 sm:p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-800/30 border border-zinc-200 dark:border-zinc-700"
       >
         <div class="flex items-start gap-4">
           <div
-            class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0"
+            class="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center overflow-hidden flex-shrink-0"
           >
             <img
               v-if="review.user?.avatar"
@@ -225,14 +225,14 @@
             />
             <span
               v-else
-              class="material-symbols-outlined text-slate-500 text-xl"
+              class="material-symbols-outlined text-zinc-500 text-xl"
             >
               person
             </span>
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex flex-wrap items-center gap-2 mb-1">
-              <span class="font-semibold text-slate-900 dark:text-white">
+              <span class="font-semibold text-zinc-900 dark:text-white">
                 {{ review.user?.name ?? $t('reviews.anonymous') }}
               </span>
               <ProductRating
@@ -242,17 +242,17 @@
                 :show-reviews="false"
                 text-color="amber"
               />
-              <span class="text-xs text-slate-500">
+              <span class="text-xs text-zinc-500 dark:text-zinc-400">
                 {{ formatDate(review.created_at) }}
               </span>
             </div>
             <p
               v-if="review.comment"
-              class="text-sm text-slate-600 dark:text-slate-300"
+              class="text-sm text-zinc-700 dark:text-zinc-200"
             >
               {{ review.comment }}
             </p>
-            <p v-else class="text-sm text-slate-500 italic">
+            <p v-else class="text-sm text-zinc-500 italic">
               {{ $t('reviews.noComment') }}
             </p>
           </div>
@@ -263,22 +263,22 @@
     <!-- Pagination -->
     <div
       v-if="reviewsMeta?.last_page > 1"
-      class="flex justify-center gap-4 mt-8 pt-6 border-t border-slate-200 dark:border-slate-700"
+      class="flex justify-center gap-4 mt-8 pt-6 border-t border-zinc-200 dark:border-zinc-800"
     >
       <button
         type="button"
-        class="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium disabled:opacity-50"
+        class="px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 text-sm font-medium disabled:opacity-50"
         :disabled="reviewsMeta.current_page <= 1 || reviewsLoading"
         @click="loadReviews(reviewsMeta.current_page - 1)"
       >
         {{ $t('common.previous') }}
       </button>
-      <span class="flex items-center px-4 text-sm text-slate-600 dark:text-slate-400">
+      <span class="flex items-center px-4 text-sm text-zinc-600 dark:text-zinc-400">
         {{ reviewsMeta.current_page }} / {{ reviewsMeta.last_page }}
       </span>
       <button
         type="button"
-        class="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium disabled:opacity-50"
+        class="px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 text-sm font-medium disabled:opacity-50"
         :disabled="reviewsMeta.current_page >= reviewsMeta.last_page || reviewsLoading"
         @click="loadReviews(reviewsMeta.current_page + 1)"
       >

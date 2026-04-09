@@ -1,7 +1,8 @@
 <template>
   <main
-    class="flex-1 max-w-[1280px] mx-auto w-full px-6 lg:px-20 py-8 lg:py-12"
+    class="relative flex-1 max-w-[1280px] mx-auto w-full px-5 sm:px-8 lg:px-14 py-8 lg:py-10"
   >
+    <div class="pointer-events-none absolute inset-x-0 top-0 h-52 bg-gradient-to-b from-primary/10 to-transparent rounded-3xl" />
     <!-- Breadcrumbs -->
     <Breadcrumbs
       :items="[
@@ -15,21 +16,21 @@
     />
 
     <!-- Page Heading -->
-    <div class="mb-6">
-      <h1 class="text-2xl lg:text-3xl font-black tracking-tight mb-1">
+    <div class="mb-6 relative z-10">
+      <h1 class="text-3xl lg:text-4xl font-black tracking-tight mb-1 text-zinc-900 dark:text-zinc-100">
         {{ $t("cart.title") }}
       </h1>
-      <p class="text-[#5e8487] dark:text-gray-400 text-sm">
+      <p class="text-zinc-500 dark:text-zinc-400 text-sm">
         {{ $t("cart.itemsCount", { count: itemsCount }) }}
       </p>
     </div>
 
-    <div class="flex flex-col lg:flex-row gap-8 items-start">
+    <div class="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
       <!-- Cart Items Section: cuộn bên trong, không kéo dài cả trang -->
       <section class="flex-1 w-full min-w-0 flex flex-col">
         <template v-if="cartItems.length">
           <div
-            class="space-y-4 max-h-[55vh] overflow-y-auto pr-1 -mr-1"
+            class="space-y-4 max-h-[58vh] overflow-y-auto pr-1 -mr-1"
           >
             <CartItem
               v-for="item in cartItems"
@@ -42,7 +43,7 @@
 
           <div class="pt-4 mt-2 flex-shrink-0">
             <RouterLink
-              class="inline-flex items-center gap-1.5 text-primary font-semibold text-sm hover:gap-2 transition-all"
+              class="inline-flex items-center gap-1.5 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 px-4 py-2 rounded-xl font-semibold text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
               to="/products"
             >
               <span class="material-symbols-outlined text-lg">arrow_back</span>
@@ -54,21 +55,21 @@
         <!-- Empty state -->
         <div
           v-else
-          class="flex flex-col items-center justify-center py-16 px-6 rounded-xl border border-[#eaf0f0] dark:border-gray-800 bg-white dark:bg-zinc-900/50 text-center"
+          class="flex flex-col items-center justify-center py-16 px-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/70 text-center"
         >
           <span
-            class="material-symbols-outlined text-6xl text-[#5e8487] dark:text-gray-500 mb-4"
+            class="material-symbols-outlined text-6xl text-zinc-500 dark:text-zinc-400 mb-4"
           >
             shopping_cart
           </span>
-          <h2 class="text-xl font-bold text-[#111718] dark:text-white mb-2">
+          <h2 class="text-xl font-bold text-zinc-900 dark:text-white mb-2">
             {{ $t("cart.emptyTitle") }}
           </h2>
-          <p class="text-[#5e8487] dark:text-gray-400 text-sm mb-6 max-w-sm">
+          <p class="text-zinc-500 dark:text-zinc-400 text-sm mb-6 max-w-sm">
             {{ $t("cart.emptyMessage") }}
           </p>
           <RouterLink
-            class="inline-flex items-center gap-2 bg-primary text-white font-bold px-6 py-3 rounded-xl hover:bg-primary/90 transition-colors"
+            class="inline-flex items-center gap-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold px-6 py-3 rounded-xl hover:opacity-90 transition-colors"
             to="/products"
           >
             <span class="material-symbols-outlined">arrow_back</span>
@@ -80,7 +81,7 @@
       <!-- Sidebar / Order Summary (chỉ hiện khi có sản phẩm) -->
       <aside
         v-if="cartItems.length"
-        class="w-full lg:w-[340px] lg:sticky lg:top-24 flex-shrink-0"
+        class="w-full lg:w-[360px] lg:sticky lg:top-24 flex-shrink-0"
       >
         <OrderSummary
           v-model:promo-code="promoCode"

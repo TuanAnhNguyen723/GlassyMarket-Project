@@ -1,11 +1,11 @@
 /* Helpers giống mẫu, dùng kèm Tailwind CDN */
 .glass-header {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
 }
 
 .dark .glass-header {
-  background: rgba(23, 25, 28, 0.75);
+  background: rgba(18, 20, 23, 0.88);
 }
 
 .product-card:hover .product-image {
