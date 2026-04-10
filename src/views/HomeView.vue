@@ -270,23 +270,14 @@ const featuredProducts = computed(() => {
 });
 
 async function loadFeaturedProducts() {
-  // Ưu tiên backend lọc nếu có hỗ trợ featured=1, fallback sang tự lọc.
+  // Chỉ lấy sản phẩm nổi bật từ backend để giảm preload.
   try {
     const res = await productService.getProducts({
       featured: 1,
+      page: 1,
       limit: 12,
       per_page: 12,
     });
-    const data = normalizeProductsResponse(res);
-    if (data.length) {
-      allProducts.value = data;
-      return;
-    }
-  } catch {
-    // ignore -> fallback
-  }
-  try {
-    const res = await productService.getProducts({ limit: 50, per_page: 50 });
     allProducts.value = normalizeProductsResponse(res);
   } catch {
     allProducts.value = [];

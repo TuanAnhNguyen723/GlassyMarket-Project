@@ -189,7 +189,7 @@
       <section class="flex-1">
         <div class="mb-5 flex items-center justify-between">
           <p class="text-sm text-zinc-500 dark:text-zinc-400">
-            {{ sortedProducts.length }} sản phẩm phù hợp
+            {{ totalProducts }} sản phẩm phù hợp
           </p>
         </div>
         <!-- Error Message -->
@@ -220,7 +220,7 @@
           class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5"
         >
           <ProductCard
-            v-for="product in pagedProducts"
+            v-for="product in sortedProducts"
             :key="product.id"
             :product="product"
             :show-quick-view="false"
@@ -237,7 +237,7 @@
 
         <!-- Pagination -->
         <Pagination
-          v-if="sortedProducts.length > PAGE_SIZE"
+          v-if="totalPages > 1"
           :current-page="currentPage"
           :total-pages="totalPages"
           @page-change="handlePageChange"
@@ -263,6 +263,7 @@ const { t } = useI18n();
 
 const currentPage = ref(1);
 const products = ref([]);
+const productsMeta = ref({ total: 0, current_page: 1, last_page: 1, per_page: 6 });
 const isLoading = ref(false);
 const error = ref(null);
 const selectedSort = ref("newest");
@@ -309,7 +310,7 @@ const commitPriceMax = () => {
 // Chống race condition khi kéo filter nhanh (nhiều request về không theo thứ tự)
 let fetchSeq = 0;
 
-// Kích thước trang cho pagination phía client
+// Kích thước trang cho pagination phía server
 const PAGE_SIZE = 6;
 
 // Frame shape options (danh sách cố định, khớp với API frame_shape)
@@ -556,24 +557,26 @@ const sortedProducts = computed(() => {
   }
 });
 
-// Sản phẩm cho trang hiện tại (pagination phía client)
-const pagedProducts = computed(() => {
-  const start = (currentPage.value - 1) * PAGE_SIZE;
-  return sortedProducts.value.slice(start, start + PAGE_SIZE);
-});
-
-// Tổng số trang dựa trên số sản phẩm sau khi filter
+// Tổng số trang từ API (fallback client nếu backend chưa trả meta)
 const totalPages = computed(() => {
+  const apiLastPage = Number(productsMeta.value?.last_page || 0);
+  if (apiLastPage > 0) return apiLastPage;
   const total = sortedProducts.value.length;
   return total === 0 ? 1 : Math.ceil(total / PAGE_SIZE);
+});
+
+const totalProducts = computed(() => {
+  const apiTotal = Number(productsMeta.value?.total || 0);
+  if (apiTotal > 0) return apiTotal;
+  return sortedProducts.value.length;
 });
 
 /** Build params cho API (dùng chung cho fetch và cache key) */
 const buildFetchParams = (page = 1) => {
   const params = {
     page,
-    per_page: 100,
-    limit: 100,
+    per_page: PAGE_SIZE,
+    limit: PAGE_SIZE,
   };
   if (selectedSort.value === "newest") {
     params.sort_by = "created_at";
@@ -612,10 +615,27 @@ const fetchProducts = async (page = 1) => {
   const cached = get(cacheKey);
   if (cached != null && typeof cached === "object") {
     let productsData = [];
+    let paginationMeta = null;
     if (Array.isArray(cached)) productsData = cached;
-    else if (Array.isArray(cached.data)) productsData = cached.data;
-    else if (Array.isArray(cached.products)) productsData = cached.products;
+    else if (Array.isArray(cached.data)) {
+      productsData = cached.data;
+      paginationMeta = cached.meta || cached.pagination;
+    } else if (Array.isArray(cached.products)) {
+      productsData = cached.products;
+      paginationMeta = cached.meta || cached.pagination;
+    }
     products.value = productsData.map(transformProduct).filter((p) => p !== null);
+    if (paginationMeta && typeof paginationMeta === "object") {
+      productsMeta.value = {
+        total: Number(paginationMeta.total ?? productsMeta.value.total ?? 0),
+        current_page: Number(paginationMeta.current_page ?? page),
+        last_page: Number(paginationMeta.last_page ?? productsMeta.value.last_page ?? 1),
+        per_page: Number(paginationMeta.per_page ?? PAGE_SIZE),
+      };
+      currentPage.value = productsMeta.value.current_page || page;
+    } else {
+      currentPage.value = page;
+    }
     error.value = null;
     return;
   }
@@ -651,12 +671,30 @@ const fetchProducts = async (page = 1) => {
     products.value = productsData
       .map(transformProduct)
       .filter((p) => p !== null); // Remove invalid products
+    if (paginationMeta && typeof paginationMeta === "object") {
+      productsMeta.value = {
+        total: Number(paginationMeta.total ?? productsData.length),
+        current_page: Number(paginationMeta.current_page ?? page),
+        last_page: Number(paginationMeta.last_page ?? 1),
+        per_page: Number(paginationMeta.per_page ?? PAGE_SIZE),
+      };
+      currentPage.value = productsMeta.value.current_page || page;
+    } else {
+      productsMeta.value = {
+        total: productsData.length,
+        current_page: page,
+        last_page: 1,
+        per_page: PAGE_SIZE,
+      };
+      currentPage.value = page;
+    }
   } catch (err) {
     if (seq !== fetchSeq) return;
     console.error("Failed to fetch products:", err);
     error.value =
       err.message || "Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.";
     products.value = [];
+    productsMeta.value = { total: 0, current_page: 1, last_page: 1, per_page: PAGE_SIZE };
   } finally {
     // Chỉ tắt loading cho request mới nhất
     if (seq === fetchSeq) {
@@ -667,7 +705,9 @@ const fetchProducts = async (page = 1) => {
 };
 
 const handlePageChange = (page) => {
+  if (page === currentPage.value) return;
   currentPage.value = page;
+  fetchProducts(page);
 };
 
 const clearAllFilters = () => {
