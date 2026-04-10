@@ -15,29 +15,6 @@
         <span>{{ $t('cart.tax') }}</span>
         <span class="text-zinc-900 dark:text-white font-semibold">{{ formatMoney(tax) }}</span>
       </div>
-      <div class="flex justify-between text-zinc-700 dark:text-zinc-200 font-semibold pt-2 border-t border-dashed border-zinc-200 dark:border-zinc-800">
-        <span>{{ $t('cart.promoDiscount') }}</span>
-        <span>-{{ formatMoney(discount) }}</span>
-      </div>
-    </div>
-
-    <div class="mb-5">
-      <label class="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">{{ $t('cart.promoCode') }}</label>
-      <div class="flex gap-2">
-        <input
-          v-model="promoModel"
-          class="flex-1 rounded-xl border-zinc-200 dark:border-zinc-800 dark:bg-zinc-800 focus:border-zinc-900 dark:focus:border-zinc-100 focus:ring-0 text-xs uppercase font-semibold px-3 py-2 placeholder:text-zinc-300"
-          :placeholder="$t('cart.promoPlaceholder')"
-          type="text"
-        />
-        <button
-          class="px-4 py-2 text-sm bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white font-semibold rounded-xl hover:bg-zinc-900 hover:text-white dark:hover:bg-zinc-100 dark:hover:text-zinc-900 transition-colors"
-          type="button"
-          @click="$emit('apply-promo', promoModel)"
-        >
-          {{ $t('cart.apply') }}
-        </button>
-      </div>
     </div>
 
     <div class="flex justify-between items-center py-4 border-t border-zinc-200 dark:border-zinc-800 mb-5">
@@ -66,16 +43,12 @@ import { computed } from 'vue'
 const props = defineProps({
   subtotal: { type: Number, required: true },
   tax: { type: Number, required: true },
-  discount: { type: Number, required: true },
   shippingLabel: { type: String, default: 'Free' },
-  promoCode: { type: String, default: '' },
 })
 
-defineEmits(['apply-promo', 'checkout'])
+defineEmits(['checkout'])
 
-const promoModel = defineModel('promoCode', { type: String })
-
-const total = computed(() => Math.max(0, props.subtotal + props.tax - props.discount))
+const total = computed(() => Math.max(0, props.subtotal + props.tax))
 
 function formatMoney(value) {
   if (value == null) return '0 đ'

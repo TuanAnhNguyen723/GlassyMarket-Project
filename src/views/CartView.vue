@@ -84,12 +84,9 @@
         class="w-full lg:w-[360px] lg:sticky lg:top-24 flex-shrink-0"
       >
         <OrderSummary
-          v-model:promo-code="promoCode"
           :subtotal="cartSubtotal"
           :tax="tax"
-          :discount="discount"
           :shipping-label="$t('cart.free')"
-          @apply-promo="applyPromo"
           @checkout="checkout"
         />
 
@@ -100,7 +97,6 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import Breadcrumbs from "@/components/common/Breadcrumbs.vue";
 import CartItem from "@/components/features/cart/CartItem.vue";
@@ -112,14 +108,9 @@ const router = useRouter();
 const cart = useCart();
 const cartItems = cart.items;
 const cartSubtotal = cart.subtotal;
-const promoCode = ref("");
-const appliedPromo = ref({ code: "", discount: 20 });
 
 const itemsCount = cart.itemsCount;
 const tax = cart.tax;
-const discount = computed(() =>
-  appliedPromo.value.code ? appliedPromo.value.discount : 20
-);
 
 function onUpdateQuantity({ id, quantity }) {
   cart.updateQuantity(id, quantity);
@@ -127,13 +118,6 @@ function onUpdateQuantity({ id, quantity }) {
 
 function onRemove(id) {
   cart.removeItem(id);
-}
-
-function applyPromo(code) {
-  appliedPromo.value = {
-    code: (code || "").trim().toUpperCase(),
-    discount: 20,
-  };
 }
 
 function checkout() {
