@@ -146,14 +146,21 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePageLoading } from '@/composables/usePageLoading'
+import { useRouter } from 'vue-router'
 import DashboardSidebar from '../components/features/dashboard/DashboardSidebar.vue'
 import OrderCard from '../components/features/dashboard/OrderCard.vue'
-import { getOrders, mapOrderToCard, getOrderTrack, getOrderStatusKey, getOrderProgress, normalizeOrderStatus } from '@/services/profileService'
+import { getOrders, mapOrderToCard, getOrderTrack, getOrderStatusKey, getOrderProgress, normalizeOrderStatus, cancelOrder } from '@/services/profileService'
 import productService from '@/services/productService.js'
+import { useCart } from '@/composables/useCart'
+import { useNotification } from '@/composables/useNotification'
 import { get, CACHE_KEYS } from '@/utils/cache'
+import { invalidateOrders } from '@/utils/cache'
 
 const { t } = useI18n()
 const { setLoading } = usePageLoading()
+const router = useRouter()
+const cart = useCart()
+const { showNotification } = useNotification()
 const activeFilter = ref('all')
 const currentPage = ref(1)
 const perPage = 10
@@ -206,7 +213,7 @@ function buildActions(order) {
   if (s === 'delivered') {
     actions.push({ type: 'buy-again', label: t('common.buyAgain'), icon: 'rebase_edit', classes: 'border border-primary text-primary hover:bg-primary/5' })
   }
-  if (s === 'processing' || s === 'confirmed') {
+  if (s === 'pending') {
     actions.push({ type: 'cancel', label: t('common.cancelOrder'), icon: null, classes: 'border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800' })
   }
   actions.push({ type: 'details', label: t('common.details'), icon: null, classes: 'border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800' })
@@ -384,6 +391,54 @@ function goToPage(page) {
   loadOrders(page)
 }
 
+function extractOrderItemsForBuyAgain(order) {
+  const raw = order?.raw ?? {}
+  if (Array.isArray(raw.items)) return raw.items
+  if (Array.isArray(raw.order_items)) return raw.order_items
+  if (Array.isArray(raw.lines)) return raw.lines
+  return []
+}
+
+function toNumber(value, fallback = 0) {
+  const n = Number(value)
+  return Number.isFinite(n) ? n : fallback
+}
+
+function addOrderToCart(order) {
+  const items = extractOrderItemsForBuyAgain(order)
+  if (!items.length) return 0
+  let addedLines = 0
+
+  for (const item of items) {
+    const productId = item?.product_id ?? item?.product?.id
+    if (!productId) continue
+
+    const quantity = Math.max(1, toNumber(item?.quantity, 1))
+    const unitPrice = item?.unit_price ?? item?.price ?? item?.product?.price ?? 0
+    const lensId = item?.lens_id ?? item?.lens?.id ?? null
+    const lensName = item?.lens_name ?? item?.lens?.name ?? '—'
+    const productName = item?.product_name ?? item?.product?.name ?? 'Sản phẩm'
+    const image = item?.product_image_url ?? item?.image_url ?? item?.product?.image_url ?? item?.product?.image ?? order?.image ?? ''
+    const colorName = item?.color_name ?? item?.color?.name ?? '—'
+    const colorHex = item?.color_hex ?? item?.color?.hex_code ?? null
+
+    for (let i = 0; i < quantity; i += 1) {
+      cart.addItem({
+        productId,
+        name: productName,
+        price: unitPrice,
+        image,
+        lensId,
+        lensName,
+        color: colorName,
+        colorHex,
+      })
+    }
+    addedLines += 1
+  }
+  return addedLines
+}
+
 function openTrackModal(order) {
   if (!order?.id) return
   trackModalOrder.value = order
@@ -445,11 +500,57 @@ const handleOrderAction = ({ type, order }) => {
     return
   }
   if (type === 'details') {
-    // Sau này: trang chi tiết đơn GET /api/v1/orders/{id}
+    showNotification({
+      message: t('orders.detailsSoon', 'Tính năng chi tiết đơn sẽ sớm có'),
+      type: 'info',
+      duration: 2200,
+    })
     return
   }
-  if (type === 'buy-again' || type === 'cancel') {
-    // TODO: buy-again thêm vào giỏ; cancel gọi API hủy đơn
+  if (type === 'buy-again') {
+    const added = addOrderToCart(order)
+    if (added > 0) {
+      showNotification({
+        message: t('orders.buyAgainAdded', 'Đã thêm sản phẩm từ đơn vào giỏ hàng'),
+        type: 'success',
+        duration: 2500,
+      })
+      router.push('/cart')
+    } else {
+      showNotification({
+        message: t('orders.buyAgainFailed', 'Không tìm thấy sản phẩm để mua lại'),
+        type: 'error',
+        duration: 3000,
+      })
+    }
+    return
+  }
+  if (type === 'cancel') {
+    if (!order?.id) return
+    if (!window.confirm(t('orders.confirmCancel', 'Bạn có chắc muốn hủy đơn hàng này?'))) return
+    cancelOrder(order.id)
+      .then(async () => {
+        invalidateOrders()
+        await loadOrders(currentPage.value)
+        showNotification({
+          message: t('orders.cancelSuccess', 'Đã hủy đơn hàng'),
+          type: 'success',
+          duration: 2800,
+        })
+      })
+      .catch((err) => {
+        let message = err?.message || t('orders.cancelFailed', 'Không thể hủy đơn hàng')
+        if (err?.status === 403) {
+          message = t('orders.cancelForbidden', 'Bạn chỉ có thể hủy đơn của chính mình')
+        } else if (err?.status === 422) {
+          message = t('orders.cancelOnlyPending', 'Chỉ có thể hủy đơn ở trạng thái chờ xử lý')
+        }
+        showNotification({
+          message,
+          type: 'error',
+          duration: 3600,
+        })
+      })
   }
 }
 </script>

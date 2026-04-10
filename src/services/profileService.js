@@ -274,6 +274,16 @@ export async function getOrderTrack(orderId) {
 }
 
 /**
+ * Hủy đơn hàng (backend: POST /orders/{id}/cancel).
+ * @param {number|string} orderId
+ * @returns {Promise<Object>}
+ */
+export async function cancelOrder(orderId) {
+  const id = encodeURIComponent(orderId)
+  return api.post(`/orders/${id}/cancel`, {})
+}
+
+/**
  * Format ngày đặt hàng
  * @param {string} dateStr
  * @returns {string}
