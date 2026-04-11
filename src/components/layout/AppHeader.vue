@@ -21,21 +21,6 @@
             to="/products"
             >{{ $t("header.eyeglasses") }}</RouterLink
           >
-          <RouterLink
-            class="text-sm font-semibold text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white transition-colors"
-            to="/products"
-            >{{ $t("header.sunglasses") }}</RouterLink
-          >
-          <RouterLink
-            class="text-sm font-semibold text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white transition-colors"
-            to="/products"
-            >{{ $t("header.accessories") }}</RouterLink
-          >
-          <RouterLink
-            class="text-sm font-semibold text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white transition-colors"
-            to="/About"
-            >{{ $t("header.aboutUs") }}</RouterLink
-          >
         </nav>
       </div>
 

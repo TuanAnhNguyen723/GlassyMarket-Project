@@ -250,6 +250,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRoute } from "vue-router";
 import Breadcrumbs from "@/components/common/Breadcrumbs.vue";
 import ProductCard from "@/components/features/products/ProductCard.vue";
 import Pagination from "@/components/common/Pagination.vue";
@@ -260,6 +261,7 @@ import { get } from "@/utils/cache";
 
 const { setLoading } = usePageLoading();
 const { t } = useI18n();
+const route = useRoute();
 
 const currentPage = ref(1);
 const products = ref([]);
@@ -306,6 +308,22 @@ const commitPriceMax = () => {
   // Chỉ khi thả chuột (change) mới commit và trigger fetch (watch priceMax)
   priceMax.value = priceMaxDraft.value;
 };
+
+function applyFiltersFromRouteQuery() {
+  const q = route.query ?? {};
+  if (typeof q.frame_shape === "string" && q.frame_shape.trim()) {
+    selectedFrameShape.value = q.frame_shape.trim();
+  }
+  const maxPrice = Number(q.max_price);
+  if (Number.isFinite(maxPrice) && maxPrice >= 0) {
+    priceMax.value = maxPrice;
+    priceMaxDraft.value = maxPrice;
+  }
+  const minPrice = Number(q.min_price);
+  if (Number.isFinite(minPrice) && minPrice >= 0) {
+    priceMin.value = minPrice;
+  }
+}
 
 // Chống race condition khi kéo filter nhanh (nhiều request về không theo thứ tự)
 let fetchSeq = 0;
@@ -730,6 +748,16 @@ watch(
   { deep: true },
 );
 
+watch(
+  () => route.query,
+  () => {
+    applyFiltersFromRouteQuery();
+    currentPage.value = 1;
+    fetchProducts(1);
+  },
+  { deep: true },
+);
+
 const fetchCategories = async () => {
   try {
     const data = await categoryService.getCategories();
@@ -747,6 +775,7 @@ const fetchCategories = async () => {
 // Fetch products on component mount
 onMounted(() => {
   fetchCategories();
+  applyFiltersFromRouteQuery();
   fetchProducts(1);
 });
 </script>

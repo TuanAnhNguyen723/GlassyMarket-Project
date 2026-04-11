@@ -43,6 +43,11 @@
       <HomeHero
         :image-url="heroImage"
         image-alt="Young model wearing stylish premium blue light glasses"
+        :store-product-count="storeProductCount"
+        secondary-text="AI gợi ý sản phẩm"
+        secondary-icon="smart_toy"
+        @primary="goToProducts"
+        @secondary="openAiChat"
       />
       <HomeBadges :badges="badges" />
       <HomeBestSellers
@@ -53,6 +58,11 @@
       />
       <HomePromoBanner />
     </div>
+    <AiProductChatWidget
+      ref="aiChatRef"
+      @apply-filters="handleAiApplyFilters"
+      @view-more="handleAiApplyFilters"
+    />
   </main>
 </template>
 
@@ -62,9 +72,11 @@ import HomeBadges from "@/components/features/home/HomeBadges.vue";
 import HomeBestSellers from "@/components/features/home/HomeBestSellers.vue";
 import HomeHero from "@/components/features/home/HomeHero.vue";
 import HomePromoBanner from "@/components/features/home/HomePromoBanner.vue";
+import AiProductChatWidget from "@/components/features/home/AiProductChatWidget.vue";
 import productService from "@/services/productService.js";
 import { getAvailablePromoCodes } from "@/services/promoCodeService.js";
 import { useCart } from "@/composables/useCart.js";
+import { useRouter } from "vue-router";
 
 const heroImage =
   "https://images.unsplash.com/photo-1485875437342-9b39470b3d95?auto=format&fit=crop&w=1400&q=80";
@@ -82,14 +94,26 @@ const badges = [
   },
   {
     icon: "ar_on_you",
-    title: "Thử kính trực tuyến",
-    subtitle: "Xem trước kiểu dáng phù hợp ngay trên thiết bị của bạn",
+    title: "AI gợi ý sản phẩm",
+    subtitle: "Gợi ý kính theo nhu cầu, phong cách và ngân sách của bạn",
   },
 ];
 
 const cart = useCart();
+const router = useRouter();
+const aiChatRef = ref(null);
+
+function openAiChat() {
+  aiChatRef.value?.openChat?.();
+}
+
+function goToProducts() {
+  router.push("/products");
+}
 
 const allProducts = ref([]);
+/** Tổng SP cửa hàng — lấy từ meta/field của response getProducts (cùng 1 lần gọi). */
+const storeProductCount = ref(null);
 const homePromo = ref(null);
 
 function parsePrice(value) {
@@ -135,6 +159,27 @@ function normalizeProductsResponse(response) {
     if (Array.isArray(response.products)) return response.products;
   }
   return [];
+}
+
+/** Tổng sản phẩm trong cửa hàng từ cùng response API (không gọi thêm request). */
+function extractStoreProductCount(response) {
+  if (!response || typeof response !== "object") return null;
+  const meta = response.meta ?? response.pagination ?? {};
+  const candidates = [
+    meta.total_products,
+    meta.total_all,
+    meta.catalog_total,
+    response.total_products,
+    response.products_total,
+    response.products_count,
+    meta.total,
+    response.total,
+  ];
+  for (const c of candidates) {
+    const n = Number(c);
+    if (Number.isFinite(n) && n >= 0) return n;
+  }
+  return null;
 }
 
 function toNumber(value) {
@@ -279,8 +324,10 @@ async function loadFeaturedProducts() {
       per_page: 12,
     });
     allProducts.value = normalizeProductsResponse(res);
+    storeProductCount.value = extractStoreProductCount(res);
   } catch {
     allProducts.value = [];
+    storeProductCount.value = null;
   }
 }
 
@@ -361,6 +408,24 @@ function onAddToCart(product) {
     color: "—",
     frameType: raw?.category?.name ?? "—",
   });
+}
+
+function buildProductsQueryFromAiFilters(filters) {
+  const query = {};
+  if (!filters || typeof filters !== "object") return query;
+  if (filters.frame_shape) query.frame_shape = String(filters.frame_shape);
+  if (filters.max_price != null && filters.max_price !== "") {
+    query.max_price = String(filters.max_price);
+  }
+  if (filters.min_price != null && filters.min_price !== "") {
+    query.min_price = String(filters.min_price);
+  }
+  return query;
+}
+
+function handleAiApplyFilters(filters) {
+  const query = buildProductsQueryFromAiFilters(filters);
+  router.push({ path: "/products", query });
 }
 
 onMounted(() => {

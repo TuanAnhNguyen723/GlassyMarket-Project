@@ -40,8 +40,8 @@
           </div>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-9">
             <div class="rounded-xl bg-zinc-100/80 dark:bg-zinc-800/70 px-4 py-3">
-              <p class="text-2xl font-extrabold text-zinc-900 dark:text-zinc-50">1,200+</p>
-              <p class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Mẫu gọng cao cấp</p>
+              <p class="text-2xl font-extrabold text-zinc-900 dark:text-zinc-50">{{ productCountLabel }}</p>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Mẫu kính cao cấp</p>
             </div>
             <div class="rounded-xl bg-zinc-100/80 dark:bg-zinc-800/70 px-4 py-3">
               <p class="text-2xl font-extrabold text-zinc-900 dark:text-zinc-50">4.9/5</p>
@@ -72,7 +72,9 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   pill: { type: String, default: "New Collection 2026" },
   description: {
     type: String,
@@ -83,9 +85,17 @@ defineProps({
   imageAlt: { type: String, default: "Hero image" },
   primaryText: { type: String, default: "Mua ngay" },
   primaryIcon: { type: String, default: "arrow_forward" },
-  secondaryText: { type: String, default: "Thử kính ảo" },
-  secondaryIcon: { type: String, default: "visibility" },
+  secondaryText: { type: String, default: "AI gợi ý sản phẩm" },
+  secondaryIcon: { type: String, default: "smart_toy" },
+  /** Tổng sản phẩm trong cửa hàng (từ API, cùng response getProducts). null = chưa có / không parse được */
+  storeProductCount: { type: Number, default: null },
 })
 
 defineEmits(['primary', 'secondary'])
+
+const productCountLabel = computed(() => {
+  const n = props.storeProductCount
+  if (n == null || !Number.isFinite(n) || n < 0) return '—'
+  return `${Math.round(n).toLocaleString('vi-VN')}+`
+})
 </script>
