@@ -6,12 +6,19 @@
       <div class="flex items-center gap-12">
         <!-- Logo -->
         <RouterLink to="/" class="flex items-center gap-2.5">
+          <img
+            v-if="resolvedSiteLogoUrl"
+            :src="resolvedSiteLogoUrl"
+            :alt="storeName"
+            class="size-8 rounded-lg object-cover border border-zinc-200 dark:border-zinc-700"
+          />
           <div
+            v-else
             class="size-8 bg-zinc-900 dark:bg-zinc-100 rounded-lg flex items-center justify-center text-white dark:text-zinc-900"
           >
             <span class="material-symbols-outlined text-xl">visibility</span>
           </div>
-          <h2 class="text-lg font-black tracking-[0.08em] uppercase">Optic</h2>
+          <h2 class="text-lg font-black tracking-[0.08em] uppercase">{{ storeName }}</h2>
         </RouterLink>
 
         <!-- Nav Links -->
@@ -180,15 +187,31 @@
       </div>
     </div>
   </header>
+  <div
+    v-if="showPromoTicker"
+    class="relative z-40 border-b border-primary/20 bg-primary/5 dark:bg-primary/10"
+  >
+    <div class="max-w-[1440px] mx-auto overflow-hidden px-5 sm:px-8 lg:px-14">
+      <div class="header-ticker whitespace-nowrap py-2">
+        <span class="mx-8 text-xs sm:text-sm font-semibold text-zinc-700 dark:text-zinc-100">
+          {{ promoTickerText }}
+        </span>
+        <span class="mx-8 text-xs sm:text-sm font-semibold text-zinc-700 dark:text-zinc-100">
+          {{ promoTickerText }}
+        </span>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { computed, ref, onMounted, onUnmounted } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useTheme } from "@/composables/useTheme";
 import { useLanguage } from "@/composables/useLanguage";
 import { useCart } from "@/composables/useCart.js";
 import { useAuth } from "@/composables/useAuth";
+import { useGeneralSettings } from "@/composables/useGeneralSettings";
 import productService from "@/services/productService";
 import { resolveAssetUrl } from "@/services/api";
 
@@ -205,7 +228,17 @@ const searchQuery = ref("");
 const searchResults = ref([]);
 const isSearchLoading = ref(false);
 const showSearchPopup = ref(false);
+const {
+  storeName,
+  siteLogoUrl,
+  promoTickerEnabled,
+  promoTickerText,
+} = useGeneralSettings();
 let searchDebounceTimer = null;
+const resolvedSiteLogoUrl = computed(() => resolveAssetUrl(siteLogoUrl.value));
+const showPromoTicker = computed(
+  () => promoTickerEnabled.value && Boolean(promoTickerText.value),
+);
 
 function normalizeProductsResponse(response) {
   if (!response) return [];
@@ -393,3 +426,20 @@ onUnmounted(() => {
   if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
 });
 </script>
+
+<style scoped>
+.header-ticker {
+  display: inline-block;
+  min-width: 180%;
+  animation: headerTicker 30s linear infinite;
+}
+
+@keyframes headerTicker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+</style>

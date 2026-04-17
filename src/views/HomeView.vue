@@ -3,43 +3,63 @@
     <div
       class="pointer-events-none absolute inset-x-0 -top-44 h-[420px] bg-gradient-to-b from-primary/15 to-transparent"
     />
-    <div class="max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-14 pb-20">
-      <section v-if="shouldShowPromoBanner" class="pt-6 md:pt-8">
-        <div
-          class="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-r from-emerald-50 via-cyan-50 to-sky-100 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 text-zinc-800 dark:text-zinc-100 shadow-[0_20px_45px_-30px_rgba(15,23,42,0.35)]"
+    <div class="max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-14 pb-20 relative">
+      <aside class="hidden 2xl:block absolute top-10 -left-52 z-10">
+        <a
+          v-if="showPrimaryBanner && resolvedBannerPrimaryLink"
+          :href="resolvedBannerPrimaryLink"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="block w-44 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 shadow-md"
         >
-          <div
-            class="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-emerald-50 via-emerald-50/85 to-transparent dark:from-zinc-900 dark:via-zinc-900/85 dark:to-transparent"
+          <img
+            :src="resolvedBannerPrimaryUrl"
+            alt="Banner trái"
+            class="w-full h-[600px] object-cover"
+            @error="handlePrimaryBannerError"
           />
-          <div
-            class="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-sky-100 via-sky-100/85 to-transparent dark:from-zinc-800 dark:via-zinc-800/85 dark:to-transparent"
+        </a>
+        <div
+          v-else-if="showPrimaryBanner"
+          class="block w-44 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 shadow-md"
+        >
+          <img
+            :src="resolvedBannerPrimaryUrl"
+            alt="Banner trái"
+            class="w-full h-[600px] object-cover"
+            @error="handlePrimaryBannerError"
           />
-          <div
-            class="flex items-center justify-center gap-3 px-4 py-2.5 border-b border-zinc-900/5 dark:border-white/10"
-          >
-            <span class="material-symbols-outlined text-primary text-base"
-              >campaign</span
-            >
-            <p
-              class="text-[11px] font-bold uppercase tracking-[0.18em] text-primary/90"
-            >
-              Ưu đãi nổi bật
-            </p>
-          </div>
-          <div class="relative h-11 flex items-center overflow-hidden">
-            <div class="promo-marquee whitespace-nowrap">
-              <span
-                class="mx-6 font-semibold text-sm md:text-base text-zinc-700 dark:text-zinc-100"
-                >{{ promoBannerText }}</span
-              >
-              <span
-                class="mx-6 font-semibold text-sm md:text-base text-zinc-700 dark:text-zinc-100"
-                >{{ promoBannerText }}</span
-              >
-            </div>
-          </div>
         </div>
-      </section>
+      </aside>
+
+      <aside class="hidden 2xl:block absolute top-10 -right-52 z-10">
+        <a
+          v-if="showSecondaryBanner && resolvedBannerSecondaryLink"
+          :href="resolvedBannerSecondaryLink"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="block w-44 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 shadow-md"
+        >
+          <img
+            :src="resolvedBannerSecondaryUrl"
+            alt="Banner phải"
+            class="w-full h-[600px] object-cover"
+            @error="handleSecondaryBannerError"
+          />
+        </a>
+        <div
+          v-else-if="showSecondaryBanner"
+          class="block w-44 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 shadow-md"
+        >
+          <img
+            :src="resolvedBannerSecondaryUrl"
+            alt="Banner phải"
+            class="w-full h-[600px] object-cover"
+            @error="handleSecondaryBannerError"
+          />
+        </div>
+      </aside>
+
       <HomeHero
         :image-url="heroImage"
         image-alt="Young model wearing stylish premium blue light glasses"
@@ -67,20 +87,75 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import HomeBadges from "@/components/features/home/HomeBadges.vue";
 import HomeBestSellers from "@/components/features/home/HomeBestSellers.vue";
 import HomeHero from "@/components/features/home/HomeHero.vue";
 import HomePromoBanner from "@/components/features/home/HomePromoBanner.vue";
 import AiProductChatWidget from "@/components/features/home/AiProductChatWidget.vue";
 import productService from "@/services/productService.js";
-import { getAvailablePromoCodes } from "@/services/promoCodeService.js";
 import { useCart } from "@/composables/useCart.js";
 import { useRouter } from "vue-router";
 import { useNotification } from "@/composables/useNotification";
+import { useGeneralSettings } from "@/composables/useGeneralSettings";
+import { resolveAssetUrl } from "@/services/api";
 
-const heroImage =
-  "https://images.unsplash.com/photo-1485875437342-9b39470b3d95?auto=format&fit=crop&w=1400&q=80";
+const {
+  fetchGeneralSettings,
+  heroImageUrl,
+  bannerPrimaryUrl,
+  bannerSecondaryUrl,
+  bannerPrimaryLink,
+  bannerSecondaryLink,
+} = useGeneralSettings();
+const heroImage = computed(
+  () =>
+    resolveAssetUrl(heroImageUrl.value) ||
+    "https://images.unsplash.com/photo-1485875437342-9b39470b3d95?auto=format&fit=crop&w=1400&q=80",
+);
+const resolvedBannerPrimaryUrl = computed(() =>
+  resolveAssetUrl(bannerPrimaryUrl.value),
+);
+const resolvedBannerSecondaryUrl = computed(() =>
+  resolveAssetUrl(bannerSecondaryUrl.value),
+);
+const resolvedBannerPrimaryLink = computed(() => bannerPrimaryLink.value || "");
+const resolvedBannerSecondaryLink = computed(
+  () => bannerSecondaryLink.value || "",
+);
+const isPrimaryBannerVisible = ref(true);
+const isSecondaryBannerVisible = ref(true);
+const showPrimaryBanner = computed(
+  () => Boolean(resolvedBannerPrimaryUrl.value) && isPrimaryBannerVisible.value,
+);
+const showSecondaryBanner = computed(
+  () =>
+    Boolean(resolvedBannerSecondaryUrl.value) && isSecondaryBannerVisible.value,
+);
+
+function handlePrimaryBannerError() {
+  isPrimaryBannerVisible.value = false;
+}
+
+function handleSecondaryBannerError() {
+  isSecondaryBannerVisible.value = false;
+}
+
+watch(
+  resolvedBannerPrimaryUrl,
+  (url) => {
+    isPrimaryBannerVisible.value = Boolean(url);
+  },
+  { immediate: true },
+);
+
+watch(
+  resolvedBannerSecondaryUrl,
+  (url) => {
+    isSecondaryBannerVisible.value = Boolean(url);
+  },
+  { immediate: true },
+);
 
 const badges = [
   {
@@ -116,7 +191,6 @@ function goToProducts() {
 const allProducts = ref([]);
 /** Tổng SP cửa hàng — lấy từ meta/field của response getProducts (cùng 1 lần gọi). */
 const storeProductCount = ref(null);
-const homePromo = ref(null);
 
 function parsePrice(value) {
   if (value == null) return 0;
@@ -184,11 +258,6 @@ function extractStoreProductCount(response) {
   return null;
 }
 
-function toNumber(value) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : null;
-}
-
 function getProductStock(p) {
   const n = Number(
     p?.stock ??
@@ -200,117 +269,6 @@ function getProductStock(p) {
   );
   return Number.isFinite(n) ? n : 0;
 }
-
-function formatPromoDate(input) {
-  if (!input) return "12/4/2026";
-  const d = new Date(input);
-  if (Number.isNaN(d.getTime())) return "12/4/2026";
-  return d.toLocaleDateString("vi-VN");
-}
-
-function parseDateMs(input) {
-  if (!input) return null
-  const ms = new Date(input).getTime()
-  return Number.isFinite(ms) ? ms : null
-}
-
-function extractDiscountText(voucher) {
-  const raw = voucher?.raw ?? {};
-  const discountType = String(
-    raw.discount_type ?? raw.type ?? "",
-  ).toLowerCase();
-  const percentCandidates = [
-    raw.discount_percent,
-    raw.percent,
-    raw.percentage,
-    raw.discount_percentage,
-    raw.discount_value,
-    raw.value,
-  ];
-  const amountCandidates = [
-    voucher?.discountAmount,
-    raw.discount_amount,
-    raw.amount,
-    raw.value_amount,
-  ];
-  const percentValue = percentCandidates
-    .map(toNumber)
-    .find((v) => v != null && v > 0);
-  const amountValue = amountCandidates
-    .map(toNumber)
-    .find((v) => v != null && v > 0);
-  if (discountType.includes("percent") || discountType.includes("percentage")) {
-    if (percentValue != null) return `${Math.round(percentValue)}%`;
-  }
-  if (percentValue != null && percentValue <= 100)
-    return `${Math.round(percentValue)}%`;
-  if (amountValue != null)
-    return `${Math.round(amountValue).toLocaleString("vi-VN")}đ`;
-  return "12%";
-}
-
-function extractAppliesScope(voucher) {
-  const raw = voucher?.raw ?? {};
-  const scope = String(
-    raw.applies_to ?? raw.scope ?? raw.apply_scope ?? "",
-  ).toLowerCase();
-  if (scope.includes("all") || scope.includes("global"))
-    return "toàn bộ sản phẩm";
-  return "sản phẩm áp dụng";
-}
-
-const promoBannerText = computed(() => {
-  const voucher = homePromo.value;
-  const scope = extractAppliesScope(voucher);
-  const discountText = extractDiscountText(voucher);
-  const startDate = formatPromoDate(
-    voucher?.raw?.starts_at ??
-      voucher?.raw?.start_date ??
-      voucher?.raw?.valid_from ??
-      voucher?.raw?.start_at ??
-      voucher?.raw?.active_from ??
-      voucher?.raw?.created_at ??
-      voucher?.raw?.createdAt ??
-      voucher?.raw?.created ??
-      voucher?.raw?.end_date ??
-      voucher?.raw?.expires_at ??
-      voucher?.raw?.expired_at ??
-      voucher?.raw?.valid_until,
-  );
-  const endDate = formatPromoDate(
-    voucher?.raw?.ends_at ??
-      voucher?.raw?.end_date ??
-      voucher?.raw?.expires_at ??
-      voucher?.raw?.expired_at ??
-      voucher?.raw?.valid_until ??
-      voucher?.raw?.end_at,
-  );
-  return `Hiện cửa hàng chúng tôi đang có mã giảm giá cho ${scope} lên tới ${discountText}, bắt đầu từ ngày ${startDate} và kết thúc vào ngày ${endDate}. Nhanh tay mua hàng kẻo bỏ lỡ.`;
-});
-
-const shouldShowPromoBanner = computed(() => {
-  const voucher = homePromo.value
-  if (!voucher) return false
-  const now = Date.now()
-  const startMs = parseDateMs(
-    voucher?.raw?.starts_at ??
-      voucher?.raw?.start_date ??
-      voucher?.raw?.valid_from ??
-      voucher?.raw?.start_at ??
-      voucher?.raw?.active_from
-  )
-  const endMs = parseDateMs(
-    voucher?.raw?.ends_at ??
-      voucher?.raw?.end_date ??
-      voucher?.raw?.expires_at ??
-      voucher?.raw?.expired_at ??
-      voucher?.raw?.valid_until ??
-      voucher?.raw?.end_at
-  )
-  if (startMs != null && now < startMs) return false
-  if (endMs != null && now > endMs) return false
-  return true
-})
 
 const featuredProducts = computed(() => {
   const list = allProducts.value.filter(
@@ -344,68 +302,6 @@ async function loadFeaturedProducts() {
   } catch {
     allProducts.value = [];
     storeProductCount.value = null;
-  }
-}
-
-async function loadHomePromo() {
-  try {
-    const vouchers = await getAvailablePromoCodes([]);
-    if (!Array.isArray(vouchers) || !vouchers.length) {
-      homePromo.value = null;
-      return;
-    }
-    const now = Date.now()
-    const validNow = vouchers.filter((v) => {
-      const startMs = parseDateMs(
-        v?.raw?.starts_at ??
-          v?.raw?.start_date ??
-          v?.raw?.valid_from ??
-          v?.raw?.start_at ??
-          v?.raw?.active_from
-      )
-      const endMs = parseDateMs(
-        v?.raw?.ends_at ??
-          v?.raw?.end_date ??
-          v?.raw?.expires_at ??
-          v?.raw?.expired_at ??
-          v?.raw?.valid_until ??
-          v?.raw?.end_at
-      )
-      if (startMs != null && now < startMs) return false
-      if (endMs != null && now > endMs) return false
-      return true
-    })
-    if (!validNow.length) {
-      homePromo.value = null
-      return
-    }
-    const sorted = [...validNow].sort((a, b) => {
-      const aStartsAt = parseDateMs(
-        a?.raw?.starts_at ??
-          a?.raw?.start_date ??
-          a?.raw?.valid_from ??
-          a?.raw?.start_at ??
-          a?.raw?.active_from
-      ) ?? 0
-      const bStartsAt = parseDateMs(
-        b?.raw?.starts_at ??
-          b?.raw?.start_date ??
-          b?.raw?.valid_from ??
-          b?.raw?.start_at ??
-          b?.raw?.active_from
-      ) ?? 0
-
-      const aTime = Number.isFinite(aStartsAt) ? aStartsAt : 0;
-      const bTime = Number.isFinite(bStartsAt) ? bStartsAt : 0;
-      if (bTime !== aTime) return bTime - aTime;
-
-      const aId = Number(a?.id ?? a?.raw?.id ?? 0);
-      const bId = Number(b?.id ?? b?.raw?.id ?? 0);
-      return (Number.isFinite(bId) ? bId : 0) - (Number.isFinite(aId) ? aId : 0);
-    });
-    homePromo.value = sorted[0];
-  } catch {
-    homePromo.value = null;
   }
 }
 
@@ -454,24 +350,8 @@ function handleAiApplyFilters(filters) {
 }
 
 onMounted(() => {
+  // Banner signed URL: luôn làm mới khi vào trang chủ.
+  fetchGeneralSettings({ force: true }).catch(() => {});
   loadFeaturedProducts();
-  loadHomePromo();
 });
 </script>
-
-<style scoped>
-.promo-marquee {
-  display: inline-block;
-  min-width: 200%;
-  animation: promoMarquee 34s linear infinite;
-}
-
-@keyframes promoMarquee {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-</style>

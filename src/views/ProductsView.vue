@@ -1,6 +1,65 @@
 <template>
-  <main class="relative max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-14 py-8 md:py-10">
-    <div class="pointer-events-none absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-primary/10 to-transparent rounded-3xl" />
+  <main
+    class="relative max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-14 py-8 md:py-10"
+  >
+    <div
+      class="pointer-events-none absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-primary/10 to-transparent rounded-3xl"
+    />
+    <aside class="hidden 2xl:block absolute top-20 -left-52 z-10">
+      <a
+        v-if="showPrimaryBanner && resolvedBannerPrimaryLink"
+        :href="resolvedBannerPrimaryLink"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="block w-44 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 shadow-md"
+      >
+        <img
+          :src="resolvedBannerPrimaryUrl"
+          alt="Banner trái"
+          class="w-full h-[600px] object-cover"
+          @error="handlePrimaryBannerError"
+        />
+      </a>
+      <div
+        v-else-if="showPrimaryBanner"
+        class="block w-44 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 shadow-md"
+      >
+        <img
+          :src="resolvedBannerPrimaryUrl"
+          alt="Banner trái"
+          class="w-full h-[600px] object-cover"
+          @error="handlePrimaryBannerError"
+        />
+      </div>
+    </aside>
+
+    <aside class="hidden 2xl:block absolute top-20 -right-52 z-10">
+      <a
+        v-if="showSecondaryBanner && resolvedBannerSecondaryLink"
+        :href="resolvedBannerSecondaryLink"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="block w-44 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 shadow-md"
+      >
+        <img
+          :src="resolvedBannerSecondaryUrl"
+          alt="Banner phải"
+          class="w-full h-[600px] object-cover"
+          @error="handleSecondaryBannerError"
+        />
+      </a>
+      <div
+        v-else-if="showSecondaryBanner"
+        class="block w-44 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 shadow-md"
+      >
+        <img
+          :src="resolvedBannerSecondaryUrl"
+          alt="Banner phải"
+          class="w-full h-[600px] object-cover"
+          @error="handleSecondaryBannerError"
+        />
+      </div>
+    </aside>
     <!-- Breadcrumbs & Heading -->
     <div class="mb-8 relative z-10">
       <Breadcrumbs
@@ -26,9 +85,10 @@
         <div
           class="flex items-center justify-between gap-3 bg-white dark:bg-zinc-900 p-2.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 min-w-[280px]"
         >
-          <span class="text-sm font-semibold text-zinc-600 dark:text-zinc-300 px-2">{{
-            $t("products.sortBy")
-          }}</span>
+          <span
+            class="text-sm font-semibold text-zinc-600 dark:text-zinc-300 px-2"
+            >{{ $t("products.sortBy") }}</span
+          >
           <select
             v-model="selectedSort"
             class="bg-zinc-100 dark:bg-zinc-800 border-none text-sm font-semibold rounded-xl focus:ring-0 py-2 pl-3 pr-8 cursor-pointer text-zinc-800 dark:text-zinc-100"
@@ -53,7 +113,9 @@
           class="sticky top-24 space-y-7 bg-white/95 dark:bg-zinc-900/90 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-[0_20px_45px_-40px_rgba(0,0,0,0.8)]"
         >
           <div class="flex items-center justify-between">
-            <h3 class="font-extrabold text-lg text-zinc-900 dark:text-zinc-100">{{ $t("products.filters") }}</h3>
+            <h3 class="font-extrabold text-lg text-zinc-900 dark:text-zinc-100">
+              {{ $t("products.filters") }}
+            </h3>
             <button
               class="text-xs font-bold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
               type="button"
@@ -108,9 +170,10 @@
               >
                 {{ $t("products.priceRange") }}
               </p>
-              <span class="text-sm font-bold text-zinc-900 dark:text-zinc-100">{{
-                priceRangeLabel
-              }}</span>
+              <span
+                class="text-sm font-bold text-zinc-900 dark:text-zinc-100"
+                >{{ priceRangeLabel }}</span
+              >
             </div>
             <input
               class="w-full accent-zinc-900 dark:accent-zinc-100 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer"
@@ -229,7 +292,10 @@
         </div>
 
         <!-- Empty State -->
-        <div v-else-if="!isLoading && !error" class="text-center py-14 rounded-3xl border border-dashed border-zinc-300 dark:border-zinc-700">
+        <div
+          v-else-if="!isLoading && !error"
+          class="text-center py-14 rounded-3xl border border-dashed border-zinc-300 dark:border-zinc-700"
+        >
           <p class="text-gray-500 dark:text-gray-400 text-lg">
             {{ "Không có sản phẩm nào" }}
           </p>
@@ -255,17 +321,76 @@ import Breadcrumbs from "@/components/common/Breadcrumbs.vue";
 import ProductCard from "@/components/features/products/ProductCard.vue";
 import Pagination from "@/components/common/Pagination.vue";
 import { usePageLoading } from "@/composables/usePageLoading";
-import productService, { getProductsCacheKey } from "@/services/productService.js";
+import { useGeneralSettings } from "@/composables/useGeneralSettings";
+import productService, {
+  getProductsCacheKey,
+} from "@/services/productService.js";
 import categoryService from "@/services/categoryService.js";
+import { resolveAssetUrl } from "@/services/api";
 import { get } from "@/utils/cache";
 
 const { setLoading } = usePageLoading();
 const { t } = useI18n();
 const route = useRoute();
+const {
+  fetchGeneralSettings,
+  bannerPrimaryUrl,
+  bannerSecondaryUrl,
+  bannerPrimaryLink,
+  bannerSecondaryLink,
+} = useGeneralSettings();
+const resolvedBannerPrimaryUrl = computed(() =>
+  resolveAssetUrl(bannerPrimaryUrl.value),
+);
+const resolvedBannerSecondaryUrl = computed(() =>
+  resolveAssetUrl(bannerSecondaryUrl.value),
+);
+const resolvedBannerPrimaryLink = computed(() => bannerPrimaryLink.value || "");
+const resolvedBannerSecondaryLink = computed(
+  () => bannerSecondaryLink.value || "",
+);
+const isPrimaryBannerVisible = ref(true);
+const isSecondaryBannerVisible = ref(true);
+const showPrimaryBanner = computed(
+  () => Boolean(resolvedBannerPrimaryUrl.value) && isPrimaryBannerVisible.value,
+);
+const showSecondaryBanner = computed(
+  () =>
+    Boolean(resolvedBannerSecondaryUrl.value) && isSecondaryBannerVisible.value,
+);
+
+function handlePrimaryBannerError() {
+  isPrimaryBannerVisible.value = false;
+}
+
+function handleSecondaryBannerError() {
+  isSecondaryBannerVisible.value = false;
+}
+
+watch(
+  resolvedBannerPrimaryUrl,
+  (url) => {
+    isPrimaryBannerVisible.value = Boolean(url);
+  },
+  { immediate: true },
+);
+
+watch(
+  resolvedBannerSecondaryUrl,
+  (url) => {
+    isSecondaryBannerVisible.value = Boolean(url);
+  },
+  { immediate: true },
+);
 
 const currentPage = ref(1);
 const products = ref([]);
-const productsMeta = ref({ total: 0, current_page: 1, last_page: 1, per_page: 6 });
+const productsMeta = ref({
+  total: 0,
+  current_page: 1,
+  last_page: 1,
+  per_page: 6,
+});
 const isLoading = ref(false);
 const error = ref(null);
 const selectedSort = ref("newest");
@@ -609,7 +734,10 @@ const buildFetchParams = (page = 1) => {
     params.sort_by = "popular";
     params.sort_dir = "desc";
   }
-  if (selectedCategoryId.value !== null && selectedCategoryId.value !== undefined) {
+  if (
+    selectedCategoryId.value !== null &&
+    selectedCategoryId.value !== undefined
+  ) {
     params.categories_id = selectedCategoryId.value;
     params.category_id = selectedCategoryId.value;
   }
@@ -642,12 +770,16 @@ const fetchProducts = async (page = 1) => {
       productsData = cached.products;
       paginationMeta = cached.meta || cached.pagination;
     }
-    products.value = productsData.map(transformProduct).filter((p) => p !== null);
+    products.value = productsData
+      .map(transformProduct)
+      .filter((p) => p !== null);
     if (paginationMeta && typeof paginationMeta === "object") {
       productsMeta.value = {
         total: Number(paginationMeta.total ?? productsMeta.value.total ?? 0),
         current_page: Number(paginationMeta.current_page ?? page),
-        last_page: Number(paginationMeta.last_page ?? productsMeta.value.last_page ?? 1),
+        last_page: Number(
+          paginationMeta.last_page ?? productsMeta.value.last_page ?? 1,
+        ),
         per_page: Number(paginationMeta.per_page ?? PAGE_SIZE),
       };
       currentPage.value = productsMeta.value.current_page || page;
@@ -712,7 +844,12 @@ const fetchProducts = async (page = 1) => {
     error.value =
       err.message || "Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.";
     products.value = [];
-    productsMeta.value = { total: 0, current_page: 1, last_page: 1, per_page: PAGE_SIZE };
+    productsMeta.value = {
+      total: 0,
+      current_page: 1,
+      last_page: 1,
+      per_page: PAGE_SIZE,
+    };
   } finally {
     // Chỉ tắt loading cho request mới nhất
     if (seq === fetchSeq) {
@@ -774,6 +911,7 @@ const fetchCategories = async () => {
 
 // Fetch products on component mount
 onMounted(() => {
+  fetchGeneralSettings({ force: true }).catch(() => {});
   fetchCategories();
   applyFiltersFromRouteQuery();
   fetchProducts(1);

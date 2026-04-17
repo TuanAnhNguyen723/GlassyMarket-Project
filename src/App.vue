@@ -6,10 +6,15 @@ import AppFooter from "./components/layout/AppFooter.vue";
 import PageLoader from "./components/common/PageLoader.vue";
 import Notification from "./components/common/Notification.vue";
 import { useAuth } from '@/composables/useAuth'
+import { useGeneralSettings } from '@/composables/useGeneralSettings'
 
 const { checkAuth } = useAuth()
+const { fetchGeneralSettings } = useGeneralSettings()
 onMounted(() => {
   checkAuth()
+  fetchGeneralSettings({ force: true }).catch((error) => {
+    console.warn('Failed to fetch general settings:', error)
+  })
 })
 </script>
 
