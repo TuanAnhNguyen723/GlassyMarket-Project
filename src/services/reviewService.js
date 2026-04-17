@@ -8,6 +8,7 @@ import api from './api.js'
 
 /**
  * GET /api/v1/products/{id}/reviews - Danh sách đánh giá (public)
+ * Mỗi review có thể có replies[]: { id, message, replied_by, created_at }
  * @param {string|number} productId
  * @param {{ per_page?: number, page?: number }} params
  * @returns {Promise<{ reviews: Array, meta: Object, product_summary: Object }>}

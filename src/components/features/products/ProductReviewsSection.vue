@@ -175,6 +175,33 @@
             <p v-else class="text-sm text-zinc-500 italic">
               {{ $t('reviews.noComment') }}
             </p>
+            <div
+              v-if="sortedReplies(myReviewState.review.replies).length > 0"
+              class="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-600/80"
+            >
+              <p class="text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-2">
+                {{ $t('reviews.shopReplies') }}
+              </p>
+              <ul class="space-y-3">
+                <li
+                  v-for="reply in sortedReplies(myReviewState.review.replies)"
+                  :key="reply.id"
+                  class="rounded-xl bg-white/70 dark:bg-zinc-900/50 border border-zinc-200/90 dark:border-zinc-700/60 px-4 py-3"
+                >
+                  <div class="flex items-start gap-3 justify-between">
+                    <p class="text-sm text-zinc-800 dark:text-zinc-100 whitespace-pre-wrap flex-1 min-w-0">
+                      {{ reply.message }}
+                    </p>
+                    <time
+                      class="text-xs text-zinc-500 dark:text-zinc-400 flex-shrink-0 text-right tabular-nums pt-0.5"
+                      :datetime="reply.created_at"
+                    >
+                      {{ formatDateTime(reply.created_at) }}
+                    </time>
+                  </div>
+                </li>
+              </ul>
+            </div>
           </div>
           <div class="flex gap-2 flex-shrink-0">
             <button
@@ -255,6 +282,33 @@
             <p v-else class="text-sm text-zinc-500 italic">
               {{ $t('reviews.noComment') }}
             </p>
+            <div
+              v-if="sortedReplies(review.replies).length > 0"
+              class="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-600/80"
+            >
+              <p class="text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-2">
+                {{ $t('reviews.shopReplies') }}
+              </p>
+              <ul class="space-y-3">
+                <li
+                  v-for="reply in sortedReplies(review.replies)"
+                  :key="reply.id"
+                  class="rounded-xl bg-white/70 dark:bg-zinc-900/50 border border-zinc-200/90 dark:border-zinc-700/60 px-4 py-3"
+                >
+                  <div class="flex items-start gap-3 justify-between">
+                    <p class="text-sm text-zinc-800 dark:text-zinc-100 whitespace-pre-wrap flex-1 min-w-0">
+                      {{ reply.message }}
+                    </p>
+                    <time
+                      class="text-xs text-zinc-500 dark:text-zinc-400 flex-shrink-0 text-right tabular-nums pt-0.5"
+                      :datetime="reply.created_at"
+                    >
+                      {{ formatDateTime(reply.created_at) }}
+                    </time>
+                  </div>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </li>
@@ -345,6 +399,28 @@ function formatDate(dateStr) {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+  })
+}
+
+/** Phản hồi shop: hiển thị giờ phút (theo thời gian) */
+function formatDateTime(dateStr) {
+  if (!dateStr) return '—'
+  return new Date(dateStr).toLocaleString('vi-VN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+/** Sắp xếp replies theo thời gian tạo (cũ → mới) */
+function sortedReplies(replies) {
+  if (!Array.isArray(replies) || replies.length === 0) return []
+  return [...replies].sort((a, b) => {
+    const ta = a?.created_at ? new Date(a.created_at).getTime() : 0
+    const tb = b?.created_at ? new Date(b.created_at).getTime() : 0
+    return ta - tb
   })
 }
 

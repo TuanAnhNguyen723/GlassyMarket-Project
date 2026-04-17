@@ -211,6 +211,7 @@ export default {
     deleteError: 'Không thể xóa đánh giá.',
     confirmDelete: 'Bạn có chắc muốn xóa đánh giá này?',
     alreadyReviewed: 'Bạn đã đánh giá sản phẩm này rồi.',
+    shopReplies: 'Phản hồi từ shop',
   },
   products: {
     title: 'Kính mắt hiện đại',

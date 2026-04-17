@@ -212,6 +212,7 @@ export default {
     deleteError: 'Could not delete review.',
     confirmDelete: 'Are you sure you want to delete this review?',
     alreadyReviewed: 'You have already reviewed this product.',
+    shopReplies: 'Reply from the shop',
   },
   products: {
     title: 'Modern Eyewear',
