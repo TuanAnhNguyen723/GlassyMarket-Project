@@ -86,7 +86,7 @@ router.beforeEach(async (to, from, next) => {
     return
   }
   if (to.meta.guest && isAuthenticated.value) {
-    next(to.query.redirect ? { path: to.query.redirect } : { name: 'Dashboard' })
+    next(to.query.redirect ? { path: to.query.redirect } : { name: 'Home' })
     return
   }
   next()

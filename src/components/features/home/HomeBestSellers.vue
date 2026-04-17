@@ -29,20 +29,27 @@
         />
 
         <button
-          class="absolute bottom-3 right-3 h-9 px-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg translate-y-2 group-hover:translate-y-0"
+          class="absolute bottom-3 right-3 h-9 px-3 rounded-full flex items-center justify-center transition-all shadow-lg"
+          :class="
+            p.isOutOfStock
+              ? 'bg-zinc-300 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-300 opacity-100 cursor-not-allowed'
+              : 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0'
+          "
           type="button"
-          title="Thêm vào giỏ"
+          :title="p.isOutOfStock ? 'Sản phẩm đã hết hàng' : 'Thêm vào giỏ'"
+          :disabled="p.isOutOfStock"
           @click.stop="$emit('addToCart', p)"
         >
           <span class="material-symbols-outlined text-[18px] mr-1">add_shopping_cart</span>
-          <span class="text-xs font-semibold">Thêm</span>
+          <span class="text-xs font-semibold">{{ p.isOutOfStock ? 'Hết hàng' : 'Thêm' }}</span>
         </button>
 
         <div
-          v-if="p.badge"
-          class="absolute top-3 left-3 px-3 py-1 bg-black/70 text-white backdrop-blur-sm text-[10px] font-bold rounded-full uppercase tracking-widest"
+          v-if="p.badge || p.isOutOfStock"
+          class="absolute top-3 left-3 px-3 py-1 backdrop-blur-sm text-[10px] font-bold rounded-full uppercase tracking-widest"
+          :class="p.isOutOfStock ? 'bg-red-600/90 text-white' : 'bg-black/70 text-white'"
         >
-          {{ p.badge }}
+          {{ p.isOutOfStock ? 'Hết hàng' : p.badge }}
         </div>
       </div>
 
@@ -51,7 +58,16 @@
         <p class="text-zinc-500 dark:text-zinc-400 text-xs italic">{{ p.subtitle || 'Thiết kế thanh lịch, đeo nhẹ cả ngày' }}</p>
         <div class="flex items-center justify-between pt-1">
           <p class="font-extrabold text-zinc-900 dark:text-zinc-100 text-base whitespace-nowrap">{{ p.price }}</p>
-          <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded-full">Còn hàng</span>
+          <span
+            class="text-[11px] font-semibold px-2 py-1 rounded-full"
+            :class="
+              p.isOutOfStock
+                ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30'
+                : 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30'
+            "
+          >
+            {{ p.isOutOfStock ? 'Hết hàng' : 'Còn hàng' }}
+          </span>
         </div>
       </div>
     </article>

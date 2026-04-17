@@ -91,7 +91,7 @@ const handleSubmit = async () => {
     const res = await authService.login({ email: form.email, password: form.password })
     setUser(res.user, res.token)
     showNotification({ message: t('auth.loginSuccess'), type: 'success' })
-    router.push(route.query.redirect || '/dashboard')
+    router.push(route.query.redirect || '/')
   } catch (err) {
     errorMessage.value = err.message || 'Đăng nhập thất bại. Vui lòng thử lại.'
   } finally {

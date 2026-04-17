@@ -174,17 +174,34 @@
         <!-- CTA Actions -->
         <div class="flex flex-col gap-2.5 mt-3">
           <button
-            class="w-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 py-3.5 rounded-xl font-semibold text-sm md:text-base hover:opacity-90 transition-all flex items-center justify-center gap-2"
+            class="w-full py-3.5 rounded-xl font-semibold text-sm md:text-base transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            :class="
+              isOutOfStock
+                ? 'bg-zinc-400 dark:bg-zinc-700 text-white dark:text-zinc-200'
+                : 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90'
+            "
             type="button"
+            :disabled="isOutOfStock"
             @click="addToCart"
           >
             <span class="material-symbols-outlined text-base md:text-lg"
               >add_shopping_cart</span
             >
-            Thêm vào giỏ hàng
+            {{ isOutOfStock ? "Hết hàng" : "Thêm vào giỏ hàng" }}
           </button>
-          <p class="text-center text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-            Còn khoảng {{ product.stock }} sản phẩm sẵn kho.
+          <p
+            class="text-center text-xs mt-1"
+            :class="
+              isOutOfStock
+                ? 'text-red-600 dark:text-red-400'
+                : 'text-zinc-500 dark:text-zinc-400'
+            "
+          >
+            {{
+              isOutOfStock
+                ? "Sản phẩm đã hết hàng."
+                : `Còn khoảng ${product.stock} sản phẩm sẵn kho.`
+            }}
           </p>
         </div>
 
@@ -307,6 +324,7 @@ const product = ref({
   lensOptions: [],
   colors: [],
 });
+const isOutOfStock = computed(() => Number(product.value?.stock ?? 0) <= 0);
 
 const selectedProductColorId = ref(null);
 const selectedColorHex = ref(null);
@@ -688,6 +706,14 @@ const handleSelectImage = (img) => {
 const addToCart = () => {
   const p = product.value;
   if (!p?.id) return;
+  if (isOutOfStock.value) {
+    showNotification({
+      message: "Sản phẩm đã hết hàng, không thể thêm vào giỏ.",
+      type: "error",
+      duration: 3000,
+    });
+    return;
+  }
 
   const lensOpt = p.lensOptions?.find((o) => o.id === selectedLens.value);
   const lensName = lensOpt?.name ?? "—";

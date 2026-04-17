@@ -137,7 +137,7 @@ const handleSubmit = async () => {
     })
     setUser(res.user, res.token)
     showNotification({ message: t('auth.registerSuccess'), type: 'success' })
-    router.push(route.query.redirect || '/dashboard')
+    router.push(route.query.redirect || '/')
   } catch (err) {
     errorMessage.value = err.message || 'Đăng ký thất bại. Vui lòng thử lại.'
   } finally {

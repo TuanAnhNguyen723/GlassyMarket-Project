@@ -77,6 +77,7 @@ import productService from "@/services/productService.js";
 import { getAvailablePromoCodes } from "@/services/promoCodeService.js";
 import { useCart } from "@/composables/useCart.js";
 import { useRouter } from "vue-router";
+import { useNotification } from "@/composables/useNotification";
 
 const heroImage =
   "https://images.unsplash.com/photo-1485875437342-9b39470b3d95?auto=format&fit=crop&w=1400&q=80";
@@ -102,6 +103,7 @@ const badges = [
 const cart = useCart();
 const router = useRouter();
 const aiChatRef = ref(null);
+const { showNotification } = useNotification();
 
 function openAiChat() {
   aiChatRef.value?.openChat?.();
@@ -185,6 +187,18 @@ function extractStoreProductCount(response) {
 function toNumber(value) {
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
+}
+
+function getProductStock(p) {
+  const n = Number(
+    p?.stock ??
+      p?.quantity ??
+      p?.inventory ??
+      p?.inventory_count ??
+      p?.stock_quantity ??
+      0,
+  );
+  return Number.isFinite(n) ? n : 0;
 }
 
 function formatPromoDate(input) {
@@ -310,6 +324,8 @@ const featuredProducts = computed(() => {
     badge: p.tag ?? (p.is_premium ? "Premium" : null),
     alt: p.alt ?? p.name ?? "Product image",
     image: getProductImage(p),
+    stock: getProductStock(p),
+    isOutOfStock: getProductStock(p) <= 0,
     raw: p,
   }));
 });
@@ -397,6 +413,15 @@ function onAddToCart(product) {
   const raw = product?.raw ?? product;
   const productId = raw?.id ?? product?.id;
   if (!productId) return;
+  const stock = getProductStock(raw);
+  if (stock <= 0) {
+    showNotification({
+      message: "Sản phẩm đã hết hàng, không thể thêm vào giỏ.",
+      type: "error",
+      duration: 3000,
+    });
+    return;
+  }
   cart.addItem({
     productId,
     name: raw?.name ?? product?.name,
