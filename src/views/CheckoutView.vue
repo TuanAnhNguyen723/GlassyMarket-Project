@@ -104,39 +104,60 @@
                 type="text"
               />
             </label>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <label class="block">
                 <span
                   class="text-sm font-bold text-zinc-900 dark:text-white mb-1.5 block"
-                  >{{ $t("checkout.city") }}</span
+                  >Tỉnh / Thành</span
                 >
-                <input
-                  v-model="shipping.city"
-                  class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 focus:border-transparent h-11 px-4 text-sm"
-                  type="text"
-                />
-              </label>
-              <label class="block">
-                <span
-                  class="text-sm font-bold text-zinc-900 dark:text-white mb-1.5 block"
-                  >{{ $t("checkout.state") }}</span
-                >
-                <input
+                <select
                   v-model="shipping.state"
                   class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 focus:border-transparent h-11 px-4 text-sm"
-                  type="text"
-                />
+                  :disabled="loadingProvinces"
+                >
+                  <option disabled value="">
+                    {{
+                      loadingProvinces
+                        ? "Đang tải Tỉnh / Thành..."
+                        : "Chọn Tỉnh / Thành"
+                    }}
+                  </option>
+                  <option
+                    v-for="province in provinceOptions"
+                    :key="province.code"
+                    :value="province.name"
+                  >
+                    {{ province.name }}
+                  </option>
+                </select>
               </label>
               <label class="block">
                 <span
-                  class="text-sm font-bold text-[#111718] dark:text-white mb-1.5 block"
-                  >{{ $t("checkout.zipCode") }}</span
+                  class="text-sm font-bold text-zinc-900 dark:text-white mb-1.5 block"
+                  >Xã / Phường</span
                 >
-                <input
-                  v-model="shipping.zip_code"
-                  class="w-full rounded-lg border border-[#eaf0f0] dark:border-gray-700 bg-slate-50 dark:bg-zinc-800 focus:ring-2 focus:ring-primary focus:border-primary h-11 px-4 text-sm"
-                  type="text"
-                />
+                <select
+                  v-model="shipping.city"
+                  class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 focus:border-transparent h-11 px-4 text-sm"
+                  :disabled="!shipping.state || loadingWards"
+                >
+                  <option disabled value="">
+                    {{
+                      !shipping.state
+                        ? "Chọn Tỉnh / Thành trước"
+                        : loadingWards
+                          ? "Đang tải Xã / Phường..."
+                          : "Chọn Xã / Phường"
+                    }}
+                  </option>
+                  <option
+                    v-for="ward in wardOptions"
+                    :key="ward"
+                    :value="ward"
+                  >
+                    {{ ward }}
+                  </option>
+                </select>
               </label>
             </div>
           </div>
@@ -284,17 +305,11 @@
             <p class="text-sm text-zinc-500 dark:text-zinc-400 mb-2">
               {{ $t("checkout.selectPaymentMethod") }}
             </p>
-            <p
-              v-if="paymentMethod === 'momo' || paymentMethod === 'vnpay'"
-              class="text-xs text-amber-600 dark:text-amber-400 mb-2"
-            >
-              {{ $t("checkout.paymentDemoNote") }}
-            </p>
             <div class="space-y-3">
               <label
                 class="relative flex cursor-pointer rounded-lg border-2 p-4 transition-colors"
                 :class="
-                  paymentMethod === 'momo'
+                  paymentMethod === 'bank_transfer'
                     ? 'border-zinc-900 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800'
                     : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500'
                 "
@@ -303,52 +318,26 @@
                   v-model="paymentMethod"
                   class="sr-only"
                   type="radio"
-                  value="momo"
+                  value="bank_transfer"
                 />
                 <span
                   class="flex-1 font-semibold text-sm text-zinc-900 dark:text-white"
                 >
-                  {{ $t("checkout.payWithMomo") }}
+                  Chuyển khoản ngân hàng
                 </span>
                 <span
                   class="material-symbols-outlined flex-shrink-0"
                   :class="
-                    paymentMethod === 'momo'
+                    paymentMethod === 'bank_transfer'
                       ? 'text-zinc-900 dark:text-zinc-100'
                       : 'text-slate-300 dark:text-gray-600'
                   "
                 >
-                  {{ paymentMethod === "momo" ? "check_circle" : "circle" }}
-                </span>
-              </label>
-              <label
-                class="relative flex cursor-pointer rounded-lg border-2 p-4 transition-colors"
-                :class="
-                  paymentMethod === 'vnpay'
-                    ? 'border-zinc-900 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800'
-                    : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500'
-                "
-              >
-                <input
-                  v-model="paymentMethod"
-                  class="sr-only"
-                  type="radio"
-                  value="vnpay"
-                />
-                <span
-                  class="flex-1 font-semibold text-sm text-zinc-900 dark:text-white"
-                >
-                  {{ $t("checkout.payWithVNPay") }}
-                </span>
-                <span
-                  class="material-symbols-outlined flex-shrink-0"
-                  :class="
-                    paymentMethod === 'vnpay'
-                      ? 'text-zinc-900 dark:text-zinc-100'
-                      : 'text-slate-300 dark:text-gray-600'
-                  "
-                >
-                  {{ paymentMethod === "vnpay" ? "check_circle" : "circle" }}
+                  {{
+                    paymentMethod === "bank_transfer"
+                      ? "check_circle"
+                      : "circle"
+                  }}
                 </span>
               </label>
               <label
@@ -394,7 +383,7 @@
         >
           <span v-if="isPlacingOrder" class="animate-pulse">...</span>
           <span v-else class="material-symbols-outlined">verified_user</span>
-          {{ $t("checkout.placeOrder") }} - {{ formatPrice(grandTotal) }}
+          {{ `${$t("checkout.placeOrder")} - ${formatPrice(grandTotal)}` }}
         </button>
       </div>
 
@@ -674,7 +663,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import Breadcrumbs from "@/components/common/Breadcrumbs.vue";
@@ -705,7 +694,7 @@ const { showNotification } = useNotification();
 
 const stepOpen = ref(1);
 const deliveryMethod = ref("standard");
-const paymentMethod = ref(null); // 'momo' | 'vnpay' | 'direct' → backend set paid / pending
+const paymentMethod = ref(null); // 'bank_transfer' | 'direct'
 const expressShippingFee = 15000;
 const promoCode = ref("");
 const promoDiscountAmount = ref(0);
@@ -727,8 +716,108 @@ const shipping = ref({
   address: "",
   city: "",
   state: "",
-  zip_code: "",
 });
+
+const provinceOptions = ref([]);
+const wardOptions = ref([]);
+const loadingProvinces = ref(false);
+const loadingWards = ref(false);
+const PROVINCE_API_BASE = "https://provinces.open-api.vn/api";
+
+async function loadProvinceOptions() {
+  loadingProvinces.value = true;
+  try {
+    const response = await fetch(`${PROVINCE_API_BASE}/?depth=1`);
+    if (!response.ok) throw new Error("Cannot load province list");
+    const data = await response.json();
+    provinceOptions.value = (Array.isArray(data) ? data : [])
+      .map((province) => ({
+        code: Number(province.code),
+        name: String(province.name || "").trim(),
+      }))
+      .filter((province) => Number.isFinite(province.code) && province.name)
+      .sort((a, b) => a.name.localeCompare(b.name, "vi"));
+  } catch {
+    provinceOptions.value = [];
+    showNotification({
+      message: "Không tải được danh sách Tỉnh / Thành.",
+      type: "error",
+      duration: 3500,
+    });
+  } finally {
+    loadingProvinces.value = false;
+  }
+}
+
+async function loadWardOptionsByProvinceName(provinceName) {
+  const selected = provinceOptions.value.find((p) => p.name === provinceName);
+  if (!selected?.code) {
+    wardOptions.value = [];
+    return;
+  }
+  loadingWards.value = true;
+  try {
+    const response = await fetch(`${PROVINCE_API_BASE}/p/${selected.code}?depth=3`);
+    if (!response.ok) throw new Error("Cannot load ward list");
+    const data = await response.json();
+    const districts = Array.isArray(data?.districts) ? data.districts : [];
+    wardOptions.value = districts
+      .flatMap((district) =>
+        (Array.isArray(district?.wards) ? district.wards : []).map((ward) =>
+          String(ward?.name || "").trim(),
+        ),
+      )
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, "vi"));
+  } catch {
+    wardOptions.value = [];
+    showNotification({
+      message: "Không tải được danh sách Xã / Phường.",
+      type: "error",
+      duration: 3500,
+    });
+  } finally {
+    loadingWards.value = false;
+  }
+}
+
+watch(
+  () => shipping.value.state,
+  async (newState, oldState) => {
+    if (newState !== oldState) {
+      shipping.value.city = "";
+    }
+    if (!newState) {
+      wardOptions.value = [];
+      return;
+    }
+    await loadWardOptionsByProvinceName(newState);
+  },
+);
+
+watch(
+  () => provinceOptions.value.length,
+  (count) => {
+    if (!count) return;
+    const stillValid = provinceOptions.value.some(
+      (province) => province.name === shipping.value.state,
+    );
+    if (!stillValid) {
+      shipping.value.state = "";
+      shipping.value.city = "";
+    }
+  },
+);
+
+watch(
+  () => wardOptions.value.length,
+  () => {
+    const stillValid = wardOptions.value.includes(shipping.value.city);
+    if (!stillValid) {
+    shipping.value.city = "";
+    }
+  },
+);
 
 const isPlacingOrder = ref(false);
 
@@ -1080,15 +1169,15 @@ const canPlaceOrder = computed(() => {
     s.name?.trim() &&
     s.phone?.trim() &&
     s.email?.trim() &&
-    s.address?.trim()
+    s.address?.trim() &&
+    s.state?.trim() &&
+    s.city?.trim()
   );
   const hasPayment =
-    paymentMethod.value === "momo" ||
-    paymentMethod.value === "vnpay" ||
+    paymentMethod.value === "bank_transfer" ||
     paymentMethod.value === "direct";
   return hasShipping && hasPayment;
 });
-
 function isPaymentMethodValidationError(err) {
   const msg = String(err?.message || "").toLowerCase();
   return err?.status === 422 && msg.includes("payment method");
@@ -1130,8 +1219,8 @@ function isPromoMinOrderMessage(message) {
 }
 
 function getPaymentMethodCandidates(uiMethod) {
-  if (uiMethod === "momo") return ["momo"];
-  if (uiMethod === "vnpay") return ["vnpay", "vnpay"];
+  if (uiMethod === "bank_transfer")
+    return ["bank_transfer", "bank", "transfer"];
   if (uiMethod === "direct") return ["cod", "cash", "direct"];
   return [];
 }
@@ -1151,8 +1240,10 @@ async function placeOrder() {
     const phone = (s.phone && String(s.phone).trim()) || "";
     const email = (s.email && String(s.email).trim()) || "";
     const address = (s.address && String(s.address).trim()) || "";
+    const shippingCity = (s.state && String(s.state).trim()) || "";
+    const shippingWard = (s.city && String(s.city).trim()) || "";
 
-    if (!name || !phone || !email || !address) {
+    if (!name || !phone || !email || !address || !shippingCity || !shippingWard) {
       showNotification({
         message: $t("checkout.errorShippingRequired"),
         type: "error",
@@ -1163,7 +1254,7 @@ async function placeOrder() {
     }
 
     const method = paymentMethod.value;
-    if (method !== "momo" && method !== "vnpay" && method !== "direct") {
+    if (method !== "bank_transfer" && method !== "direct") {
       showNotification({
         message: $t("checkout.errorPaymentRequired"),
         type: "error",
@@ -1172,22 +1263,24 @@ async function placeOrder() {
       isPlacingOrder.value = false;
       return;
     }
-    // payment_status: 'paid' (momo/vnpay) hoặc 'pending' (direct) — backend cần lưu vào DB (status / payment_status)
-    const paymentStatus =
-      method === "momo" || method === "vnpay" ? "paid" : "pending";
+    const paymentStatus = method === "bank_transfer" ? "paid" : "pending";
     const basePayload = {
       shipping_name: name,
       shipping_phone: phone,
       shipping_email: email,
       shipping_address: address,
+      shipping_city: shippingCity,
+      shipping_ward: shippingWard,
+      shipping_postal_code: "",
+      shipping_country: "Vietnam",
       shipping: {
         name,
         phone,
         email,
         address,
-        city: (s.city && String(s.city).trim()) || null,
-        state: (s.state && String(s.state).trim()) || null,
-        zip_code: (s.zip_code && String(s.zip_code).trim()) || null,
+        city: shippingCity || null,
+        ward: shippingWard || null,
+        state: shippingCity || null,
       },
       items,
       delivery_method: deliveryMethod.value,
@@ -1233,13 +1326,14 @@ async function placeOrder() {
           invalidateProductDetail(item.product_id);
         }
       }
-      if (method === "momo" || method === "vnpay") {
+      if (method === "bank_transfer") {
         showNotification({
-          message: $t("checkout.paymentDemoComplete"),
+          message: "Thanh toán chuyển khoản thành công.",
           type: "success",
           duration: 4000,
         });
-      } else {
+      }
+      if (method === "direct") {
         showNotification({
           message: $t("checkout.payDirectPending"),
           type: "success",
@@ -1284,6 +1378,7 @@ onMounted(() => {
     loadAvailableVouchers();
     loadMyVouchers();
   }
+  loadProvinceOptions();
   try {
     const raw = sessionStorage.getItem(PROMO_STORAGE_KEY);
     if (!raw) return;
