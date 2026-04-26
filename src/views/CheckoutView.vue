@@ -670,6 +670,7 @@ import Breadcrumbs from "@/components/common/Breadcrumbs.vue";
 import { useCart } from "@/composables/useCart.js";
 import { useAuth } from "@/composables/useAuth.js";
 import orderService from "@/services/orderService.js";
+import { AUTH_TOKEN_KEY } from "@/services/api.js";
 import { useNotification } from "@/composables/useNotification.js";
 import {
   invalidateOrders,
@@ -820,6 +821,18 @@ watch(
 );
 
 const isPlacingOrder = ref(false);
+
+function redirectToLoginForCheckout() {
+  showNotification({
+    message: "Vui lòng đăng nhập để đặt hàng.",
+    type: "error",
+    duration: 3500,
+  });
+  router.push({
+    name: "Login",
+    query: { redirect: "/checkout" },
+  });
+}
 
 function parsePrice(value) {
   if (value == null) return 0;
@@ -1227,6 +1240,11 @@ function getPaymentMethodCandidates(uiMethod) {
 
 async function placeOrder() {
   if (!canPlaceOrder.value || isPlacingOrder.value) return;
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (!token) {
+    redirectToLoginForCheckout();
+    return;
+  }
   isPlacingOrder.value = true;
   try {
     const items = (cartItems.value ?? []).map((i) => ({
@@ -1290,11 +1308,6 @@ async function placeOrder() {
     if (appliedPromoCode.value) {
       basePayload.promo_code = appliedPromoCode.value;
     }
-    // Gửi user_id khi đã đăng nhập để backend gán đơn cho user (GET /orders trả về đơn theo user)
-    const userId = user.value?.id;
-    if (userId != null) {
-      basePayload.user_id = userId;
-    }
     const methodCandidates = getPaymentMethodCandidates(method);
     let data = null;
     let lastErr = null;
@@ -1348,6 +1361,10 @@ async function placeOrder() {
     }
   } catch (e) {
     console.error("Create order failed:", e);
+    if (Number(e?.status) === 401) {
+      redirectToLoginForCheckout();
+      return;
+    }
     if (isPromoAlreadyUsedError(e)) {
       promoDiscountAmount.value = 0;
       appliedPromoCode.value = "";
@@ -1370,6 +1387,11 @@ async function placeOrder() {
 }
 
 onMounted(() => {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (!token) {
+    redirectToLoginForCheckout();
+    return;
+  }
   if (!(cartItems.value ?? []).length) {
     router.replace("/cart");
     return;

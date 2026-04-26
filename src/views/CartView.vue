@@ -103,9 +103,12 @@ import CartItem from "@/components/features/cart/CartItem.vue";
 import OrderSummary from "@/components/features/cart/OrderSummary.vue";
 import ShippingNotice from "@/components/features/cart/ShippingNotice.vue";
 import { useCart } from "@/composables/useCart.js";
+import { useNotification } from "@/composables/useNotification.js";
+import { AUTH_TOKEN_KEY } from "@/services/api.js";
 
 const router = useRouter();
 const cart = useCart();
+const { showNotification } = useNotification();
 const cartItems = cart.items;
 const cartSubtotal = cart.subtotal;
 
@@ -121,6 +124,19 @@ function onRemove(id) {
 }
 
 function checkout() {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (!token) {
+    showNotification({
+      message: "Vui lòng đăng nhập để đặt hàng.",
+      type: "error",
+      duration: 3500,
+    });
+    router.push({
+      name: "Login",
+      query: { redirect: "/checkout" },
+    });
+    return;
+  }
   router.push("/checkout");
 }
 </script>

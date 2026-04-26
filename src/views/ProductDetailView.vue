@@ -300,6 +300,7 @@ import { usePageLoading } from "@/composables/usePageLoading";
 import { get, CACHE_KEYS } from "@/utils/cache";
 import { useNotification } from "@/composables/useNotification.js";
 import { useCart } from "@/composables/useCart.js";
+import { AUTH_TOKEN_KEY } from "@/services/api.js";
 
 const route = useRoute();
 const { setLoading } = usePageLoading();
@@ -706,6 +707,19 @@ const handleSelectImage = (img) => {
 const addToCart = () => {
   const p = product.value;
   if (!p?.id) return;
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (!token) {
+    showNotification({
+      message: "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.",
+      type: "error",
+      duration: 3500,
+    });
+    router.push({
+      name: "Login",
+      query: { redirect: route.fullPath || `/product/${p.id}` },
+    });
+    return;
+  }
   if (isOutOfStock.value) {
     showNotification({
       message: "Sản phẩm đã hết hàng, không thể thêm vào giỏ.",

@@ -95,6 +95,7 @@ import HomePromoBanner from "@/components/features/home/HomePromoBanner.vue";
 import AiProductChatWidget from "@/components/features/home/AiProductChatWidget.vue";
 import productService from "@/services/productService.js";
 import { useCart } from "@/composables/useCart.js";
+import { AUTH_TOKEN_KEY } from "@/services/api.js";
 import { useRouter } from "vue-router";
 import { useNotification } from "@/composables/useNotification";
 import { useGeneralSettings } from "@/composables/useGeneralSettings";
@@ -309,6 +310,19 @@ function onAddToCart(product) {
   const raw = product?.raw ?? product;
   const productId = raw?.id ?? product?.id;
   if (!productId) return;
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (!token) {
+    showNotification({
+      message: "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.",
+      type: "error",
+      duration: 3500,
+    });
+    router.push({
+      name: "Login",
+      query: { redirect: `/product/${productId}` },
+    });
+    return;
+  }
   const stock = getProductStock(raw);
   if (stock <= 0) {
     showNotification({
