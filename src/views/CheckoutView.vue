@@ -323,7 +323,7 @@
                 <span
                   class="flex-1 font-semibold text-sm text-zinc-900 dark:text-white"
                 >
-                  Chuyển khoản ngân hàng
+                  Thanh toán QR
                 </span>
                 <span
                   class="material-symbols-outlined flex-shrink-0"
@@ -374,16 +374,69 @@
           </div>
         </section>
 
+        <section
+          v-if="paymentMethod === 'bank_transfer'"
+          class="border border-zinc-200 dark:border-zinc-800 rounded-3xl bg-white dark:bg-zinc-900/80 p-6 space-y-4"
+        >
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="text-base font-bold text-zinc-900 dark:text-white">
+              Thanh toán QR
+            </h3>
+            <span class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+              {{ fakePaymentStatusText }}
+            </span>
+          </div>
+
+          <p v-if="fakePaymentSession?.payment_code" class="text-sm text-zinc-600 dark:text-zinc-300">
+            Mã thanh toán: <span class="font-bold">{{ fakePaymentSession.payment_code }}</span>
+          </p>
+
+          <button
+            v-if="!fakePaymentSession?.session_id || !fakeQrDataUrl"
+            type="button"
+            class="w-full h-11 rounded-xl border border-zinc-300 dark:border-zinc-600 font-semibold text-sm text-zinc-900 dark:text-zinc-100"
+            :disabled="isStartingFakePayment"
+            @click="startFakePaymentSession"
+          >
+            {{ isStartingFakePayment ? "Đang tạo mã..." : "Tạo mã QR" }}
+          </button>
+
+          <div v-if="fakeQrDataUrl" class="rounded-2xl border border-zinc-200 dark:border-zinc-700 p-4 flex flex-col items-center gap-3">
+            <img :src="fakeQrDataUrl" alt="QR thanh toán" class="w-52 h-52 rounded-xl" />
+            <p class="text-xs text-zinc-500 dark:text-zinc-400 text-center">
+              Dùng điện thoại quét QR để mở trang xác nhận thanh toán.
+            </p>
+          </div>
+
+          <p v-if="fakePaymentSession?.expires_at" class="text-sm text-zinc-600 dark:text-zinc-300">
+            Thời gian còn lại: <span class="font-semibold">{{ fakeCountdownText }}</span>
+          </p>
+
+          <p v-if="fakePaymentError" class="text-sm text-red-600 dark:text-red-400">
+            {{ fakePaymentError }}
+          </p>
+
+          <button
+            v-if="shouldShowRegenerateFakeQr"
+            type="button"
+            class="w-full h-11 rounded-xl border border-zinc-300 dark:border-zinc-600 font-semibold text-sm text-zinc-900 dark:text-zinc-100"
+            :disabled="isStartingFakePayment"
+            @click="startFakePaymentSession"
+          >
+            {{ isStartingFakePayment ? "Đang tạo mã..." : "Tạo mã mới" }}
+          </button>
+        </section>
+
         <!-- Thanh toán (tạo đơn kèm payment_method → backend set paid/pending) -->
         <button
           type="button"
           class="w-full bg-zinc-900 dark:bg-zinc-100 hover:opacity-90 text-white dark:text-zinc-900 font-bold py-4 rounded-xl text-base transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="isPlacingOrder || !canPlaceOrder"
-          @click="placeOrder"
+          :disabled="isPlacingOrder || isStartingFakePayment || !canPlaceOrder || !canSubmitOrder"
+          @click="handleCheckoutAction"
         >
-          <span v-if="isPlacingOrder" class="animate-pulse">...</span>
+          <span v-if="isPlacingOrder || isStartingFakePayment" class="animate-pulse">...</span>
           <span v-else class="material-symbols-outlined">verified_user</span>
-          {{ `${$t("checkout.placeOrder")} - ${formatPrice(grandTotal)}` }}
+          {{ checkoutButtonText }}
         </button>
       </div>
 
@@ -663,14 +716,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
+import QRCode from "qrcode";
 import Breadcrumbs from "@/components/common/Breadcrumbs.vue";
 import { useCart } from "@/composables/useCart.js";
 import { useAuth } from "@/composables/useAuth.js";
 import orderService from "@/services/orderService.js";
 import { AUTH_TOKEN_KEY } from "@/services/api.js";
+import fakePaymentService from "@/services/fakePaymentService.js";
 import { useNotification } from "@/composables/useNotification.js";
 import {
   invalidateOrders,
@@ -821,6 +876,14 @@ watch(
 );
 
 const isPlacingOrder = ref(false);
+const isStartingFakePayment = ref(false);
+const fakePaymentSession = ref(null);
+const fakeQrDataUrl = ref("");
+const fakePaymentError = ref("");
+const fakeCountdownSeconds = ref(0);
+let fakePaymentPollTimer = null;
+let fakePaymentCountdownTimer = null;
+const CHECKOUT_FAKE_PAYMENT_STORAGE_KEY = "checkout_fake_payment_session";
 
 function redirectToLoginForCheckout() {
   showNotification({
@@ -832,6 +895,12 @@ function redirectToLoginForCheckout() {
     name: "Login",
     query: { redirect: "/checkout" },
   });
+}
+
+function clearAuthAndRedirectToLogin() {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  localStorage.removeItem("user");
+  redirectToLoginForCheckout();
 }
 
 function parsePrice(value) {
@@ -1191,6 +1260,237 @@ const canPlaceOrder = computed(() => {
     paymentMethod.value === "direct";
   return hasShipping && hasPayment;
 });
+
+const canSubmitOrder = computed(() => {
+  if (paymentMethod.value !== "bank_transfer") return true;
+  return fakePaymentSession.value?.status === "paid";
+});
+
+const checkoutButtonText = computed(() => {
+  if (paymentMethod.value === "bank_transfer") {
+    if (fakePaymentSession.value?.status === "paid") {
+      return `${$t("checkout.placeOrder")} - ${formatPrice(grandTotal.value)}`;
+    }
+    if (isStartingFakePayment.value) return "Đang tạo mã QR...";
+    return `Thanh toán QR - ${formatPrice(grandTotal.value)}`;
+  }
+  return `${$t("checkout.placeOrder")} - ${formatPrice(grandTotal.value)}`;
+});
+
+const fakePaymentStatusText = computed(() => {
+  const status = String(fakePaymentSession.value?.status || "pending");
+  if (status === "scanned") return "Đã quét, chờ xác nhận";
+  if (status === "paid") return "Thanh toán thành công";
+  if (status === "expired") return "Mã hết hạn";
+  if (status === "cancelled") return "Mã đã huỷ";
+  return "Chờ quét";
+});
+
+const fakeCountdownText = computed(() => {
+  const sec = Math.max(0, Number(fakeCountdownSeconds.value || 0));
+  const mm = String(Math.floor(sec / 60)).padStart(2, "0");
+  const ss = String(sec % 60).padStart(2, "0");
+  return `${mm}:${ss}`;
+});
+
+const shouldShowRegenerateFakeQr = computed(() =>
+  ["expired", "cancelled"].includes(String(fakePaymentSession.value?.status || "")),
+);
+
+function persistFakePaymentSession() {
+  try {
+    if (!fakePaymentSession.value?.session_id) {
+      sessionStorage.removeItem(CHECKOUT_FAKE_PAYMENT_STORAGE_KEY);
+      return;
+    }
+    sessionStorage.setItem(
+      CHECKOUT_FAKE_PAYMENT_STORAGE_KEY,
+      JSON.stringify({
+        session_id: fakePaymentSession.value.session_id,
+      }),
+    );
+  } catch (_) {}
+}
+
+function stopFakePaymentTimers() {
+  if (fakePaymentPollTimer) {
+    clearInterval(fakePaymentPollTimer);
+    fakePaymentPollTimer = null;
+  }
+  if (fakePaymentCountdownTimer) {
+    clearInterval(fakePaymentCountdownTimer);
+    fakePaymentCountdownTimer = null;
+  }
+}
+
+function updateCountdownByExpiresAt(expiresAt) {
+  if (!expiresAt) {
+    fakeCountdownSeconds.value = 0;
+    return;
+  }
+  const diff = Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000);
+  fakeCountdownSeconds.value = Math.max(0, diff);
+}
+
+async function renderQrContent(content) {
+  fakeQrDataUrl.value = "";
+  if (!content) return;
+  fakeQrDataUrl.value = await QRCode.toDataURL(content, {
+    margin: 1,
+    width: 320,
+  });
+}
+
+function resolveMobileQrContent(rawContent, sessionId) {
+  const appOrigin =
+    String(import.meta.env.VITE_PUBLIC_APP_URL || "").trim() ||
+    window.location.origin;
+  const fallback = `${appOrigin}/fake-pay/${sessionId}`;
+  const text = String(rawContent || "").trim();
+  if (!text) return fallback;
+  if (text.includes("localhost") || text.includes("127.0.0.1")) return fallback;
+  return text;
+}
+
+async function syncFakeSessionStatus(sessionId) {
+  const res = await fakePaymentService.getSession(sessionId);
+  fakePaymentSession.value = {
+    session_id: res.session_id,
+    status: res.status,
+    amount: res.amount,
+    currency: res.currency,
+    payment_code: res.payment_code,
+    expires_at: res.expires_at,
+    scanned_at: res.scanned_at,
+    paid_at: res.paid_at,
+    qr_content: fakePaymentSession.value?.qr_content || "",
+  };
+  persistFakePaymentSession();
+  updateCountdownByExpiresAt(fakePaymentSession.value.expires_at);
+  if (["paid", "expired", "cancelled"].includes(String(fakePaymentSession.value.status || ""))) {
+    stopFakePaymentTimers();
+  }
+}
+
+function startFakePaymentCountdown() {
+  if (fakePaymentCountdownTimer) clearInterval(fakePaymentCountdownTimer);
+  fakePaymentCountdownTimer = setInterval(async () => {
+    if (!fakePaymentSession.value?.expires_at) return;
+    updateCountdownByExpiresAt(fakePaymentSession.value.expires_at);
+    if (fakeCountdownSeconds.value > 0) return;
+    try {
+      await syncFakeSessionStatus(fakePaymentSession.value.session_id);
+    } catch (_) {
+      // Ignore once; polling loop will retry.
+    }
+  }, 1000);
+}
+
+function startFakePaymentPolling() {
+  if (!fakePaymentSession.value?.session_id) return;
+  if (fakePaymentPollTimer) clearInterval(fakePaymentPollTimer);
+  fakePaymentPollTimer = setInterval(async () => {
+    try {
+      await syncFakeSessionStatus(fakePaymentSession.value.session_id);
+      if (fakePaymentSession.value?.status === "paid") {
+        showNotification({
+          message: "Đã nhận thanh toán thành công.",
+          type: "success",
+          duration: 2800,
+        });
+      }
+    } catch (err) {
+      if (Number(err?.status) === 401) {
+        stopFakePaymentTimers();
+        clearAuthAndRedirectToLogin();
+      }
+    }
+  }, 1500);
+}
+
+async function startFakePaymentSession() {
+  if (isStartingFakePayment.value) return;
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (!token) {
+    redirectToLoginForCheckout();
+    return;
+  }
+  isStartingFakePayment.value = true;
+  fakePaymentError.value = "";
+  stopFakePaymentTimers();
+  try {
+    const orderId = null;
+    const res = await fakePaymentService.createSession({
+      order_id: orderId,
+      amount: Math.round(Number(grandTotal.value || 0)),
+    });
+    const qrContent = resolveMobileQrContent(res.qr_content, res.session_id);
+    fakePaymentSession.value = {
+      session_id: res.session_id,
+      status: res.status,
+      amount: res.amount,
+      currency: res.currency,
+      payment_code: res.payment_code,
+      expires_at: res.expires_at,
+      scanned_at: null,
+      paid_at: null,
+      qr_content: qrContent,
+    };
+    await renderQrContent(qrContent);
+    persistFakePaymentSession();
+    updateCountdownByExpiresAt(res.expires_at);
+    startFakePaymentCountdown();
+    startFakePaymentPolling();
+  } catch (err) {
+    if (Number(err?.status) === 401) {
+      clearAuthAndRedirectToLogin();
+      return;
+    }
+    fakePaymentError.value = err?.message || "Không thể tạo mã QR thanh toán.";
+  } finally {
+    isStartingFakePayment.value = false;
+  }
+}
+
+async function resumeFakePaymentSessionIfAny() {
+  try {
+    const raw = sessionStorage.getItem(CHECKOUT_FAKE_PAYMENT_STORAGE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    const sessionId = String(saved?.session_id || "");
+    if (!sessionId) return;
+    await syncFakeSessionStatus(sessionId);
+    const content = resolveMobileQrContent(fakePaymentSession.value?.qr_content, sessionId);
+    await renderQrContent(content);
+    if (!["paid", "expired", "cancelled"].includes(String(fakePaymentSession.value?.status || ""))) {
+      startFakePaymentCountdown();
+      startFakePaymentPolling();
+    }
+  } catch (_) {
+    // ignore resume errors
+  }
+}
+
+async function handleCheckoutAction() {
+  if (paymentMethod.value !== "bank_transfer") {
+    await placeOrder();
+    return;
+  }
+  const currentStatus = String(fakePaymentSession.value?.status || "");
+  if (fakePaymentSession.value?.session_id && !["expired", "cancelled", "paid"].includes(currentStatus)) {
+    showNotification({
+      message: "Vui lòng quét QR và xác nhận trên điện thoại.",
+      type: "error",
+      duration: 2400,
+    });
+    return;
+  }
+  if (fakePaymentSession.value?.status !== "paid") {
+    await startFakePaymentSession();
+    return;
+  }
+  await placeOrder();
+}
 function isPaymentMethodValidationError(err) {
   const msg = String(err?.message || "").toLowerCase();
   return err?.status === 422 && msg.includes("payment method");
@@ -1345,6 +1645,12 @@ async function placeOrder() {
           type: "success",
           duration: 4000,
         });
+        stopFakePaymentTimers();
+        fakePaymentSession.value = null;
+        fakeQrDataUrl.value = "";
+        fakePaymentError.value = "";
+        fakeCountdownSeconds.value = 0;
+        persistFakePaymentSession();
       }
       if (method === "direct") {
         showNotification({
@@ -1401,6 +1707,7 @@ onMounted(() => {
     loadMyVouchers();
   }
   loadProvinceOptions();
+  resumeFakePaymentSessionIfAny();
   try {
     const raw = sessionStorage.getItem(PROMO_STORAGE_KEY);
     if (!raw) return;
@@ -1414,5 +1721,18 @@ onMounted(() => {
   } catch (_) {
     // ignore parse/storage errors
   }
+});
+
+watch(
+  () => paymentMethod.value,
+  async (method) => {
+    if (method !== "bank_transfer") return;
+    if (fakePaymentSession.value?.session_id) return;
+    await startFakePaymentSession();
+  },
+);
+
+onBeforeUnmount(() => {
+  stopFakePaymentTimers();
 });
 </script>

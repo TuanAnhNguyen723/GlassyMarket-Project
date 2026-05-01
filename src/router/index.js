@@ -48,7 +48,14 @@ const routes = [
   {
     path: '/checkout',
     name: 'Checkout',
-    component: () => import('../views/CheckoutView.vue')
+    component: () => import('../views/CheckoutView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/fake-pay/:sessionId',
+    name: 'FakePayMobile',
+    component: () => import('../views/FakePayMobileView.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/dashboard',
