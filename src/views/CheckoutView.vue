@@ -552,14 +552,18 @@
             {{ $t("cart.emptyMessage") }}
           </div>
           <template v-else>
-            <div class="space-y-4 max-h-[280px] overflow-y-auto pr-1">
-              <div v-for="item in cartItems" :key="item.id" class="flex gap-3">
+            <div class="space-y-4 max-h-[360px] overflow-y-auto pr-1">
+              <div v-for="item in cartItems" :key="item.id" class="flex gap-3 rounded-2xl border border-zinc-100 dark:border-zinc-800 p-2">
                 <div
-                  class="size-16 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 bg-cover bg-center"
-                  :style="{
-                    backgroundImage: item.image ? `url('${item.image}')` : '',
-                  }"
-                />
+                  class="w-[30%] min-w-[88px] max-w-[120px] self-stretch overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-800 flex-shrink-0"
+                >
+                  <img
+                    :src="item.image"
+                    :alt="item.alt || item.name"
+                    class="w-full h-full object-cover object-center"
+                    loading="lazy"
+                  />
+                </div>
                 <div class="flex-1 min-w-0">
                   <p
                     class="text-sm font-semibold text-zinc-900 dark:text-white line-clamp-2"
@@ -569,10 +573,28 @@
                   <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                     x{{ item.quantity }}
                   </p>
+                  <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
+                    Lens:
+                    <span class="font-medium text-zinc-800 dark:text-zinc-200">
+                      {{ getCartItemLensName(item) }}
+                    </span>
+                  </p>
+                  <div
+                    v-if="getPrescriptionLines(item).length"
+                    class="mt-1 rounded-lg bg-zinc-50 dark:bg-zinc-800/60 px-2 py-1.5 text-[11px] text-zinc-500 dark:text-zinc-400 space-y-0.5"
+                  >
+                    <p
+                      v-for="line in getPrescriptionLines(item)"
+                      :key="line"
+                      class="truncate"
+                    >
+                      {{ line }}
+                    </p>
+                  </div>
                   <p
                     class="text-sm font-bold text-zinc-900 dark:text-zinc-100 mt-1"
                   >
-                    {{ formatPrice(parsePrice(item.price) * item.quantity) }}
+                    {{ formatPrice(parsePrice(item.unitPrice ?? item.price) * item.quantity) }}
                   </p>
                 </div>
               </div>
@@ -818,6 +840,7 @@ import Breadcrumbs from "@/components/common/Breadcrumbs.vue";
 import { useCart } from "@/composables/useCart.js";
 import { useAuth } from "@/composables/useAuth.js";
 import orderService from "@/services/orderService.js";
+import productService from "@/services/productService.js";
 import { AUTH_TOKEN_KEY } from "@/services/api.js";
 import fakePaymentService from "@/services/fakePaymentService.js";
 import { useNotification } from "@/composables/useNotification.js";
@@ -1202,6 +1225,56 @@ function formatPrice(price) {
   return `${num.toLocaleString("vi-VN")} đ`;
 }
 
+function getCartItemLensName(item) {
+  const value =
+    item?.lensName ??
+    item?.lens_name ??
+    item?.lens ??
+    item?.lens_option_name ??
+    "";
+  return String(value).trim() || "Không chọn lens";
+}
+
+function formatPrescriptionNumber(value, digits = 2) {
+  if (value === null || value === undefined || value === "") return "";
+  const num = Number(value);
+  if (!Number.isFinite(num)) return "";
+  return num > 0 ? `+${num.toFixed(digits)}` : num.toFixed(digits);
+}
+
+function getPrescriptionLines(item) {
+  const p = item?.prescription;
+  if (!p || typeof p !== "object") return [];
+  const right = [
+    p.right_sphere !== undefined
+      ? `SPH ${formatPrescriptionNumber(p.right_sphere)}`
+      : "",
+    p.right_cylinder !== undefined
+      ? `CYL ${formatPrescriptionNumber(p.right_cylinder)}`
+      : "",
+    p.right_axis !== undefined ? `AXIS ${p.right_axis}` : "",
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const left = [
+    p.left_sphere !== undefined
+      ? `SPH ${formatPrescriptionNumber(p.left_sphere)}`
+      : "",
+    p.left_cylinder !== undefined
+      ? `CYL ${formatPrescriptionNumber(p.left_cylinder)}`
+      : "",
+    p.left_axis !== undefined ? `AXIS ${p.left_axis}` : "",
+  ]
+    .filter(Boolean)
+    .join(", ");
+  return [
+    right ? `Mắt phải: ${right}` : "",
+    left ? `Mắt trái: ${left}` : "",
+    p.pd !== undefined ? `PD: ${p.pd}` : "",
+    p.notes ? `Ghi chú: ${p.notes}` : "",
+  ].filter(Boolean);
+}
+
 function formatVndNoSuffix(value) {
   const num = Math.round(parsePrice(value));
   return `${num.toLocaleString("vi-VN")}`;
@@ -1577,6 +1650,25 @@ const fakeCountdownText = computed(() => {
   return `${mm}:${ss}`;
 });
 
+function isFakePaymentExpired(expiresAt) {
+  if (!expiresAt) return false;
+  return new Date(expiresAt).getTime() <= Date.now();
+}
+
+function markFakePaymentExpired() {
+  if (!fakePaymentSession.value?.session_id) return;
+  const currentStatus = String(fakePaymentSession.value.status || "");
+  if (!["paid", "expired", "cancelled"].includes(currentStatus)) {
+    fakePaymentSession.value = {
+      ...fakePaymentSession.value,
+      status: "expired",
+    };
+    persistFakePaymentSession();
+  }
+  fakeCountdownSeconds.value = 0;
+  stopFakePaymentTimers();
+}
+
 const shouldShowRegenerateFakeQr = computed(() =>
   ["expired", "cancelled"].includes(String(fakePaymentSession.value?.status || "")),
 );
@@ -1651,29 +1743,52 @@ async function syncFakeSessionStatus(sessionId) {
   };
   persistFakePaymentSession();
   updateCountdownByExpiresAt(fakePaymentSession.value.expires_at);
+  if (isFakePaymentExpired(fakePaymentSession.value.expires_at)) {
+    markFakePaymentExpired();
+    return;
+  }
   if (["paid", "expired", "cancelled"].includes(String(fakePaymentSession.value.status || ""))) {
     stopFakePaymentTimers();
   }
 }
 
 function startFakePaymentCountdown() {
+  if (paymentMethod.value !== "bank_transfer") return;
+  if (isFakePaymentExpired(fakePaymentSession.value?.expires_at)) {
+    markFakePaymentExpired();
+    return;
+  }
   if (fakePaymentCountdownTimer) clearInterval(fakePaymentCountdownTimer);
   fakePaymentCountdownTimer = setInterval(async () => {
+    if (paymentMethod.value !== "bank_transfer") {
+      stopFakePaymentTimers();
+      return;
+    }
     if (!fakePaymentSession.value?.expires_at) return;
     updateCountdownByExpiresAt(fakePaymentSession.value.expires_at);
-    if (fakeCountdownSeconds.value > 0) return;
-    try {
-      await syncFakeSessionStatus(fakePaymentSession.value.session_id);
-    } catch (_) {
-      // Ignore once; polling loop will retry.
+    if (fakeCountdownSeconds.value <= 0) {
+      markFakePaymentExpired();
     }
   }, 1000);
 }
 
 function startFakePaymentPolling() {
+  if (paymentMethod.value !== "bank_transfer") return;
   if (!fakePaymentSession.value?.session_id) return;
+  if (isFakePaymentExpired(fakePaymentSession.value?.expires_at)) {
+    markFakePaymentExpired();
+    return;
+  }
   if (fakePaymentPollTimer) clearInterval(fakePaymentPollTimer);
   fakePaymentPollTimer = setInterval(async () => {
+    if (paymentMethod.value !== "bank_transfer") {
+      stopFakePaymentTimers();
+      return;
+    }
+    if (isFakePaymentExpired(fakePaymentSession.value?.expires_at)) {
+      markFakePaymentExpired();
+      return;
+    }
     try {
       await syncFakeSessionStatus(fakePaymentSession.value.session_id);
       if (fakePaymentSession.value?.status === "paid") {
@@ -1693,6 +1808,7 @@ function startFakePaymentPolling() {
 }
 
 async function startFakePaymentSession() {
+  if (paymentMethod.value !== "bank_transfer") return;
   if (isStartingFakePayment.value) return;
   const token = localStorage.getItem(AUTH_TOKEN_KEY);
   if (!token) {
@@ -1737,6 +1853,7 @@ async function startFakePaymentSession() {
 }
 
 async function resumeFakePaymentSessionIfAny() {
+  if (paymentMethod.value !== "bank_transfer") return;
   try {
     const raw = sessionStorage.getItem(CHECKOUT_FAKE_PAYMENT_STORAGE_KEY);
     if (!raw) return;
@@ -1746,7 +1863,10 @@ async function resumeFakePaymentSessionIfAny() {
     await syncFakeSessionStatus(sessionId);
     const content = resolveMobileQrContent(fakePaymentSession.value?.qr_content, sessionId);
     await renderQrContent(content);
-    if (!["paid", "expired", "cancelled"].includes(String(fakePaymentSession.value?.status || ""))) {
+    if (
+      !isFakePaymentExpired(fakePaymentSession.value?.expires_at) &&
+      !["paid", "expired", "cancelled"].includes(String(fakePaymentSession.value?.status || ""))
+    ) {
       startFakePaymentCountdown();
       startFakePaymentPolling();
     }
@@ -1822,6 +1942,93 @@ function getPaymentMethodCandidates(uiMethod) {
   return [];
 }
 
+const productColorFallbackCache = new Map();
+
+function normalizeId(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : value;
+}
+
+function normalizePrescriptionType(type) {
+  const key = String(type || "").trim().toLowerCase();
+  if (key === "myopia") return "myopia";
+  if (key === "hyperopia") return "hyperopia";
+  if (key === "reading" || key === "near" || key === "progressive") {
+    return "reading";
+  }
+  return "other";
+}
+
+function pickFirstProductColorId(product) {
+  const colors = Array.isArray(product?.colors) ? product.colors : [];
+  const first = colors.find((color) => {
+    const id =
+      color?.product_color_id ??
+      color?.productColorId ??
+      color?.id ??
+      color?.product_color?.id ??
+      color?.pivot?.id ??
+      null;
+    return id !== null && id !== undefined && id !== "";
+  });
+  if (!first) return null;
+  return normalizeId(
+    first.product_color_id ??
+      first.productColorId ??
+      first.id ??
+      first.product_color?.id ??
+      first.pivot?.id,
+  );
+}
+
+async function resolveProductColorId(item) {
+  const existing = normalizeId(item?.productColorId ?? item?.product_color_id);
+  if (existing != null) return existing;
+  const productId = item?.productId ?? item?.product_id;
+  if (!productId) return null;
+  const key = String(productId);
+  if (productColorFallbackCache.has(key)) {
+    return productColorFallbackCache.get(key);
+  }
+  try {
+    const product = await productService.getProductById(productId);
+    const colorId = pickFirstProductColorId(product);
+    productColorFallbackCache.set(key, colorId);
+    return colorId;
+  } catch (err) {
+    console.warn("Cannot resolve product color for order item:", err);
+    productColorFallbackCache.set(key, null);
+    return null;
+  }
+}
+
+async function buildOrderItems() {
+  const result = [];
+  for (const cartItem of cartItems.value ?? []) {
+    const item = {
+      product_id: normalizeId(cartItem.productId ?? cartItem.product_id),
+      quantity: Number(cartItem.quantity || 1),
+    };
+    const productColorId = await resolveProductColorId(cartItem);
+    if (productColorId != null) {
+      item.product_color_id = productColorId;
+    }
+    const lensId = normalizeId(cartItem.lensId ?? cartItem.lens_id);
+    if (lensId != null) {
+      item.lens_id = lensId;
+    }
+    if (cartItem.prescription) {
+      item.prescription_type = normalizePrescriptionType(
+        cartItem.prescriptionType ?? cartItem.prescription_type,
+      );
+      item.prescription = cartItem.prescription;
+    }
+    result.push(item);
+  }
+  return result;
+}
+
 async function placeOrder() {
   if (!canPlaceOrder.value || isPlacingOrder.value) return;
   const token = localStorage.getItem(AUTH_TOKEN_KEY);
@@ -1831,12 +2038,7 @@ async function placeOrder() {
   }
   isPlacingOrder.value = true;
   try {
-    const items = (cartItems.value ?? []).map((i) => ({
-      product_id: i.productId,
-      quantity: i.quantity,
-      unit_price: parsePrice(i.price),
-      lens_id: i.lensId ?? null,
-    }));
+    const items = await buildOrderItems();
     const s = shipping.value;
     const name = (s.name && String(s.name).trim()) || "";
     const phone = (s.phone && String(s.phone).trim()) || "";
@@ -1967,9 +2169,9 @@ async function placeOrder() {
       return;
     }
     showNotification({
-      message: $t("checkout.errorCreateOrder"),
+      message: e?.message || $t("checkout.errorCreateOrder"),
       type: "error",
-      duration: 4000,
+      duration: 5000,
     });
   } finally {
     isPlacingOrder.value = false;
@@ -1991,7 +2193,6 @@ onMounted(() => {
     loadMyVouchers();
   }
   loadProvinceOptions();
-  resumeFakePaymentSessionIfAny();
   try {
     const raw = sessionStorage.getItem(PROMO_STORAGE_KEY);
     if (!raw) return;
@@ -2010,7 +2211,20 @@ onMounted(() => {
 watch(
   () => paymentMethod.value,
   async (method) => {
-    if (method !== "bank_transfer") return;
+    if (method !== "bank_transfer") {
+      stopFakePaymentTimers();
+      return;
+    }
+    if (fakePaymentSession.value?.session_id) {
+      if (isFakePaymentExpired(fakePaymentSession.value.expires_at)) {
+        markFakePaymentExpired();
+        return;
+      }
+      startFakePaymentCountdown();
+      startFakePaymentPolling();
+      return;
+    }
+    await resumeFakePaymentSessionIfAny();
     if (fakePaymentSession.value?.session_id) return;
     await startFakePaymentSession();
   },

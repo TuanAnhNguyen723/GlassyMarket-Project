@@ -28,10 +28,10 @@ function saveToStorage(key, items) {
 }
 
 /**
- * Tạo id dòng giỏ hàng: cùng sản phẩm + cùng lens = gộp quantity
+ * Tạo id dòng giỏ hàng: cùng sản phẩm + cùng màu + cùng lens + cùng độ mắt = gộp quantity
  */
-function lineId(productId, lensId) {
-  return `${productId}-${lensId ?? "default"}`;
+function lineId(productId, productColorId, lensId, prescriptionKey = "") {
+  return `${productId}-${productColorId ?? "default-color"}-${lensId ?? "default-lens"}-${prescriptionKey}`;
 }
 
 /**
@@ -43,6 +43,15 @@ function parsePrice(value) {
   const cleaned = String(value).replace(/[^0-9.,-]/g, "").replace(/,/g, "");
   const num = Number.parseFloat(cleaned);
   return Number.isNaN(num) ? 0 : num;
+}
+
+function normalizePrescription(prescription) {
+  if (!prescription || typeof prescription !== "object") return null;
+  const entries = Object.entries(prescription).filter(
+    ([, value]) => value !== null && value !== undefined && value !== "",
+  );
+  if (!entries.length) return null;
+  return Object.fromEntries(entries);
 }
 
 /**
@@ -105,13 +114,17 @@ const itemsCount = computed(() =>
 );
 
 const subtotal = computed(() =>
-  items.value.reduce((sum, i) => sum + parsePrice(i.price) * (i.quantity || 0), 0)
+  items.value.reduce(
+    (sum, i) => sum + parsePrice(i.unitPrice ?? i.price) * (i.quantity || 0),
+    0,
+  )
 );
 
 /** Thuế 8% tính trên từng sản phẩm (price × quantity), làm tròn từng dòng rồi cộng tổng */
 const tax = computed(() =>
   items.value.reduce(
-    (sum, i) => sum + Math.round(parsePrice(i.price) * (i.quantity || 0) * 0.08),
+    (sum, i) =>
+      sum + Math.round(parsePrice(i.unitPrice ?? i.price) * (i.quantity || 0) * 0.08),
     0
   )
 );
@@ -123,7 +136,7 @@ const tax = computed(() =>
 export function useCart() {
   initCartSync();
   /**
-   * Thêm vào giỏ (hoặc tăng quantity nếu đã có cùng productId + lensId).
+   * Thêm vào giỏ (hoặc tăng quantity nếu đã có cùng productId + productColorId + lensId + prescription).
    * @param {Object} payload
    * @param {string|number} payload.productId
    * @param {string} payload.name
@@ -132,19 +145,36 @@ export function useCart() {
    * @param {string} [payload.alt]
    * @param {string|number} [payload.lensId]
    * @param {string} [payload.lensName]
+   * @param {string} [payload.lensType]
+   * @param {string} [payload.prescriptionType]
+   * @param {Object} [payload.prescription]
+   * @param {string|number} [payload.productColorId]
    * @param {string} [payload.color] - Tên màu (để hiển thị)
    * @param {string} [payload.colorHex] - Mã hex từ API (colors.hex_code) để hiển thị ô màu
    * @param {string} [payload.frameType] - Loại kính (category/frame detail)
    */
   function addItem(payload) {
     const productId = String(payload.productId ?? payload.id ?? "");
-    const lensId = payload.lensId != null ? String(payload.lensId) : "default";
-    const id = lineId(productId, lensId);
+    const productColorId =
+      payload.productColorId ?? payload.product_color_id ?? null;
+    const lensId = payload.lensId ?? payload.lens_id ?? null;
+    const prescription = normalizePrescription(payload.prescription);
+    const prescriptionKey = prescription
+      ? JSON.stringify({
+          type: payload.prescriptionType ?? payload.prescription_type ?? null,
+          prescription,
+        })
+      : "";
+    const id = lineId(productId, productColorId, lensId, prescriptionKey);
 
     const price = parsePrice(payload.price);
     const image = payload.image ?? payload.imageUrl ?? "";
     const name = payload.name ?? "Sản phẩm";
-    const lensName = payload.lensName ?? "—";
+    const lensName =
+      payload.lensName ?? payload.lens_name ?? payload.lens_option_name ?? "Không chọn lens";
+    const lensType = payload.lensType ?? payload.lens_type ?? null;
+    const prescriptionType =
+      payload.prescriptionType ?? payload.prescription_type ?? null;
     const color = payload.color ?? "—";
     const colorHex =
       payload.colorHex ?? payload.color_hex ?? payload.hex ?? null;
@@ -160,14 +190,21 @@ export function useCart() {
     items.value.push({
       id,
       productId,
+      productColorId,
       name,
       price,
+      unitPrice: price,
       image,
       alt,
       color,
       colorHex: colorHex && String(colorHex).trim() ? String(colorHex).trim() : null,
       frameType,
+      lensId,
       lens: lensName,
+      lensName,
+      lensType,
+      prescriptionType,
+      prescription,
       quantity: 1,
     });
   }
