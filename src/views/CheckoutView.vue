@@ -33,7 +33,7 @@
 
         <!-- Step 1: Shipping -->
         <section
-          class="border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden bg-white dark:bg-zinc-900/80"
+          class="border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-visible bg-white dark:bg-zinc-900/80"
         >
           <button
             type="button"
@@ -110,54 +110,148 @@
                   class="text-sm font-bold text-zinc-900 dark:text-white mb-1.5 block"
                   >Tỉnh / Thành</span
                 >
-                <select
-                  v-model="shipping.state"
-                  class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 focus:border-transparent h-11 px-4 text-sm"
-                  :disabled="loadingProvinces"
-                >
-                  <option disabled value="">
-                    {{
+                <div class="relative">
+                  <input
+                    v-model="provinceQuery"
+                    type="text"
+                    autocomplete="off"
+                    spellcheck="false"
+                    role="combobox"
+                    :aria-expanded="provinceOpen"
+                    class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 focus:border-transparent h-11 pl-4 pr-11 text-sm"
+                    :placeholder="
                       loadingProvinces
-                        ? "Đang tải Tỉnh / Thành..."
-                        : "Chọn Tỉnh / Thành"
-                    }}
-                  </option>
-                  <option
-                    v-for="province in provinceOptions"
-                    :key="province.code"
-                    :value="province.name"
+                        ? 'Đang tải Tỉnh / Thành...'
+                        : 'Gõ để tìm hoặc chọn Tỉnh / Thành'
+                    "
+                    :disabled="loadingProvinces"
+                    @focus="onProvinceFocus"
+                    @blur="onProvinceBlur"
+                    @input="onProvinceInput"
+                    @keydown.escape.prevent="closeProvinceDropdown"
+                  />
+                  <button
+                    type="button"
+                    class="absolute inset-y-0 right-0 flex items-center justify-center w-11 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                    tabindex="-1"
+                    aria-label="Mở danh sách tỉnh thành"
+                    :disabled="loadingProvinces"
+                    @mousedown.prevent="toggleProvinceDropdown"
                   >
-                    {{ province.name }}
-                  </option>
-                </select>
+                    <span
+                      class="material-symbols-outlined text-xl transition-transform"
+                      :class="provinceOpen ? 'rotate-180' : ''"
+                    >
+                      expand_more
+                    </span>
+                  </button>
+                  <ul
+                    v-show="
+                      provinceOpen &&
+                      !loadingProvinces &&
+                      filteredProvinceOptions.length
+                    "
+                    class="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-1 shadow-lg"
+                    role="listbox"
+                  >
+                    <li
+                      v-for="province in filteredProvinceOptions"
+                      :key="province.code"
+                      role="option"
+                      class="px-4 py-2.5 text-sm cursor-pointer text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      @mousedown.prevent="selectProvince(province)"
+                    >
+                      {{ province.name }}
+                    </li>
+                  </ul>
+                  <div
+                    v-show="
+                      provinceOpen &&
+                      !loadingProvinces &&
+                      !filteredProvinceOptions.length &&
+                      provinceQuery.trim()
+                    "
+                    class="absolute z-30 mt-1 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400 shadow-lg"
+                  >
+                    Không tìm thấy Tỉnh / Thành phù hợp.
+                  </div>
+                </div>
               </label>
               <label class="block">
                 <span
                   class="text-sm font-bold text-zinc-900 dark:text-white mb-1.5 block"
                   >Xã / Phường</span
                 >
-                <select
-                  v-model="shipping.city"
-                  class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 focus:border-transparent h-11 px-4 text-sm"
-                  :disabled="!shipping.state || loadingWards"
-                >
-                  <option disabled value="">
-                    {{
+                <div class="relative">
+                  <input
+                    v-model="wardQuery"
+                    type="text"
+                    autocomplete="off"
+                    spellcheck="false"
+                    role="combobox"
+                    :aria-expanded="wardOpen"
+                    class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 focus:border-transparent h-11 pl-4 pr-11 text-sm disabled:opacity-60"
+                    :placeholder="
                       !shipping.state
-                        ? "Chọn Tỉnh / Thành trước"
+                        ? 'Chọn Tỉnh / Thành trước'
                         : loadingWards
-                          ? "Đang tải Xã / Phường..."
-                          : "Chọn Xã / Phường"
-                    }}
-                  </option>
-                  <option
-                    v-for="ward in wardOptions"
-                    :key="ward"
-                    :value="ward"
+                          ? 'Đang tải Xã / Phường...'
+                          : 'Gõ để tìm (xã, phường, huyện)...'
+                    "
+                    :disabled="!shipping.state || loadingWards"
+                    @focus="onWardFocus"
+                    @blur="onWardBlur"
+                    @input="onWardInput"
+                    @keydown.escape.prevent="closeWardDropdown"
+                  />
+                  <button
+                    type="button"
+                    class="absolute inset-y-0 right-0 flex items-center justify-center w-11 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 disabled:opacity-40"
+                    tabindex="-1"
+                    aria-label="Mở danh sách xã phường"
+                    :disabled="!shipping.state || loadingWards"
+                    @mousedown.prevent="toggleWardDropdown"
                   >
-                    {{ ward }}
-                  </option>
-                </select>
+                    <span
+                      class="material-symbols-outlined text-xl transition-transform"
+                      :class="wardOpen ? 'rotate-180' : ''"
+                    >
+                      expand_more
+                    </span>
+                  </button>
+                  <ul
+                    v-show="
+                      wardOpen &&
+                      shipping.state &&
+                      !loadingWards &&
+                      filteredWardOptions.length
+                    "
+                    class="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-1 shadow-lg"
+                    role="listbox"
+                  >
+                    <li
+                      v-for="ward in filteredWardOptions"
+                      :key="ward.key"
+                      role="option"
+                      class="px-4 py-2.5 text-sm cursor-pointer text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      @mousedown.prevent="selectWard(ward)"
+                    >
+                      {{ ward.label }}
+                    </li>
+                  </ul>
+                  <div
+                    v-show="
+                      wardOpen &&
+                      shipping.state &&
+                      !loadingWards &&
+                      !filteredWardOptions.length &&
+                      wardQuery.trim()
+                    "
+                    class="absolute z-30 mt-1 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400 shadow-lg"
+                  >
+                    Không tìm thấy Xã / Phường phù hợp.
+                  </div>
+                </div>
               </label>
             </div>
           </div>
@@ -778,7 +872,162 @@ const provinceOptions = ref([]);
 const wardOptions = ref([]);
 const loadingProvinces = ref(false);
 const loadingWards = ref(false);
+const provinceQuery = ref("");
+const wardQuery = ref("");
+const provinceOpen = ref(false);
+const wardOpen = ref(false);
 const PROVINCE_API_BASE = "https://provinces.open-api.vn/api";
+
+function normalizeKeyword(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function syncWardQueryFromCity() {
+  if (!shipping.value.city) {
+    wardQuery.value = "";
+    return;
+  }
+  const w = wardOptions.value.find(
+    (ward) => ward.name === shipping.value.city,
+  );
+  wardQuery.value = w ? w.label : shipping.value.city;
+}
+
+function selectProvince(province) {
+  shipping.value.state = province.name;
+  provinceQuery.value = province.name;
+  provinceOpen.value = false;
+}
+
+function selectWard(ward) {
+  shipping.value.city = ward.name;
+  wardQuery.value = ward.label;
+  wardOpen.value = false;
+}
+
+function closeProvinceDropdown() {
+  provinceOpen.value = false;
+}
+
+function closeWardDropdown() {
+  wardOpen.value = false;
+}
+
+function onProvinceFocus() {
+  provinceOpen.value = true;
+}
+
+function onWardFocus() {
+  if (!shipping.value.state || loadingWards.value) return;
+  wardOpen.value = true;
+}
+
+function toggleProvinceDropdown() {
+  if (loadingProvinces.value) return;
+  provinceOpen.value = !provinceOpen.value;
+}
+
+function toggleWardDropdown() {
+  if (!shipping.value.state || loadingWards.value) return;
+  wardOpen.value = !wardOpen.value;
+}
+
+function onProvinceInput() {
+  const pq = provinceQuery.value.trim();
+  const st = (shipping.value.state || "").trim();
+  if (pq !== st) {
+    shipping.value.state = "";
+    shipping.value.city = "";
+    wardQuery.value = "";
+  }
+}
+
+function onWardInput() {
+  const current = wardOptions.value.find(
+    (ward) => ward.name === shipping.value.city,
+  );
+  const expectedLabel = (current?.label || "").trim();
+  const q = wardQuery.value.trim();
+  const city = (shipping.value.city || "").trim();
+  if (shipping.value.city && q !== expectedLabel && q !== city) {
+    shipping.value.city = "";
+  }
+}
+
+function onProvinceBlur() {
+  window.setTimeout(() => {
+    provinceOpen.value = false;
+    const q = provinceQuery.value.trim();
+    if (!q) {
+      shipping.value.state = "";
+      shipping.value.city = "";
+      provinceQuery.value = "";
+      wardQuery.value = "";
+      return;
+    }
+    const exact = provinceOptions.value.find((p) => p.name === q);
+    if (exact) {
+      shipping.value.state = exact.name;
+      provinceQuery.value = exact.name;
+      return;
+    }
+    const loose = provinceOptions.value.find(
+      (p) => normalizeKeyword(p.name) === normalizeKeyword(q),
+    );
+    if (loose) {
+      shipping.value.state = loose.name;
+      provinceQuery.value = loose.name;
+      return;
+    }
+    provinceQuery.value = shipping.value.state || "";
+    if (!shipping.value.state) {
+      wardQuery.value = "";
+    }
+  }, 200);
+}
+
+function onWardBlur() {
+  window.setTimeout(() => {
+    wardOpen.value = false;
+    if (!shipping.value.state) {
+      wardQuery.value = "";
+      return;
+    }
+    const q = wardQuery.value.trim();
+    if (!q) {
+      shipping.value.city = "";
+      wardQuery.value = "";
+      return;
+    }
+    const byLabel = wardOptions.value.find((w) => w.label === q);
+    if (byLabel) {
+      shipping.value.city = byLabel.name;
+      wardQuery.value = byLabel.label;
+      return;
+    }
+    const byName = wardOptions.value.find((w) => w.name === q);
+    if (byName) {
+      shipping.value.city = byName.name;
+      wardQuery.value = byName.label;
+      return;
+    }
+    const loose = wardOptions.value.find(
+      (w) =>
+        normalizeKeyword(w.label) === normalizeKeyword(q) ||
+        normalizeKeyword(w.name) === normalizeKeyword(q),
+    );
+    if (loose) {
+      shipping.value.city = loose.name;
+      wardQuery.value = loose.label;
+      return;
+    }
+    syncWardQueryFromCity();
+  }, 200);
+}
 
 async function loadProvinceOptions() {
   loadingProvinces.value = true;
@@ -819,12 +1068,20 @@ async function loadWardOptionsByProvinceName(provinceName) {
     const districts = Array.isArray(data?.districts) ? data.districts : [];
     wardOptions.value = districts
       .flatMap((district) =>
-        (Array.isArray(district?.wards) ? district.wards : []).map((ward) =>
-          String(ward?.name || "").trim(),
-        ),
+        (Array.isArray(district?.wards) ? district.wards : []).map((ward) => {
+          const districtName = String(district?.name || "").trim();
+          const wardName = String(ward?.name || "").trim();
+          const label = districtName ? `${wardName} - ${districtName}` : wardName;
+          return {
+            key: `${districtName}-${wardName}`,
+            name: wardName,
+            district: districtName,
+            label,
+          };
+        }),
       )
-      .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b, "vi"));
+      .filter((ward) => ward.name)
+      .sort((a, b) => a.label.localeCompare(b.label, "vi"));
   } catch {
     wardOptions.value = [];
     showNotification({
@@ -837,11 +1094,31 @@ async function loadWardOptionsByProvinceName(provinceName) {
   }
 }
 
+const filteredProvinceOptions = computed(() => {
+  const keyword = normalizeKeyword(provinceQuery.value);
+  if (!keyword) return provinceOptions.value;
+  return provinceOptions.value.filter((province) =>
+    normalizeKeyword(province.name).includes(keyword),
+  );
+});
+
+const filteredWardOptions = computed(() => {
+  const keyword = normalizeKeyword(wardQuery.value);
+  if (!keyword) return wardOptions.value;
+  return wardOptions.value.filter(
+    (ward) =>
+      normalizeKeyword(ward.name).includes(keyword) ||
+      normalizeKeyword(ward.district).includes(keyword) ||
+      normalizeKeyword(ward.label).includes(keyword),
+  );
+});
+
 watch(
   () => shipping.value.state,
   async (newState, oldState) => {
     if (newState !== oldState) {
       shipping.value.city = "";
+      wardQuery.value = "";
     }
     if (!newState) {
       wardOptions.value = [];
@@ -861,6 +1138,8 @@ watch(
     if (!stillValid) {
       shipping.value.state = "";
       shipping.value.city = "";
+      provinceQuery.value = "";
+      wardQuery.value = "";
     }
   },
 );
@@ -868,9 +1147,14 @@ watch(
 watch(
   () => wardOptions.value.length,
   () => {
-    const stillValid = wardOptions.value.includes(shipping.value.city);
+    const stillValid = wardOptions.value.some(
+      (ward) => ward.name === shipping.value.city,
+    );
     if (!stillValid) {
-    shipping.value.city = "";
+      shipping.value.city = "";
+      wardQuery.value = "";
+    } else {
+      syncWardQueryFromCity();
     }
   },
 );
