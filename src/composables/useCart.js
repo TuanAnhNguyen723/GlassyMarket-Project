@@ -13,10 +13,19 @@ function loadFromStorage(key) {
     const raw = localStorage.getItem(key);
     if (!raw) return [];
     const data = JSON.parse(raw);
-    return Array.isArray(data) ? data : [];
+    return Array.isArray(data) ? data.map(sanitizeStoredCartItem) : [];
   } catch {
     return [];
   }
+}
+
+function sanitizeStoredCartItem(item) {
+  if (!item || typeof item !== "object") return item;
+  const prescription = normalizePrescription(item.prescription);
+  return {
+    ...item,
+    prescription,
+  };
 }
 
 function saveToStorage(key, items) {
@@ -48,7 +57,8 @@ function parsePrice(value) {
 function normalizePrescription(prescription) {
   if (!prescription || typeof prescription !== "object") return null;
   const entries = Object.entries(prescription).filter(
-    ([, value]) => value !== null && value !== undefined && value !== "",
+    ([key, value]) =>
+      key !== "pd" && value !== null && value !== undefined && value !== "",
   );
   if (!entries.length) return null;
   return Object.fromEntries(entries);

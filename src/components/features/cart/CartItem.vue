@@ -50,9 +50,6 @@
             <p v-if="leftPrescriptionText">
               Mắt trái: <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ leftPrescriptionText }}</span>
             </p>
-            <p v-if="pdText">
-              PD: <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ pdText }}</span>
-            </p>
             <p v-if="notesText">
               Ghi chú: <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ notesText }}</span>
             </p>
@@ -145,11 +142,6 @@ const leftPrescriptionText = computed(() =>
     prescription.value?.left_axis !== undefined ? `AXIS ${prescription.value?.left_axis}` : '',
   ]),
 )
-
-const pdText = computed(() => {
-  const value = prescription.value?.pd
-  return value === null || value === undefined || value === '' ? '' : String(value)
-})
 
 const notesText = computed(() => String(prescription.value?.notes || '').trim())
 

@@ -248,12 +248,8 @@
                     </div>
                   </div>
 
-                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div class="grid grid-cols-1 gap-3">
                     <label class="block">
-                      <span class="mb-1 block text-xs font-semibold text-zinc-500 dark:text-zinc-400">PD</span>
-                      <input v-model="prescription.pd" class="h-10 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 text-sm" type="number" min="40" max="80" step="0.5" placeholder="VD: 62" />
-                    </label>
-                    <label class="block sm:col-span-2">
                       <span class="mb-1 block text-xs font-semibold text-zinc-500 dark:text-zinc-400">Ghi chú</span>
                       <input v-model="prescription.notes" class="h-10 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 text-sm" type="text" placeholder="VD: dùng kính hằng ngày" />
                     </label>
@@ -551,12 +547,8 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 gap-3">
               <label class="block">
-                <span class="mb-1 block text-xs font-semibold text-zinc-500 dark:text-zinc-400">PD</span>
-                <input v-model="prescription.pd" class="h-10 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 text-sm" type="number" min="40" max="80" step="0.5" placeholder="VD: 62" />
-              </label>
-              <label class="block sm:col-span-2">
                 <span class="mb-1 block text-xs font-semibold text-zinc-500 dark:text-zinc-400">Ghi chú</span>
                 <input v-model="prescription.notes" class="h-10 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 text-sm" type="text" placeholder="VD: dùng kính hằng ngày" />
               </label>
@@ -766,7 +758,6 @@ const prescription = ref({
   left_sphere: "",
   left_cylinder: "",
   left_axis: "",
-  pd: "",
   notes: "",
 });
 const isLoading = ref(true);
@@ -1018,7 +1009,6 @@ function buildPrescriptionPayload() {
     left_sphere: cleanNumber(prescription.value.left_sphere),
     left_cylinder: cleanNumber(prescription.value.left_cylinder),
     left_axis: cleanNumber(prescription.value.left_axis),
-    pd: cleanNumber(prescription.value.pd),
     notes: String(prescription.value.notes || "").trim(),
   };
   return Object.fromEntries(

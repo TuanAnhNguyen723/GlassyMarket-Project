@@ -1270,7 +1270,6 @@ function getPrescriptionLines(item) {
   return [
     right ? `Mắt phải: ${right}` : "",
     left ? `Mắt trái: ${left}` : "",
-    p.pd !== undefined ? `PD: ${p.pd}` : "",
     p.notes ? `Ghi chú: ${p.notes}` : "",
   ].filter(Boolean);
 }
@@ -1960,6 +1959,15 @@ function normalizePrescriptionType(type) {
   return "other";
 }
 
+function sanitizePrescriptionForOrder(prescription) {
+  if (!prescription || typeof prescription !== "object") return null;
+  const entries = Object.entries(prescription).filter(
+    ([key, value]) =>
+      key !== "pd" && value !== null && value !== undefined && value !== "",
+  );
+  return entries.length ? Object.fromEntries(entries) : null;
+}
+
 function pickFirstProductColorId(product) {
   const colors = Array.isArray(product?.colors) ? product.colors : [];
   const first = colors.find((color) => {
@@ -2018,11 +2026,12 @@ async function buildOrderItems() {
     if (lensId != null) {
       item.lens_id = lensId;
     }
-    if (cartItem.prescription) {
+    const prescription = sanitizePrescriptionForOrder(cartItem.prescription);
+    if (prescription) {
       item.prescription_type = normalizePrescriptionType(
         cartItem.prescriptionType ?? cartItem.prescription_type,
       );
-      item.prescription = cartItem.prescription;
+      item.prescription = prescription;
     }
     result.push(item);
   }
