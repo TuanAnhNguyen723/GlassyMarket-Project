@@ -61,7 +61,15 @@
       </div>
 
       <div class="flex items-center justify-between mt-3">
-        <QuantityStepper v-model="qtyModel" />
+        <div class="flex items-center gap-3">
+          <QuantityStepper v-model="qtyModel" :max="quantityMax" />
+          <span
+            v-if="hasStockLimit"
+            class="text-[11px] font-medium text-zinc-500 dark:text-zinc-400"
+          >
+            Còn {{ quantityMax }}
+          </span>
+        </div>
 
         <button class="flex items-center gap-1 text-zinc-600 dark:text-zinc-300 font-semibold text-xs hover:text-red-600 dark:hover:text-red-400 transition-colors" type="button" @click="$emit('remove', item.id)">
           <span class="material-symbols-outlined text-base">delete</span>
@@ -86,6 +94,13 @@ const qtyModel = computed({
   get: () => props.item.quantity,
   set: (v) => emit('update:quantity', { id: props.item.id, quantity: v }),
 })
+
+const quantityMax = computed(() => {
+  const stock = Number(props.item.stock ?? props.item.stock_quantity ?? 0)
+  return Number.isFinite(stock) && stock > 0 ? stock : 99
+})
+
+const hasStockLimit = computed(() => quantityMax.value !== 99)
 
 const lensDisplayName = computed(() => {
   const value =

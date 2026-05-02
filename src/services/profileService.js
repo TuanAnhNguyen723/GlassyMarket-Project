@@ -308,6 +308,10 @@ export function mapOrderToCard(order) {
         ? order.lines
         : []
   const firstItem = orderItems[0]
+  const itemsQuantity = orderItems.reduce((sum, item) => {
+    const quantity = Number(item?.quantity ?? item?.qty ?? 0)
+    return sum + (Number.isFinite(quantity) ? quantity : 0)
+  }, 0)
   const status = normalizeOrderStatus(order.status || 'pending')
   const customer = order.customer ?? null
   const statusDisplay = status.charAt(0).toUpperCase() + status.slice(1)
@@ -331,6 +335,7 @@ export function mapOrderToCard(order) {
     customerId: customer?.id ?? order.user_id ?? null,
     customerDisplay: customer ? customer.name : (order.shipping_name || null),
     customerEmail: customer?.email ?? order.shipping_email ?? null,
+    itemsQuantity,
     orderDate: formatOrderDate(order.created_at ?? order.order_date ?? order.date),
     total: order.total ?? order.total_amount ?? 0,
     raw: order

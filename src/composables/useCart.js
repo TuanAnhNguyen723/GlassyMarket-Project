@@ -152,6 +152,7 @@ export function useCart() {
    * @param {string} [payload.color] - Tên màu (để hiển thị)
    * @param {string} [payload.colorHex] - Mã hex từ API (colors.hex_code) để hiển thị ô màu
    * @param {string} [payload.frameType] - Loại kính (category/frame detail)
+   * @param {number|string} [payload.stock] - Tồn kho hiện tại của sản phẩm
    */
   function addItem(payload) {
     const productId = String(payload.productId ?? payload.id ?? "");
@@ -180,10 +181,18 @@ export function useCart() {
       payload.colorHex ?? payload.color_hex ?? payload.hex ?? null;
     const frameType = payload.frameType ?? "—";
     const alt = payload.alt ?? name;
+    const stock = Number(payload.stock ?? payload.stock_quantity ?? 0);
+    const maxQuantity = Number.isFinite(stock) && stock > 0 ? stock : null;
 
     const existing = items.value.find((i) => i.id === id);
     if (existing) {
-      existing.quantity = (existing.quantity || 1) + 1;
+      if (maxQuantity != null) {
+        existing.stock = maxQuantity;
+      }
+      existing.quantity =
+        maxQuantity != null
+          ? Math.min(maxQuantity, (existing.quantity || 1) + 1)
+          : (existing.quantity || 1) + 1;
       return;
     }
 
@@ -205,6 +214,7 @@ export function useCart() {
       lensType,
       prescriptionType,
       prescription,
+      stock: maxQuantity,
       quantity: 1,
     });
   }
@@ -216,7 +226,11 @@ export function useCart() {
       return;
     }
     const item = items.value.find((i) => i.id === itemId);
-    if (item) item.quantity = num;
+    if (item) {
+      const stock = Number(item.stock ?? item.stock_quantity ?? 0);
+      const maxQuantity = Number.isFinite(stock) && stock > 0 ? stock : null;
+      item.quantity = maxQuantity != null ? Math.min(num, maxQuantity) : num;
+    }
   }
 
   function removeItem(itemId) {

@@ -841,7 +841,7 @@ import { useCart } from "@/composables/useCart.js";
 import { useAuth } from "@/composables/useAuth.js";
 import orderService from "@/services/orderService.js";
 import productService from "@/services/productService.js";
-import { AUTH_TOKEN_KEY } from "@/services/api.js";
+import api, { AUTH_TOKEN_KEY } from "@/services/api.js";
 import fakePaymentService from "@/services/fakePaymentService.js";
 import { useNotification } from "@/composables/useNotification.js";
 import {
@@ -2029,6 +2029,41 @@ async function buildOrderItems() {
   return result;
 }
 
+async function fetchLiveProductStock(productId) {
+  const response = await api.get(`/products/${productId}?_stock_check=${Date.now()}`);
+  const product = response?.data ?? response;
+  const stock = Number(product?.stock ?? product?.stock_quantity ?? 0);
+  return Number.isFinite(stock) ? stock : 0;
+}
+
+async function validateCartStockBeforeOrder() {
+  for (const item of cartItems.value ?? []) {
+    const productId = item.productId ?? item.product_id;
+    if (!productId) continue;
+    const stock = await fetchLiveProductStock(productId);
+    const quantity = Number(item.quantity || 0);
+    item.stock = stock;
+    if (stock <= 0) {
+      showNotification({
+        message: `${item.name || "Sản phẩm"} đã hết hàng.`,
+        type: "error",
+        duration: 4500,
+      });
+      return false;
+    }
+    if (quantity > stock) {
+      cart.updateQuantity(item.id, stock);
+      showNotification({
+        message: `${item.name || "Sản phẩm"} chỉ còn ${stock} sản phẩm. Mình đã cập nhật lại số lượng trong giỏ.`,
+        type: "error",
+        duration: 5500,
+      });
+      return false;
+    }
+  }
+  return true;
+}
+
 async function placeOrder() {
   if (!canPlaceOrder.value || isPlacingOrder.value) return;
   const token = localStorage.getItem(AUTH_TOKEN_KEY);
@@ -2038,6 +2073,11 @@ async function placeOrder() {
   }
   isPlacingOrder.value = true;
   try {
+    const stockIsValid = await validateCartStockBeforeOrder();
+    if (!stockIsValid) {
+      isPlacingOrder.value = false;
+      return;
+    }
     const items = await buildOrderItems();
     const s = shipping.value;
     const name = (s.name && String(s.name).trim()) || "";

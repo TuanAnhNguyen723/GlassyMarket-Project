@@ -1220,7 +1220,7 @@ const applyProductResponse = (res) => {
     comparePrice,
     rating: ratingAverage,
     reviews: ratingReviews,
-    stock: res.stock ?? 0,
+    stock: res.stock ?? res.stock_quantity ?? 0,
     images: images.length ? images : [{ url: "", alt: res.name }],
     frameDetails,
     colors,
@@ -1416,6 +1416,7 @@ const addToCart = () => {
     color,
     colorHex,
     frameType,
+    stock: p.stock,
   });
 
   showNotification({

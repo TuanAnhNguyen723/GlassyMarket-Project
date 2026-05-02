@@ -216,7 +216,6 @@ function buildActions(order) {
   if (s === 'pending') {
     actions.push({ type: 'cancel', label: t('common.cancelOrder'), icon: null, classes: 'border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800' })
   }
-  actions.push({ type: 'details', label: t('common.details'), icon: null, classes: 'border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800' })
   return actions
 }
 

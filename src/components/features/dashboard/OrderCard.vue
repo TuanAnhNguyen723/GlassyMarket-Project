@@ -36,6 +36,12 @@
           {{ $t('orders.customerLabel') }}: {{ customerLabel }}
         </p>
         <p class="text-slate-500 dark:text-slate-400 text-xs">
+          Số lượng đã mua:
+          <span class="font-semibold text-slate-900 dark:text-slate-200">
+            {{ order.itemsQuantity || 0 }}
+          </span>
+        </p>
+        <p class="text-slate-500 dark:text-slate-400 text-xs">
           {{ order.orderDate ? $t('orders.orderedOn', { date: order.orderDate }) : '—' }} • <span class="font-semibold text-slate-900 dark:text-slate-200">{{ order.totalFormatted || formatTotal(order.total) }}</span>
         </p>
       </div>
