@@ -301,11 +301,6 @@
             >
               {{ product.name }}
             </h1>
-            <span
-              class="text-xl md:text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 whitespace-nowrap flex-shrink-0"
-            >
-              {{ formatPrice(finalPrice) }}
-            </span>
           </div>
           <ProductRating
             :rating="product.rating"
